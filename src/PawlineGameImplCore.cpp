@@ -667,6 +667,7 @@ void PawlineGameImpl::ResetGame()
     m_pauseBeforeEscape = false;
     m_gameOver = false;
     m_victory = false;
+    m_bossSpawned = false;
     m_bossPhaseTwoTriggered = false;
     m_demoSpawnTimer = 0.70f;
     m_demoWalletTimer = 2.20f;

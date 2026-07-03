@@ -10,22 +10,20 @@ void PawlineGameImpl::UpdateEnemyDirector(float dt)
     const float threat = ThreatLevel();
     const StageDefinition stage = CurrentStage();
 
-    if (m_stageTime >= m_nextBossTime)
+    // 보스는 시간표가 아니라 적 기지가 충분히 밀렸을 때 한 번만 나온다.
+    const float enemyHpPct = m_enemyBaseMaxHp > 0.0f ? Clamp01(m_enemyBaseHp / m_enemyBaseMaxHp) : 1.0f;
+    if (!m_bossSpawned && enemyHpPct <= BossTriggerHpRatio())
     {
         const EnemyUnit bossType = StageBossType();
         SpawnEnemy(bossType, true);
         if (!m_units.empty())
         {
-            const Unit& boss = m_units.back();
-            m_bossFocusX = std::max(0.0f, std::min(kCameraMaxX, boss.pos.x - 760.0f));
+            Unit& boss = m_units.back();
+            boss.boss = true;
+            TriggerBossEntrance(boss, GetEnemyStats(bossType, threat).accent);
         }
-        m_bossBannerTimer = 3.15f;
-        m_bossWarningTimer = 1.20f;
-        AddCameraTrauma(0.62f);
-        m_nextBossTime += 44.0f / stage.threatScale;
+        m_bossSpawned = true;
         m_enemyTimer = std::min(m_enemyTimer, 1.1f);
-        SetMessage(GetEnemyStats(bossType, threat).name + L" 접근 중.");
-        AddRing({kEnemyBaseX - 80.0f, kLaneY}, 220.0f, 0.70f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.46f), 5.0f);
     }
 
     if (m_enemyTimer > 0.0f)
@@ -91,6 +89,12 @@ void PawlineGameImpl::UpdateDirectorPressure(float dt)
 float PawlineGameImpl::DirectorSpawnMultiplier() const
 {
     return std::max(0.84f, std::min(1.16f, 1.0f - m_directorPressure * 0.12f));
+}
+
+float PawlineGameImpl::BossTriggerHpRatio() const
+{
+    // 후반 행성은 전투 템포가 빠르므로 보스가 조금 더 일찍 개입한다.
+    return std::min(0.72f, 0.66f + static_cast<float>(m_selectedStage) * 0.0065f);
 }
 
 EnemyUnit PawlineGameImpl::PickStageEnemy(int value, int phase) const
@@ -180,7 +184,7 @@ EnemyUnit PawlineGameImpl::PickStageEnemy(int value, int phase) const
         {
             return EnemyUnit::Comet;
         }
-        return value < 82 ? EnemyUnit::Void : EnemyUnit::Boss;
+        return value < 82 ? EnemyUnit::Void : EnemyUnit::Quake;
     }
 }
 
@@ -332,7 +336,7 @@ Unit* PawlineGameImpl::FindBossUnit()
     Unit* boss = nullptr;
     for (Unit& unit : m_units)
     {
-        if (unit.team == Team::Enemy && unit.alive && (unit.elite || static_cast<EnemyUnit>(unit.kind) == EnemyUnit::Boss))
+        if (unit.team == Team::Enemy && unit.alive && unit.boss)
         {
             if (!boss || unit.maxHp > boss->maxHp)
             {
@@ -348,7 +352,7 @@ const Unit* PawlineGameImpl::FindBossUnit() const
     const Unit* boss = nullptr;
     for (const Unit& unit : m_units)
     {
-        if (unit.team == Team::Enemy && unit.alive && (unit.elite || static_cast<EnemyUnit>(unit.kind) == EnemyUnit::Boss))
+        if (unit.team == Team::Enemy && unit.alive && unit.boss)
         {
             if (!boss || unit.maxHp > boss->maxHp)
             {
@@ -1033,6 +1037,7 @@ void PawlineGameImpl::SpawnPlayer(PlayerUnit type)
     unit.shakePhase = static_cast<float>(unit.id) * 0.37f;
     unit.ranged = stats.ranged;
     unit.reward = 0;
+    unit.nextKnockbackPct = (type == PlayerUnit::Box || type == PlayerUnit::Titan || type == PlayerUnit::Frost || type == PlayerUnit::Solar) ? 0.36f : 0.46f;
     unit.animState = UnitAnimState::Move;
     m_units.push_back(unit);
     AddBurst(unit.pos, stats.accent, 10);
@@ -1064,6 +1069,8 @@ void PawlineGameImpl::SpawnEnemy(EnemyUnit type, bool elite)
     unit.ranged = stats.ranged;
     unit.reward = elite ? stats.reward * 2 : stats.reward;
     unit.elite = elite;
+    unit.boss = elite && type == EnemyUnit::Boss;
+    unit.nextKnockbackPct = unit.boss ? 0.78f : (elite ? 0.64f : 0.44f);
     unit.animState = elite ? UnitAnimState::Windup : UnitAnimState::Move;
     m_units.push_back(unit);
     AddBurst(unit.pos, stats.accent, elite || type == EnemyUnit::Boss ? 20 : 8);
@@ -1082,10 +1089,26 @@ void PawlineGameImpl::UpdateUnits(float dt)
     // rendering can now read a clear Idle/Move/Windup/Attack/Recover/Hit state.
     for (Unit& unit : m_units)
     {
+        if (!unit.alive)
+        {
+            continue;
+        }
         unit.attackTimer = std::max(0.0f, unit.attackTimer - dt);
         unit.hitFlash = std::max(0.0f, unit.hitFlash - dt);
         unit.shakeTimer = std::max(0.0f, unit.shakeTimer - dt);
         unit.attackAnim = std::max(0.0f, unit.attackAnim - dt);
+        unit.stunTimer = std::max(0.0f, unit.stunTimer - dt);
+        if (unit.knockbackTimer > 0.0f)
+        {
+            unit.knockbackTimer = std::max(0.0f, unit.knockbackTimer - dt);
+            unit.pos.x += unit.knockbackVelocity * dt;
+            unit.knockbackVelocity *= std::pow(0.025f, dt);
+            if (unit.knockbackTimer <= 0.0f)
+            {
+                unit.knockbackVelocity = 0.0f;
+            }
+        }
+        unit.pos.x = std::max(kPlayerBaseX + 42.0f, std::min(kEnemyBaseX - 42.0f, unit.pos.x));
         unit.stateTime += dt;
     }
 
@@ -1098,6 +1121,13 @@ void PawlineGameImpl::UpdateUnits(float dt)
         }
 
         const Vec2 before = unit.pos;
+        if (unit.stunTimer > 0.0f || unit.knockbackTimer > 0.0f)
+        {
+            unit.walkCycle += dt * 9.0f;
+            SetUnitAnimState(unit, UnitAnimState::Hit);
+            continue;
+        }
+
         const int targetIndex = FindTargetIndex(unit);
         const bool baseInRange = IsEnemyBaseInRange(unit);
         const bool hasTarget = targetIndex >= 0 || baseInRange;
@@ -1165,6 +1195,114 @@ UnitAnimState PawlineGameImpl::ResolveAttackAnimState(const Unit& unit) const
         return UnitAnimState::Attack;
     }
     return UnitAnimState::Recover;
+}
+
+void PawlineGameImpl::TriggerBossEntrance(Unit& boss, D2D1_COLOR_F color)
+{
+    boss.boss = true;
+    boss.stunTimer = 0.0f;
+    boss.knockbackTimer = 0.0f;
+    boss.knockbackVelocity = 0.0f;
+    boss.nextKnockbackPct = 0.78f;
+    m_bossFocusX = std::max(0.0f, std::min(kCameraMaxX, boss.pos.x - 760.0f));
+    m_bossBannerTimer = 3.15f;
+    m_bossWarningTimer = 1.20f;
+    AddCameraTrauma(0.78f);
+
+    const std::wstring name = GetEnemyStats(static_cast<EnemyUnit>(boss.kind), ThreatLevel()).name;
+    SetMessage(name + L" 강림. 전선 충격!");
+    AddRing(boss.pos, 320.0f, 0.82f, FadeColor(color, 0.54f), 6.0f);
+    AddRing({boss.pos.x - 84.0f, kLaneY}, 430.0f, 0.92f, D2D1::ColorF(0xFFB347, 0.34f), 5.5f);
+    AddBeam({boss.pos.x - 260.0f, kBattleTop + 18.0f}, {boss.pos.x + 58.0f, kBattleBottom - 24.0f}, 13.0f, 0.30f, FadeColor(color, 0.62f));
+    AddSparkLines(boss.pos, FadeColor(color, 0.95f), 28);
+    AddDustPuff({boss.pos.x, boss.pos.y + boss.radius * 0.74f}, D2D1::ColorF(color.r, color.g, color.b, 0.26f), 24);
+
+    for (Unit& unit : m_units)
+    {
+        if (unit.team != Team::Player || !unit.alive)
+        {
+            continue;
+        }
+        TriggerUnitKnockback(unit, Team::Enemy, 430.0f, 0.86f, true);
+    }
+}
+
+float PawlineGameImpl::UnitKnockbackStep(const Unit& unit) const
+{
+    if (unit.boss)
+    {
+        return 0.22f;
+    }
+    if (unit.elite)
+    {
+        return 0.26f;
+    }
+    if (unit.team == Team::Player)
+    {
+        const PlayerUnit type = static_cast<PlayerUnit>(unit.kind);
+        if (type == PlayerUnit::Box || type == PlayerUnit::Titan || type == PlayerUnit::Frost || type == PlayerUnit::Solar)
+        {
+            return 0.30f;
+        }
+        if (type == PlayerUnit::Dash || type == PlayerUnit::Comet)
+        {
+            return 0.24f;
+        }
+    }
+    return 0.32f;
+}
+
+void PawlineGameImpl::CheckUnitKnockback(Unit& target, Team sourceTeam)
+{
+    if (!target.alive || target.maxHp <= 0.0f || target.hp <= 0.0f || target.nextKnockbackPct <= 0.0f)
+    {
+        return;
+    }
+
+    const float hpPct = Clamp01(target.hp / target.maxHp);
+    if (hpPct > target.nextKnockbackPct)
+    {
+        return;
+    }
+
+    const float crossed = target.nextKnockbackPct;
+    const float step = UnitKnockbackStep(target);
+    while (target.nextKnockbackPct > 0.0f && hpPct <= target.nextKnockbackPct)
+    {
+        target.nextKnockbackPct -= step;
+    }
+
+    const float weight = target.boss ? 0.72f : (target.elite ? 0.86f : 1.0f);
+    const float strength = (target.team == Team::Player ? 310.0f : 270.0f) * weight;
+    const float stun = target.boss ? 0.58f : (target.elite ? 0.48f : 0.36f);
+    TriggerUnitKnockback(target, sourceTeam, strength, stun + (crossed <= 0.20f ? 0.10f : 0.0f), false);
+}
+
+void PawlineGameImpl::TriggerUnitKnockback(Unit& unit, Team sourceTeam, float strength, float stunDuration, bool force)
+{
+    if (!unit.alive)
+    {
+        return;
+    }
+
+    const float dir = sourceTeam == Team::Player ? 1.0f : -1.0f;
+    const D2D1_COLOR_F color = sourceTeam == Team::Player ? D2D1::ColorF(0xBBD7FF) : D2D1::ColorF(0xFFB6C2);
+    const float heavy = unit.boss ? 1.42f : (unit.elite ? 1.18f : 1.0f);
+    unit.stunTimer = std::max(unit.stunTimer, stunDuration);
+    unit.knockbackTimer = std::max(unit.knockbackTimer, force ? 0.34f : 0.24f);
+    unit.knockbackVelocity = dir * strength;
+    unit.attackAnim = 0.0f;
+    unit.attackTimer = std::max(unit.attackTimer, stunDuration * 0.45f);
+    unit.hitFlash = std::max(unit.hitFlash, 0.18f);
+    ShakeUnit(unit, force ? 0.28f : 0.20f);
+    SetUnitAnimState(unit, UnitAnimState::Hit);
+
+    const Vec2 ground = {unit.pos.x, unit.pos.y + unit.radius * 0.72f};
+    AddRing(unit.pos, unit.radius * (3.0f + heavy), force ? 0.38f : 0.27f, FadeColor(color, force ? 0.56f : 0.42f), 2.8f + heavy);
+    AddBeam(unit.pos - Vec2{dir * (unit.radius + 46.0f), 0.0f}, unit.pos + Vec2{dir * (unit.radius + 8.0f), -8.0f}, 5.0f + heavy * 1.2f, 0.14f, FadeColor(color, 0.62f));
+    AddSparkLines(unit.pos, FadeColor(color, 0.86f), force ? 12 : 7);
+    AddDustPuff(ground, D2D1::ColorF(color.r, color.g, color.b, 0.24f), force ? 12 : 6);
+    AddFloatText(unit.pos + Vec2{0.0f, -unit.radius - 38.0f}, force ? L"SHOCK" : L"STUN", color, force ? 0.86f : 0.64f);
 }
 
 int PawlineGameImpl::FindTargetIndex(const Unit& unit) const
@@ -1994,6 +2132,10 @@ void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
             AddFloatText(target.pos, L"+" + ToWideInt(target.reward), D2D1::ColorF(0xB8FF89), 0.9f);
         }
         AddDeathBurst(target);
+    }
+    else
+    {
+        CheckUnitKnockback(target, sourceTeam);
     }
 }
 

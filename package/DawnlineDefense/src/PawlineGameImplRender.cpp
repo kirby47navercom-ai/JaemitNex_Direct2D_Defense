@@ -1548,6 +1548,7 @@ void PawlineGameImpl::DrawUnits()
         {
             DrawEnemyUnit(unit);
         }
+        DrawUnitStunEffect(unit);
         DrawUnitHp(unit);
     }
 }
@@ -2381,10 +2382,10 @@ void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
         FillEllipse({pos.x - 18.0f, pos.y - 20.0f}, 5.0f, 5.0f, D2D1::ColorF(0xFFDB7A));
     }
 
-    if (unit.elite || type == EnemyUnit::Boss)
+    if (unit.boss || unit.elite || type == EnemyUnit::Boss)
     {
         StrokeEllipse(pos, unit.radius + 8.0f, unit.radius + 8.0f, D2D1::ColorF(0xFF9BA8, 0.62f), 3.0f);
-        DrawPixelTextCentered(type == EnemyUnit::Boss ? L"BOSS" : L"ELITE", D2D1::RectF(pos.x - 38.0f, pos.y - 59.0f, pos.x + 38.0f, pos.y - 35.0f), 1.8f, D2D1::ColorF(0xFFE3E8), 1.0f);
+        DrawPixelTextCentered(unit.boss || type == EnemyUnit::Boss ? L"BOSS" : L"ELITE", D2D1::RectF(pos.x - 38.0f, pos.y - 59.0f, pos.x + 38.0f, pos.y - 35.0f), 1.8f, D2D1::ColorF(0xFFE3E8), 1.0f);
     }
 }
 
@@ -2397,6 +2398,52 @@ void PawlineGameImpl::DrawUnitHp(const Unit& unit)
     FillRoundRect(back, 2.0f, D2D1::ColorF(0x071017, 0.88f));
     FillRoundRect(D2D1::RectF(back.left, back.top, back.left + width * pct, back.bottom), 2.0f,
                   unit.team == Team::Player ? D2D1::ColorF(0x65B8FF) : D2D1::ColorF(0xFF9BA8));
+}
+
+void PawlineGameImpl::DrawUnitStunEffect(const Unit& unit)
+{
+    if (unit.stunTimer <= 0.0f && unit.knockbackTimer <= 0.0f)
+    {
+        return;
+    }
+
+    const Vec2 pos = UnitRenderPos(unit);
+    const float stunAlpha = Clamp01(unit.stunTimer / 0.80f);
+    const float knockAlpha = Clamp01(unit.knockbackTimer / 0.34f);
+    const float dir = unit.knockbackVelocity >= 0.0f ? 1.0f : -1.0f;
+
+    if (knockAlpha > 0.0f)
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            const float t = static_cast<float>(i);
+            const float y = pos.y - unit.radius * 0.20f + (t - 1.5f) * 8.0f;
+            const float len = 20.0f + t * 7.0f + unit.radius * 0.35f;
+            DrawLine({pos.x - dir * (unit.radius + 10.0f + t * 5.0f), y},
+                     {pos.x - dir * (unit.radius + len), y - 4.0f},
+                     D2D1::ColorF(0xEAF7FF, 0.18f * knockAlpha), 2.0f + knockAlpha * 1.6f);
+        }
+        StrokeEllipse({pos.x, pos.y + unit.radius * 0.58f}, unit.radius * (1.45f + knockAlpha * 0.42f), unit.radius * 0.38f,
+                      D2D1::ColorF(0xFFFFFF, 0.14f * knockAlpha), 1.8f);
+    }
+
+    if (stunAlpha <= 0.0f)
+    {
+        return;
+    }
+
+    const float spin = m_uiTime * 5.0f + unit.shakePhase;
+    const Vec2 halo = {pos.x, pos.y - unit.radius - 25.0f};
+    StrokeEllipse(halo, unit.radius * 0.84f, 8.0f, D2D1::ColorF(0xF6FF83, 0.35f * stunAlpha), 1.6f);
+    for (int i = 0; i < 4; ++i)
+    {
+        const float a = spin + static_cast<float>(i) * 1.5708f;
+        const Vec2 star = {halo.x + std::cos(a) * unit.radius * 0.76f, halo.y + std::sin(a) * 6.5f};
+        DrawLine({star.x - 5.0f, star.y}, {star.x + 5.0f, star.y}, D2D1::ColorF(0xFFF4B8, 0.72f * stunAlpha), 1.8f);
+        DrawLine({star.x, star.y - 5.0f}, {star.x, star.y + 5.0f}, D2D1::ColorF(0xFFF4B8, 0.58f * stunAlpha), 1.8f);
+        FillEllipse(star, 2.4f, 2.4f, D2D1::ColorF(0xF6FF83, 0.78f * stunAlpha));
+    }
+    DrawPixelTextCentered(L"STUN", D2D1::RectF(halo.x - 34.0f, halo.y - 26.0f, halo.x + 34.0f, halo.y - 10.0f), 1.35f, D2D1::ColorF(0xFFF4B8), 0.86f * stunAlpha);
 }
 
 void PawlineGameImpl::DrawProjectiles()
@@ -2886,7 +2933,7 @@ void PawlineGameImpl::DrawBossPresentation()
     const Unit* boss = nullptr;
     for (const Unit& unit : m_units)
     {
-        if (unit.team == Team::Enemy && unit.alive && (unit.elite || static_cast<EnemyUnit>(unit.kind) == EnemyUnit::Boss))
+        if (unit.team == Team::Enemy && unit.alive && unit.boss)
         {
             if (!boss || unit.maxHp > boss->maxHp)
             {

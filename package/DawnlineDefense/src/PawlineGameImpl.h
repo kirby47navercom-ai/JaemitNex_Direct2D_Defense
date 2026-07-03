@@ -238,9 +238,14 @@ struct Unit
     float attackDir = 1.0f;
     float stateTime = 0.0f;
     float walkCycle = 0.0f;
+    float stunTimer = 0.0f;
+    float knockbackTimer = 0.0f;
+    float knockbackVelocity = 0.0f;
+    float nextKnockbackPct = 0.50f;
     int reward = 0;
     bool ranged = false;
     bool elite = false;
+    bool boss = false;
     bool alive = true;
     UnitAnimState animState = UnitAnimState::Idle;
 };
@@ -463,6 +468,8 @@ private:
 
     float DirectorSpawnMultiplier() const;
 
+    float BossTriggerHpRatio() const;
+
     EnemyUnit PickStageEnemy(int value, int phase) const;
 
     EnemyUnit StageBossType() const;
@@ -550,6 +557,14 @@ private:
     void SetUnitAnimState(Unit& unit, UnitAnimState state);
 
     UnitAnimState ResolveAttackAnimState(const Unit& unit) const;
+
+    void TriggerBossEntrance(Unit& boss, D2D1_COLOR_F color);
+
+    float UnitKnockbackStep(const Unit& unit) const;
+
+    void CheckUnitKnockback(Unit& target, Team sourceTeam);
+
+    void TriggerUnitKnockback(Unit& unit, Team sourceTeam, float strength, float stunDuration, bool force);
 
     int FindTargetIndex(const Unit& unit) const;
 
@@ -851,6 +866,8 @@ private:
 
     void DrawUnitHp(const Unit& unit);
 
+    void DrawUnitStunEffect(const Unit& unit);
+
     void DrawProjectiles();
 
     void DrawProjectileShape(const Projectile& projectile, Vec2 drawPos, Vec2 dir, Vec2 normal, float pulse);
@@ -1018,6 +1035,7 @@ private:
     bool m_reduceFlashes = false;
     bool m_escapeMenuOpen = false;
     bool m_pauseBeforeEscape = false;
+    bool m_bossSpawned = false;
     bool m_bossPhaseTwoTriggered = false;
     bool m_showcaseMode = false;
     bool m_debugMode = false;

@@ -727,6 +727,13 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
     if (m_debugMode && key == VK_F4 && m_screen == GameScreen::Playing)
     {
         SpawnEnemy(StageBossType(), true);
+        if (!m_units.empty())
+        {
+            Unit& boss = m_units.back();
+            boss.boss = true;
+            TriggerBossEntrance(boss, GetEnemyStats(static_cast<EnemyUnit>(boss.kind), ThreatLevel()).accent);
+        }
+        m_bossSpawned = true;
         SetMessage(L"테스트 보스 소환.");
         return;
     }
