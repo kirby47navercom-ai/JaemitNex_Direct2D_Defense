@@ -924,31 +924,60 @@ std::wstring PawlineGameImpl::SynergySummary() const
     std::vector<std::wstring> lines;
     if (HasLoadoutUnit(PlayerUnit::Box) && HasLoadoutUnit(PlayerUnit::Frost))
     {
-        lines.push_back(L"GUARD WALL  FRONT HP +10%");
+        lines.push_back(L"가드 월: 전열 HP +10%");
     }
     if (HasLoadoutUnit(PlayerUnit::Spark) && HasLoadoutUnit(PlayerUnit::Prism))
     {
-        lines.push_back(L"ARC FOCUS  RANGED DMG +8%");
+        lines.push_back(L"아크 포커스: 원거리 피해 +8%");
     }
     if (HasLoadoutUnit(PlayerUnit::Dash) && HasLoadoutUnit(PlayerUnit::Comet))
     {
-        lines.push_back(L"RUSH PACK  SPEED/DMG +7%");
+        lines.push_back(L"러시 팩: 돌격 속도/피해 +7%");
     }
     if (HasLoadoutUnit(PlayerUnit::Orbit) && HasLoadoutUnit(PlayerUnit::Nebula))
     {
-        lines.push_back(L"STAR SCOPE  RANGE +6%");
+        lines.push_back(L"스타 스코프: 원거리 사거리 +6%");
     }
     if (HasLoadoutUnit(PlayerUnit::Mint))
     {
-        lines.push_back(L"MINT SUPPLY  ENERGY REGEN +4");
+        lines.push_back(L"민트 보급: 에너지 회복 +4");
     }
     if (HasLoadoutUnit(PlayerUnit::Solar) && HasLoadoutUnit(PlayerUnit::Bell))
     {
-        lines.push_back(L"SUN CHIME  CANNON CHARGE +12%");
+        lines.push_back(L"태양 종소리: 캐논 충전 +12%");
     }
     if (lines.empty())
     {
-        return L"NO ACTIVE SYNERGY";
+        struct SynergyHint
+        {
+            PlayerUnit first;
+            PlayerUnit second;
+            const wchar_t* effect;
+        };
+        const std::array<SynergyHint, 5> hints = {{
+            {PlayerUnit::Box, PlayerUnit::Frost, L"전열 HP +10%"},
+            {PlayerUnit::Spark, PlayerUnit::Prism, L"원거리 피해 +8%"},
+            {PlayerUnit::Dash, PlayerUnit::Comet, L"돌격 속도/피해 +7%"},
+            {PlayerUnit::Orbit, PlayerUnit::Nebula, L"원거리 사거리 +6%"},
+            {PlayerUnit::Solar, PlayerUnit::Bell, L"캐논 충전 +12%"}
+        }};
+
+        for (const SynergyHint& hint : hints)
+        {
+            const bool hasFirst = HasLoadoutUnit(hint.first);
+            const bool hasSecond = HasLoadoutUnit(hint.second);
+            if (hasFirst == hasSecond)
+            {
+                continue;
+            }
+
+            const PlayerUnit missing = hasFirst ? hint.second : hint.first;
+            return L"활성 시너지 없음\n후보: " + GetPlayerStats(hint.first).name + L" + " +
+                   GetPlayerStats(hint.second).name + L" - " + hint.effect +
+                   L"\n필요: " + GetPlayerStats(missing).name;
+        }
+
+        return L"활성 시너지 없음\n추천: 방패냥 + 얼음방패냥 - 전열 HP +10%";
     }
 
     std::wstring text;
@@ -956,7 +985,7 @@ std::wstring PawlineGameImpl::SynergySummary() const
     {
         if (i > 0)
         {
-            text += L" / ";
+            text += L"\n";
         }
         text += lines[i];
     }
@@ -965,12 +994,44 @@ std::wstring PawlineGameImpl::SynergySummary() const
 
 std::wstring PawlineGameImpl::GrowthRecommendation() const
 {
+    // 1순위: 현재 편성에 들어간 유닛을 강화하면 바로 체감된다.
+    for (PlayerUnit unit : m_loadout)
+    {
+        if (IsUnitUnlocked(unit) && UnitLevel(unit) < kMaxUnitLevel && m_lumen >= UnitUpgradeCost(unit))
+        {
+            return GetPlayerStats(unit).name + L" 강화 가능 - 현재 편성 전력 상승";
+        }
+    }
+
+    // 2순위: 하나만 더 사면 시너지가 켜지는 유닛을 우선 추천한다.
+    const std::array<std::pair<PlayerUnit, PlayerUnit>, 5> pairs = {{
+        {PlayerUnit::Box, PlayerUnit::Frost},
+        {PlayerUnit::Spark, PlayerUnit::Prism},
+        {PlayerUnit::Dash, PlayerUnit::Comet},
+        {PlayerUnit::Orbit, PlayerUnit::Nebula},
+        {PlayerUnit::Solar, PlayerUnit::Bell}
+    }};
+    for (const auto& [first, second] : pairs)
+    {
+        const bool hasFirst = HasLoadoutUnit(first);
+        const bool hasSecond = HasLoadoutUnit(second);
+        if (hasFirst == hasSecond)
+        {
+            continue;
+        }
+        const PlayerUnit missing = hasFirst ? second : first;
+        if (!IsUnitUnlocked(missing) && m_lumen >= UnitUnlockCost(missing))
+        {
+            return GetPlayerStats(missing).name + L" 구매 가능 - 시너지 완성";
+        }
+    }
+
     for (int i = 0; i < kRosterCount; ++i)
     {
         const PlayerUnit unit = static_cast<PlayerUnit>(i);
         if (!IsUnitUnlocked(unit) && m_lumen >= UnitUnlockCost(unit))
         {
-            return GetPlayerStats(unit).name + L" 구매 가능";
+            return GetPlayerStats(unit).name + L" 구매 가능 - 캐릭터 풀 확장";
         }
     }
     for (int i = 0; i < kRosterCount; ++i)
@@ -981,7 +1042,35 @@ std::wstring PawlineGameImpl::GrowthRecommendation() const
             return UnitLevel(unit) == kMaxUnitLevel - 1 ? GetPlayerStats(unit).name + L" 진화 가능" : GetPlayerStats(unit).name + L" 강화 가능";
         }
     }
-    return L"다음 유닛을 위해 LUMEN을 모아줘";
+
+    int bestNeed = 999999;
+    std::wstring target = L"다음 유닛";
+    for (PlayerUnit unit : m_loadout)
+    {
+        if (IsUnitUnlocked(unit) && UnitLevel(unit) < kMaxUnitLevel)
+        {
+            const int need = std::max(0, UnitUpgradeCost(unit) - m_lumen);
+            if (need < bestNeed)
+            {
+                bestNeed = need;
+                target = GetPlayerStats(unit).name + L" 강화";
+            }
+        }
+    }
+    for (int i = 0; i < kRosterCount; ++i)
+    {
+        const PlayerUnit unit = static_cast<PlayerUnit>(i);
+        if (!IsUnitUnlocked(unit))
+        {
+            const int need = std::max(0, UnitUnlockCost(unit) - m_lumen);
+            if (need < bestNeed)
+            {
+                bestNeed = need;
+                target = GetPlayerStats(unit).name + L" 구매";
+            }
+        }
+    }
+    return target + L"까지 LUMEN " + ToWideInt(bestNeed) + L" 더 필요";
 }
 
 void PawlineGameImpl::UpdateWalletPulse(float dt)

@@ -1124,9 +1124,13 @@ void PawlineGameImpl::DrawShopUnitCard(int index)
 void PawlineGameImpl::DrawSynergyPanel(D2D1_RECT_F rect)
 {
     // 편성 조합에 따라 활성화된 보너스를 한눈에 보여주는 패널이다.
-    DrawCartoonPanel(rect, D2D1::ColorF(0x0F1A22, 0.96f), D2D1::ColorF(0xB8FF89));
+    DrawCartoonPanel(rect, D2D1::ColorF(0x07131C, 0.98f), D2D1::ColorF(0xB8FF89));
     DrawPixelText(L"SYNERGY", {rect.left + 14.0f, rect.top + 12.0f}, 2.4f, D2D1::ColorF(0xB8FF89));
-    DrawPixelTextCentered(SynergySummary(), D2D1::RectF(rect.left + 12.0f, rect.top + 38.0f, rect.right - 12.0f, rect.bottom - 10.0f), 1.55f, D2D1::ColorF(0xF3FBFF), 1.0f);
+    DrawOutlinedString(SynergySummary(),
+                       D2D1::RectF(rect.left + 188.0f, rect.top + 16.0f, rect.right - 18.0f, rect.bottom - 10.0f),
+                       m_smallFormat,
+                       D2D1::ColorF(0xF3FBFF),
+                       0.72f);
 }
 
 void PawlineGameImpl::DrawBalancePanel(D2D1_RECT_F rect)
@@ -1149,7 +1153,16 @@ void PawlineGameImpl::DrawBalancePanel(D2D1_RECT_F rect)
 
     drawBar(rect.top + 52.0f, L"위협", threat, D2D1::ColorF(0xFF9BA8));
     drawBar(rect.top + 82.0f, L"전력", power, D2D1::ColorF(0x65B8FF));
-    DrawPixelTextCentered(BalanceAdvice(), D2D1::RectF(rect.left + 16.0f, rect.bottom - 34.0f, rect.right - 16.0f, rect.bottom - 10.0f), 1.65f, D2D1::ColorF(0xF3FBFF), 1.0f);
+    DrawOutlinedString(BalanceAdvice(),
+                       D2D1::RectF(rect.left + 18.0f, rect.bottom - 44.0f, rect.right - 18.0f, rect.bottom - 24.0f),
+                       m_smallFormat,
+                       D2D1::ColorF(0xFFFFFF),
+                       0.74f);
+    DrawOutlinedString(GrowthRecommendation(),
+                       D2D1::RectF(rect.left + 18.0f, rect.bottom - 24.0f, rect.right - 18.0f, rect.bottom - 5.0f),
+                       m_smallFormat,
+                       D2D1::ColorF(0xF6FF83),
+                       0.74f);
 }
 
 void PawlineGameImpl::DrawShopUnitDetail()
