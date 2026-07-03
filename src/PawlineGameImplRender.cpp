@@ -3695,34 +3695,42 @@ void PawlineGameImpl::DrawWalletButton()
 {
     const int cost = WalletUpgradeCost();
     const bool enabled = cost > 0 && m_energy >= static_cast<float>(cost);
+    const bool maxed = cost <= 0;
     const D2D1_RECT_F rect = WalletButtonRect();
     const bool hover = Contains(rect, m_mouse);
     DrawCartoonPanel(rect, hover ? D2D1::ColorF(0x182E28, 0.98f) : D2D1::ColorF(0x10241E, 0.98f),
-                     enabled ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0x4E6253), hover && cost > 0);
-    DrawPixelTextCentered(cost > 0 ? L"WALLET +" : L"WALLET MAX",
+                     enabled || maxed ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0x4E6253), hover && cost > 0);
+    DrawPixelTextCentered(maxed ? L"WALLET MAX" : L"WALLET +",
                           D2D1::RectF(rect.left + 8.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 28.0f),
-                          2.0f,
-                          cost > 0 ? D2D1::ColorF(0xEAF7FF) : D2D1::ColorF(0xF6FF83),
-                          cost > 0 ? 1.0f : 0.92f);
-    DrawPixelTextCentered(L"LV." + ToWideInt(m_walletLevel) + L"  +" + ToWideInt(static_cast<int>(std::round((WalletUnitBoost() - 1.0f) * 100.0f))) + L"%",
+                          maxed ? 1.72f : 2.0f,
+                          maxed ? D2D1::ColorF(0xF6FF83) : D2D1::ColorF(0xEAF7FF),
+                          1.0f);
+    DrawPixelTextCentered(maxed ? L"UNIT BOOST +" + ToWideInt(static_cast<int>(std::round((WalletUnitBoost() - 1.0f) * 100.0f))) + L"%"
+                                : L"LV." + ToWideInt(m_walletLevel) + L"  +" + ToWideInt(static_cast<int>(std::round((WalletUnitBoost() - 1.0f) * 100.0f))) + L"%",
                           D2D1::RectF(rect.left + 9.0f, rect.top + 29.0f, rect.right - 9.0f, rect.top + 48.0f),
-                          1.55f,
+                          maxed ? 1.18f : 1.55f,
                           D2D1::ColorF(0xF6FF83),
                           1.0f);
-    const D2D1_RECT_F bar = D2D1::RectF(rect.left + 18.0f, rect.top + 49.0f, rect.right - 18.0f, rect.top + 55.0f);
-    FillRoundRect(bar, 3.0f, D2D1::ColorF(0x071017, 0.86f));
+
+    const std::wstring supplyText = L"SUPPLY " + ToWideInt(static_cast<int>(std::ceil(std::max(0.0f, m_walletPulseTimer)))) + L"S";
+    const D2D1_RECT_F bottom = D2D1::RectF(rect.left + 10.0f, rect.bottom - 24.0f, rect.right - 10.0f, rect.bottom - 6.0f);
+    FillRoundRect(bottom, 6.0f, D2D1::ColorF(0x061019, 0.56f));
+    if (maxed)
+    {
+        // MAX 상태에서는 업그레이드가 끝났음을 명확히 보여주고, 보급 타이머는 글자만 둔다.
+        FillEllipse({bottom.left + 12.0f, bottom.top + 9.0f}, 4.0f, 4.0f, D2D1::ColorF(0xB8FF89, 0.86f));
+        DrawPixelTextCentered(supplyText, D2D1::RectF(bottom.left + 22.0f, bottom.top + 2.0f, bottom.right - 4.0f, bottom.bottom - 2.0f),
+                              1.20f, D2D1::ColorF(0xDFFFD1), 1.0f);
+        return;
+    }
+
+    const D2D1_RECT_F costRect = D2D1::RectF(bottom.left + 4.0f, bottom.top + 2.0f, bottom.left + 58.0f, bottom.bottom - 2.0f);
+    DrawPixelTextCentered(L"COST " + ToWideInt(cost), costRect, 1.16f, enabled ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xB5C1C8), 1.0f);
+    const D2D1_RECT_F supplyRect = D2D1::RectF(bottom.left + 62.0f, bottom.top + 3.0f, bottom.right - 4.0f, bottom.bottom - 3.0f);
+    FillRoundRect(supplyRect, 4.0f, D2D1::ColorF(0x071017, 0.86f));
     const float pulsePct = 1.0f - Clamp01(m_walletPulseTimer / WalletPulseInterval());
-    FillRoundRect(D2D1::RectF(bar.left, bar.top, bar.left + (bar.right - bar.left) * pulsePct, bar.bottom), 3.0f, D2D1::ColorF(0xB8FF89));
-    DrawPixelTextCentered(cost > 0 ? L"COST " + ToWideInt(cost) : L"MAXED",
-                          D2D1::RectF(rect.left + 8.0f, rect.bottom - 24.0f, rect.right * 0.5f + rect.left * 0.5f - 3.0f, rect.bottom - 7.0f),
-                          1.35f,
-                          enabled ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0x9AA7B0),
-                          1.0f);
-    DrawPixelTextCentered(L"PULSE " + ToWideInt(static_cast<int>(std::ceil(std::max(0.0f, m_walletPulseTimer)))) + L"S",
-                          D2D1::RectF(rect.left * 0.5f + rect.right * 0.5f + 3.0f, rect.bottom - 24.0f, rect.right - 8.0f, rect.bottom - 7.0f),
-                          1.25f,
-                          D2D1::ColorF(0xF6FF83),
-                          1.0f);
+    FillRoundRect(D2D1::RectF(supplyRect.left, supplyRect.top, supplyRect.left + (supplyRect.right - supplyRect.left) * pulsePct, supplyRect.bottom), 4.0f, D2D1::ColorF(0xB8FF89, 0.82f));
+    DrawPixelTextCentered(supplyText, supplyRect, 1.00f, D2D1::ColorF(0xF3FBFF), 1.0f);
 }
 
 void PawlineGameImpl::DrawCannonButton()
