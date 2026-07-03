@@ -4,10 +4,25 @@
 PawlineGameImpl::~PawlineGameImpl()
 {
     DiscardDeviceResources();
+    UnregisterPrivateFonts();
+    if (m_comInitialized)
+    {
+        CoUninitialize();
+    }
 }
 
 HRESULT PawlineGameImpl::Initialize()
 {
+    const HRESULT coHr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    if (SUCCEEDED(coHr))
+    {
+        m_comInitialized = true;
+    }
+    else if (coHr != RPC_E_CHANGED_MODE)
+    {
+        return coHr;
+    }
+
     HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, m_factory.GetAddressOf());
     if (FAILED(hr))
     {
@@ -22,6 +37,14 @@ HRESULT PawlineGameImpl::Initialize()
     {
         return hr;
     }
+
+    hr = CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(m_wicFactory.GetAddressOf()));
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    RegisterPrivateFonts();
 
     hr = CreateTextFormats();
     if (FAILED(hr))
@@ -186,8 +209,9 @@ LRESULT PawlineGameImpl::HandleMessage(UINT message, WPARAM wParam, LPARAM lPara
 
 HRESULT PawlineGameImpl::CreateTextFormats()
 {
+    const wchar_t* uiFont = m_privateFontLoaded ? L"Galmuri11" : L"Segoe UI";
     HRESULT hr = m_writeFactory->CreateTextFormat(
-        L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
+        uiFont, nullptr, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 32.0f, L"en-us", m_titleFormat.GetAddressOf());
     if (FAILED(hr))
     {
@@ -195,7 +219,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
     }
 
     hr = m_writeFactory->CreateTextFormat(
-        L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_FONT_STYLE_NORMAL,
+        uiFont, nullptr, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 18.0f, L"en-us", m_headerFormat.GetAddressOf());
     if (FAILED(hr))
     {
@@ -203,7 +227,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
     }
 
     hr = m_writeFactory->CreateTextFormat(
-        L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        uiFont, nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 15.0f, L"en-us", m_bodyFormat.GetAddressOf());
     if (FAILED(hr))
     {
@@ -211,7 +235,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
     }
 
     hr = m_writeFactory->CreateTextFormat(
-        L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        uiFont, nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 12.5f, L"en-us", m_smallFormat.GetAddressOf());
     if (FAILED(hr))
     {
@@ -219,7 +243,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
     }
 
     hr = m_writeFactory->CreateTextFormat(
-        L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_FONT_STYLE_NORMAL,
+        uiFont, nullptr, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 15.0f, L"en-us", m_buttonFormat.GetAddressOf());
     if (FAILED(hr))
     {
@@ -227,7 +251,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
     }
 
     hr = m_writeFactory->CreateTextFormat(
-        L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
+        uiFont, nullptr, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 18.0f, L"en-us", m_centerFormat.GetAddressOf());
     if (FAILED(hr))
     {
@@ -262,13 +286,148 @@ HRESULT PawlineGameImpl::CreateDeviceResources()
         return hr;
     }
 
-    return m_renderTarget->CreateSolidColorBrush(D2D1::ColorF(0xFFFFFF), m_brush.GetAddressOf());
+    hr = m_renderTarget->CreateSolidColorBrush(D2D1::ColorF(0xFFFFFF), m_brush.GetAddressOf());
+    if (SUCCEEDED(hr))
+    {
+        LoadBitmapAssets();
+    }
+    return hr;
 }
 
 void PawlineGameImpl::DiscardDeviceResources()
 {
+    DiscardBitmapAssets();
     m_brush.Reset();
     m_renderTarget.Reset();
+}
+
+void PawlineGameImpl::RegisterPrivateFonts()
+{
+    m_privateFontPath = AssetPath(L"assets\\fonts\\Galmuri11.ttf");
+    if (GetFileAttributesW(m_privateFontPath.c_str()) == INVALID_FILE_ATTRIBUTES)
+    {
+        return;
+    }
+    m_privateFontLoaded = AddFontResourceExW(m_privateFontPath.c_str(), FR_PRIVATE, nullptr) > 0;
+}
+
+void PawlineGameImpl::UnregisterPrivateFonts()
+{
+    if (!m_privateFontLoaded || m_privateFontPath.empty())
+    {
+        return;
+    }
+    RemoveFontResourceExW(m_privateFontPath.c_str(), FR_PRIVATE, nullptr);
+    m_privateFontLoaded = false;
+}
+
+std::wstring PawlineGameImpl::ExecutableDir() const
+{
+    wchar_t path[MAX_PATH] = {};
+    GetModuleFileNameW(nullptr, path, MAX_PATH);
+    std::wstring fullPath = path;
+    const size_t slash = fullPath.find_last_of(L"\\/");
+    if (slash == std::wstring::npos)
+    {
+        return L".\\";
+    }
+    return fullPath.substr(0, slash + 1);
+}
+
+std::wstring PawlineGameImpl::AssetPath(const std::wstring& relativePath) const
+{
+    const std::wstring base = ExecutableDir();
+    const std::wstring direct = base + relativePath;
+    if (GetFileAttributesW(direct.c_str()) != INVALID_FILE_ATTRIBUTES)
+    {
+        return direct;
+    }
+    return base + L"..\\..\\" + relativePath;
+}
+
+HRESULT PawlineGameImpl::LoadBitmapFromFile(const std::wstring& path, ID2D1Bitmap** bitmap) const
+{
+    if (!m_wicFactory || !m_renderTarget || !bitmap)
+    {
+        return E_FAIL;
+    }
+
+    Microsoft::WRL::ComPtr<IWICBitmapDecoder> decoder;
+    HRESULT hr = m_wicFactory->CreateDecoderFromFilename(
+        path.c_str(),
+        nullptr,
+        GENERIC_READ,
+        WICDecodeMetadataCacheOnLoad,
+        decoder.GetAddressOf());
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    Microsoft::WRL::ComPtr<IWICBitmapFrameDecode> frame;
+    hr = decoder->GetFrame(0, frame.GetAddressOf());
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    Microsoft::WRL::ComPtr<IWICFormatConverter> converter;
+    hr = m_wicFactory->CreateFormatConverter(converter.GetAddressOf());
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    hr = converter->Initialize(
+        frame.Get(),
+        GUID_WICPixelFormat32bppPBGRA,
+        WICBitmapDitherTypeNone,
+        nullptr,
+        0.0f,
+        WICBitmapPaletteTypeMedianCut);
+    if (FAILED(hr))
+    {
+        return hr;
+    }
+
+    return m_renderTarget->CreateBitmapFromWicBitmap(converter.Get(), nullptr, bitmap);
+}
+
+void PawlineGameImpl::LoadBitmapAssets()
+{
+    if (m_bitmapAssetsLoaded || !m_renderTarget)
+    {
+        return;
+    }
+
+    LoadBitmapFromFile(AssetPath(L"assets\\sprites\\player_units.png"), m_playerSpriteSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\sprites\\enemy_units.png"), m_enemySpriteSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\combat_vfx_atlas.png"), m_vfxAtlas.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\ui\\pawline_ui_atlas.png"), m_uiAtlas.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\cutins\\solar_gatekeeper_cutin.png"), m_bossCutin.ReleaseAndGetAddressOf());
+
+    for (int i = 0; i < kStageCount; ++i)
+    {
+        std::wstringstream path;
+        path << L"assets\\backgrounds\\stage_" << std::setw(2) << std::setfill(L'0') << i << L"_space.png";
+        LoadBitmapFromFile(AssetPath(path.str()), m_backgroundBitmaps[i].ReleaseAndGetAddressOf());
+    }
+
+    m_bitmapAssetsLoaded = true;
+}
+
+void PawlineGameImpl::DiscardBitmapAssets()
+{
+    m_playerSpriteSheet.Reset();
+    m_enemySpriteSheet.Reset();
+    m_vfxAtlas.Reset();
+    m_uiAtlas.Reset();
+    m_bossCutin.Reset();
+    for (auto& bitmap : m_backgroundBitmaps)
+    {
+        bitmap.Reset();
+    }
+    m_bitmapAssetsLoaded = false;
 }
 
 const StageDefinition PawlineGameImpl::CurrentStage() const

@@ -302,6 +302,15 @@ void PawlineGameImpl::DrawLine(Vec2 a, Vec2 b, D2D1_COLOR_F color, float width)
     m_renderTarget->DrawLine(Point(a), Point(b), m_brush.Get(), width, m_roundStroke.Get());
 }
 
+void PawlineGameImpl::DrawBitmap(ID2D1Bitmap* bitmap, D2D1_RECT_F destination, float opacity, const D2D1_RECT_F* source)
+{
+    if (!bitmap)
+    {
+        return;
+    }
+    m_renderTarget->DrawBitmap(bitmap, destination, Clamp01(opacity), D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, source);
+}
+
 void PawlineGameImpl::DrawString(const std::wstring& text, D2D1_RECT_F rect, IDWriteTextFormat* format, D2D1_COLOR_F color)
 {
     SetColor(color);
@@ -334,6 +343,7 @@ void PawlineGameImpl::DrawCartoonPanel(D2D1_RECT_F rect, D2D1_COLOR_F fill, D2D1
     const D2D1_COLOR_F ink = D2D1::ColorF(0x061019, 0.94f);
     FillRoundRect(OffsetRectF(rect, 4.0f, 5.0f), 8.0f, D2D1::ColorF(0x000000, 0.30f));
     FillRoundRect(rect, 8.0f, fill);
+    DrawUiPanelAsset(rect, hover ? 1 : 0, hover ? 0.34f : 0.20f);
     FillRoundRect(D2D1::RectF(rect.left + 6.0f, rect.top + 6.0f, rect.right - 6.0f, rect.top + 18.0f), 6.0f, D2D1::ColorF(0xFFFFFF, hover ? 0.12f : 0.075f));
     StrokeRoundRect(rect, 8.0f, ink, hover ? 3.6f : 3.0f);
     StrokeRoundRect(InsetRectF(rect, 3.0f, 3.0f), 6.0f, D2D1::ColorF(accent.r, accent.g, accent.b, hover ? 0.72f : 0.45f), hover ? 2.0f : 1.2f);
@@ -421,6 +431,66 @@ Vec2 PawlineGameImpl::WorldToScreen(Vec2 pos) const
 D2D1_RECT_F PawlineGameImpl::WorldRect(float left, float top, float right, float bottom) const
 {
     return D2D1::RectF(left - m_cameraX, top, right - m_cameraX, bottom);
+}
+
+void PawlineGameImpl::DrawUnitSprite(const Unit& unit, Vec2 pos, float opacity)
+{
+    ID2D1Bitmap* sheet = unit.team == Team::Player ? m_playerSpriteSheet.Get() : m_enemySpriteSheet.Get();
+    if (!sheet)
+    {
+        return;
+    }
+
+    int frame = 0;
+    if (unit.attackAnim > 0.0f)
+    {
+        frame = std::min(3, static_cast<int>(AttackProgress(unit) * 4.0f));
+    }
+    else if (unit.animState == UnitAnimState::Move)
+    {
+        frame = static_cast<int>(std::floor(unit.walkCycle * 0.36f)) & 3;
+    }
+    else if (unit.animState == UnitAnimState::Hit || unit.knockbackTimer > 0.0f)
+    {
+        frame = 3;
+    }
+
+    const int maxKind = unit.team == Team::Player ? kRosterCount - 1 : kEnemyCount - 1;
+    const int kind = std::clamp(unit.kind, 0, maxKind);
+    const D2D1_RECT_F source = D2D1::RectF(static_cast<float>(kind * 96), static_cast<float>(frame * 96),
+                                           static_cast<float>(kind * 96 + 96), static_cast<float>(frame * 96 + 96));
+    const float scale = unit.boss ? 2.18f : (unit.elite ? 1.70f : 1.46f);
+    const float size = std::max(54.0f, unit.radius * scale * 2.0f);
+    const D2D1_RECT_F destination = D2D1::RectF(pos.x - size * 0.50f, pos.y - size * 0.62f,
+                                                pos.x + size * 0.50f, pos.y + size * 0.38f);
+    DrawBitmap(sheet, destination, opacity, &source);
+}
+
+void PawlineGameImpl::DrawVfxAtlasTile(int tileX, int tileY, Vec2 center, float size, float opacity)
+{
+    if (!m_vfxAtlas)
+    {
+        return;
+    }
+    const D2D1_RECT_F source = D2D1::RectF(static_cast<float>(tileX * 128), static_cast<float>(tileY * 128),
+                                           static_cast<float>(tileX * 128 + 128), static_cast<float>(tileY * 128 + 128));
+    const D2D1_RECT_F destination = D2D1::RectF(center.x - size * 0.5f, center.y - size * 0.5f,
+                                                center.x + size * 0.5f, center.y + size * 0.5f);
+    DrawBitmap(m_vfxAtlas.Get(), destination, opacity, &source);
+}
+
+void PawlineGameImpl::DrawUiPanelAsset(D2D1_RECT_F rect, int tileIndex, float opacity)
+{
+    if (!m_uiAtlas)
+    {
+        return;
+    }
+    const int safeTile = std::clamp(tileIndex, 0, 3);
+    const int tileX = safeTile % 2;
+    const int tileY = safeTile / 2;
+    const D2D1_RECT_F source = D2D1::RectF(static_cast<float>(tileX * 256), static_cast<float>(tileY * 128),
+                                           static_cast<float>(tileX * 256 + 256), static_cast<float>(tileY * 128 + 128));
+    DrawBitmap(m_uiAtlas.Get(), rect, opacity, &source);
 }
 
 void PawlineGameImpl::DrawPlayerIcon(PlayerUnit type, Vec2 center, float scale, bool enabled)
@@ -558,6 +628,10 @@ void PawlineGameImpl::DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, fl
     const float height = area.bottom - area.top;
 
     FillRect(area, D2D1::ColorF(stage.backColor.r + 0.020f, stage.backColor.g + 0.026f, stage.backColor.b + 0.036f, 1.0f));
+    if (m_backgroundBitmaps[safeStage])
+    {
+        DrawBitmap(m_backgroundBitmaps[safeStage].Get(), area, 0.34f);
+    }
     FillEllipse({area.left + width * 0.22f - cameraX * 0.015f, area.top + height * 0.22f}, width * 0.34f, height * 0.20f, D2D1::ColorF(0x325D86, 0.13f));
     FillEllipse({area.left + width * 0.78f - cameraX * 0.010f, area.top + height * 0.76f}, width * 0.42f, height * 0.24f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.105f));
     FillEllipse({area.left + width * 0.52f + std::sin(time * 0.15f) * width * 0.025f, area.top + height * 0.46f}, width * 0.54f, height * 0.28f, D2D1::ColorF(0x7B63CC, 0.080f));
@@ -1812,6 +1886,7 @@ void PawlineGameImpl::DrawUnitActionLines(const Unit& unit, Vec2 pos, D2D1_COLOR
             DrawLine(a, b, D2D1::ColorF(accent.r, accent.g, accent.b, 0.58f * strike), width);
         }
         FillEllipse(front, 18.0f + strike * 14.0f, 9.0f + strike * 6.0f, D2D1::ColorF(accent.r, accent.g, accent.b, 0.12f * strike));
+        DrawVfxAtlasTile(unit.team == Team::Player ? 0 : 1, 1, front, 92.0f + strike * 44.0f, 0.24f * strike);
     }
 
     if (recoil > 0.0f)
@@ -2108,6 +2183,7 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
     const float bodyRx = unit.radius * (1.0f + strike * 0.22f - windup * 0.08f + recoil * 0.05f);
     const float bodyRy = unit.radius * (1.0f - strike * 0.14f + windup * 0.08f + recoil * 0.03f);
 
+    DrawUnitSprite(unit, pos, 0.58f);
     FillEllipse({pos.x, pos.y + unit.radius + 9.0f}, unit.radius * 1.25f, 7.0f, D2D1::ColorF(0x000000, 0.28f));
     FillEllipse({pos.x - unit.radius * 0.52f, pos.y - unit.radius * 0.72f}, unit.radius * 0.46f, unit.radius * 0.46f, ink);
     FillEllipse({pos.x + unit.radius * 0.52f, pos.y - unit.radius * 0.72f}, unit.radius * 0.46f, unit.radius * 0.46f, ink);
@@ -2133,6 +2209,7 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
     }
 
     DrawPlayerWeapon(unit, pos, stats, windup, strike, recoil);
+    DrawUnitActionLines(unit, pos, stats.accent);
 
     FillEllipse({pos.x - unit.radius * 0.34f, pos.y - unit.radius * 0.12f}, 2.6f, 4.2f, D2D1::ColorF(0x071017));
     FillEllipse({pos.x + unit.radius * 0.34f, pos.y - unit.radius * 0.12f}, 2.6f, 4.2f, D2D1::ColorF(0x071017));
@@ -2304,11 +2381,13 @@ void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
     FillEllipse({pos.x, pos.y + unit.radius + 9.0f}, unit.radius * 1.25f, 7.0f, D2D1::ColorF(0x000000, 0.30f));
     const float bodyRx = unit.radius * (1.08f + strike * 0.24f - windup * 0.07f + recoil * 0.04f);
     const float bodyRy = unit.radius * (1.0f - strike * 0.13f + windup * 0.07f);
+    DrawUnitSprite(unit, pos, unit.boss ? 0.62f : 0.56f);
     FillEllipse(pos, bodyRx + 3.2f, bodyRy + 3.2f, ink);
     FillEllipse(pos, bodyRx, bodyRy, body);
     FillEllipse({pos.x - unit.radius * 0.18f, pos.y - unit.radius * 0.42f}, unit.radius * 0.28f, unit.radius * 0.15f, D2D1::ColorF(0xFFFFFF, 0.12f));
     StrokeEllipse(pos, bodyRx, bodyRy, stats.accent, 2.2f);
     DrawEnemyWeapon(unit, pos, stats, windup, strike, recoil);
+    DrawUnitActionLines(unit, pos, stats.accent);
     FillEllipse({pos.x - unit.radius * 0.32f, pos.y - unit.radius * 0.12f}, 3.0f, 4.6f, stats.accent);
     FillEllipse({pos.x + unit.radius * 0.32f, pos.y - unit.radius * 0.12f}, 3.0f, 4.6f, stats.accent);
     DrawLine({pos.x - unit.radius * 0.30f, pos.y + unit.radius * 0.34f},
@@ -3007,6 +3086,10 @@ void PawlineGameImpl::DrawBossPresentation()
         const D2D1_RECT_F panel = D2D1::RectF(286.0f, 198.0f + slide, 994.0f, 314.0f + slide);
         FillRect(D2D1::RectF(0.0f, kBattleTop, kWidth, kBattleBottom), D2D1::ColorF(0x000000, 0.24f * alpha));
         DrawCartoonPanel(panel, D2D1::ColorF(0x190D0F, 0.96f * alpha), D2D1::ColorF(0xFF9BA8, alpha), true);
+        if (m_bossCutin)
+        {
+            DrawBitmap(m_bossCutin.Get(), InflateRectF(panel, -8.0f, -8.0f), 0.55f * alpha);
+        }
         for (int i = 0; i < 11; ++i)
         {
             const float x = panel.left + 18.0f + static_cast<float>(i) * 64.0f;

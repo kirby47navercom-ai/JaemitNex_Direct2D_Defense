@@ -31,5 +31,6 @@ endif()
 target_link_libraries(DawnlineDefense PRIVATE
     d2d1
     dwrite
+    windowscodecs
     winmm
 )

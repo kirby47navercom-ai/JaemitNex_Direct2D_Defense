@@ -18,6 +18,9 @@ Copy-Item -LiteralPath (Join-Path $build "Release\DawnlineDefense.exe") -Destina
 if (Test-Path (Join-Path $root "data")) {
     Copy-Item -LiteralPath (Join-Path $root "data") -Destination (Join-Path $build "Release") -Recurse -Force
 }
+if (Test-Path (Join-Path $root "assets")) {
+    Copy-Item -LiteralPath (Join-Path $root "assets") -Destination (Join-Path $build "Release") -Recurse -Force
+}
 Copy-Item -LiteralPath (Join-Path $root "README.md") -Destination $dist
 Copy-Item -LiteralPath (Join-Path $root "docs") -Destination $dist -Recurse
 Copy-Item -LiteralPath (Join-Path $root "CMakeLists.txt") -Destination $dist
@@ -28,6 +31,9 @@ if (Test-Path (Join-Path $root "shaders")) {
 }
 if (Test-Path (Join-Path $root "data")) {
     Copy-Item -LiteralPath (Join-Path $root "data") -Destination $dist -Recurse
+}
+if (Test-Path (Join-Path $root "assets")) {
+    Copy-Item -LiteralPath (Join-Path $root "assets") -Destination $dist -Recurse
 }
 
 if (Test-Path $zip) {

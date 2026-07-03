@@ -8,6 +8,7 @@
 #include <d2d1.h>
 #include <dwrite.h>
 #include <mmsystem.h>
+#include <wincodec.h>
 #include <wrl/client.h>
 
 #include <algorithm>
@@ -398,6 +399,20 @@ private:
     HRESULT CreateDeviceResources();
 
     void DiscardDeviceResources();
+
+    void RegisterPrivateFonts();
+
+    void UnregisterPrivateFonts();
+
+    std::wstring ExecutableDir() const;
+
+    std::wstring AssetPath(const std::wstring& relativePath) const;
+
+    HRESULT LoadBitmapFromFile(const std::wstring& path, ID2D1Bitmap** bitmap) const;
+
+    void LoadBitmapAssets();
+
+    void DiscardBitmapAssets();
 
     const StageDefinition CurrentStage() const;
 
@@ -809,6 +824,8 @@ private:
 
     void DrawLine(Vec2 a, Vec2 b, D2D1_COLOR_F color, float width = 1.0f);
 
+    void DrawBitmap(ID2D1Bitmap* bitmap, D2D1_RECT_F destination, float opacity = 1.0f, const D2D1_RECT_F* source = nullptr);
+
     void DrawString(const std::wstring& text, D2D1_RECT_F rect, IDWriteTextFormat* format, D2D1_COLOR_F color);
 
     void DrawString(const std::wstring& text, D2D1_RECT_F rect, const Microsoft::WRL::ComPtr<IDWriteTextFormat>& format, D2D1_COLOR_F color);
@@ -828,6 +845,12 @@ private:
     Vec2 WorldToScreen(Vec2 pos) const;
 
     D2D1_RECT_F WorldRect(float left, float top, float right, float bottom) const;
+
+    void DrawUnitSprite(const Unit& unit, Vec2 pos, float opacity);
+
+    void DrawVfxAtlasTile(int tileX, int tileY, Vec2 center, float size, float opacity);
+
+    void DrawUiPanelAsset(D2D1_RECT_F rect, int tileIndex, float opacity);
 
     void DrawPlayerIcon(PlayerUnit type, Vec2 center, float scale, bool enabled);
 
@@ -990,12 +1013,23 @@ private:
     Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> m_brush;
     Microsoft::WRL::ComPtr<ID2D1StrokeStyle> m_roundStroke;
     Microsoft::WRL::ComPtr<IDWriteFactory> m_writeFactory;
+    Microsoft::WRL::ComPtr<IWICImagingFactory> m_wicFactory;
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_titleFormat;
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_headerFormat;
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_bodyFormat;
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_smallFormat;
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_buttonFormat;
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_centerFormat;
+    std::array<Microsoft::WRL::ComPtr<ID2D1Bitmap>, kStageCount> m_backgroundBitmaps;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_playerSpriteSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_enemySpriteSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_vfxAtlas;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_uiAtlas;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_bossCutin;
+    bool m_comInitialized = false;
+    bool m_bitmapAssetsLoaded = false;
+    bool m_privateFontLoaded = false;
+    std::wstring m_privateFontPath;
 
     // 프레임 시간과 랜덤 연출 생성기.
     DeltaTimer m_timer;
