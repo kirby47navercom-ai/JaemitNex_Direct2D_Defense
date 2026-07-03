@@ -373,6 +373,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\PawlineGame.cpp" />
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\PawlineGameImplCore.cpp" />
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\PawlineGameImplCombat.cpp" />
+    <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\PawlineGameImplFeedback.cpp" />
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\PawlineGameImplInput.cpp" />
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\PawlineGameImplLayout.cpp" />
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\PawlineGameImplRender.cpp" />

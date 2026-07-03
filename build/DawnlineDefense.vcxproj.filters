@@ -13,6 +13,9 @@
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\PawlineGameImplCombat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\PawlineGameImplFeedback.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\PawlineGameImplInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -7,6 +7,7 @@ add_executable(DawnlineDefense WIN32
     src/PawlineGame.cpp
     src/PawlineGameImplCore.cpp
     src/PawlineGameImplCombat.cpp
+    src/PawlineGameImplFeedback.cpp
     src/PawlineGameImplInput.cpp
     src/PawlineGameImplLayout.cpp
     src/PawlineGameImplRender.cpp

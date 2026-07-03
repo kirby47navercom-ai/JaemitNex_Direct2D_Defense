@@ -1483,9 +1483,25 @@ void PawlineGameImpl::DrawBaseHp(Vec2 base, float hp, float maxHp, D2D1_COLOR_F 
                           1.0f);
 }
 
+Vec2 PawlineGameImpl::StageLightDirection() const
+{
+    // 행성마다 태양빛이 들어오는 각도를 조금씩 바꿔 배경과 유닛 그림자가 같은 공간에 있는 것처럼 보이게 한다.
+    const float drift = std::sin(m_stageTime * 0.10f + static_cast<float>(m_selectedStage) * 0.7f) * 0.08f;
+    const float stageBias = -0.66f + static_cast<float>(m_selectedStage) * 0.105f;
+    return Normalize({stageBias + drift, -0.86f});
+}
+
+float PawlineGameImpl::UnitShadowLift(const Unit& unit) const
+{
+    const float attackLift = AttackWindup(unit) * 0.18f + AttackStrike(unit) * 0.42f;
+    const float knockLift = Clamp01(unit.knockbackTimer / 0.34f) * 0.40f;
+    const float stunSink = unit.stunTimer > 0.0f ? 0.06f : 0.0f;
+    return unit.radius * (0.20f + attackLift + knockLift + stunSink);
+}
+
 void PawlineGameImpl::DrawUnitLighting()
 {
-    const Vec2 lightDir = Normalize({-0.52f, -0.86f});
+    const Vec2 lightDir = StageLightDirection();
     const Vec2 shadowDir = lightDir * -1.0f;
 
     for (const Unit& unit : m_units)
@@ -1499,16 +1515,23 @@ void PawlineGameImpl::DrawUnitLighting()
         const float windup = AttackWindup(unit);
         const float strike = AttackStrike(unit);
         const float attack = Clamp01(windup * 0.45f + strike);
+        const float depth = Clamp01((pos.y - kBattleTop) / (kBattleBottom - kBattleTop));
+        const float lift = UnitShadowLift(unit);
         const D2D1_COLOR_F accent = unit.team == Team::Player
                                         ? GetPlayerStats(static_cast<PlayerUnit>(unit.kind)).accent
                                         : GetEnemyStats(static_cast<EnemyUnit>(unit.kind), ThreatLevel()).accent;
 
-        const float shadowPush = unit.radius * (0.55f + attack * 0.35f);
-        const Vec2 shadow = {pos.x + shadowDir.x * shadowPush + unit.attackDir * attack * 7.0f,
-                             pos.y + unit.radius * 0.72f + shadowDir.y * shadowPush * 0.35f};
-        FillEllipse({pos.x + unit.attackDir * 4.0f, pos.y + unit.radius + 12.0f}, unit.radius * 1.18f, unit.radius * 0.26f, D2D1::ColorF(0x000000, 0.24f));
-        FillEllipse(shadow, unit.radius * (1.74f + attack * 0.55f), unit.radius * (0.40f + attack * 0.12f), D2D1::ColorF(0x000000, 0.40f));
-        FillEllipse({shadow.x + 10.0f, shadow.y + 2.0f}, unit.radius * (1.10f + attack * 0.34f), unit.radius * 0.25f, D2D1::ColorF(0x000000, 0.24f));
+        const Vec2 foot = {pos.x + unit.attackDir * attack * 6.0f, pos.y + unit.radius + 12.0f};
+        FillEllipse(foot, unit.radius * (1.10f + depth * 0.20f), unit.radius * 0.24f, D2D1::ColorF(0x000000, 0.22f + depth * 0.08f));
+        for (int i = 0; i < 3; ++i)
+        {
+            const float t = static_cast<float>(i);
+            const Vec2 cast = foot + shadowDir * (lift * (1.15f + t * 0.72f));
+            const float fade = 1.0f - t * 0.27f;
+            FillEllipse(cast, unit.radius * (1.46f + lift * 0.024f + t * 0.16f + attack * 0.38f),
+                        unit.radius * (0.32f + t * 0.035f + attack * 0.08f),
+                        D2D1::ColorF(0x000000, (0.30f + depth * 0.10f) * fade));
+        }
         FillEllipse({pos.x - lightDir.x * unit.radius * 0.42f, pos.y - unit.radius * 0.56f}, unit.radius * 0.60f, unit.radius * 0.25f, D2D1::ColorF(0xFFFFFF, 0.040f));
         FillEllipse({pos.x + unit.attackDir * unit.radius * 0.45f, pos.y + unit.radius * 0.16f}, unit.radius * 0.52f, unit.radius * 0.18f, D2D1::ColorF(accent.r, accent.g, accent.b, 0.032f));
 
@@ -2687,11 +2710,13 @@ void PawlineGameImpl::DrawShaderPostProcess()
     const StageDefinition stage = CurrentStage();
     const D2D1_RECT_F arena = D2D1::RectF(24.0f, kBattleTop, 1256.0f, kBattleBottom);
     const float action = Clamp01(m_cannonFlash / 0.42f);
+    const float feedback = PostFxFeedbackIntensity();
+    const float chroma = feedback * (m_reduceFlashes ? 0.38f : 1.0f);
     const float scanOffset = std::fmod(m_stageTime * 22.0f, 14.0f);
 
     for (float y = kBattleTop + 4.0f + scanOffset; y < kBattleBottom; y += 14.0f)
     {
-        DrawLine({arena.left + 6.0f, y}, {arena.right - 6.0f, y}, FadeColor(stage.lineColor, 0.026f + action * 0.030f), 1.0f);
+        DrawLine({arena.left + 6.0f, y}, {arena.right - 6.0f, y}, FadeColor(stage.lineColor, 0.026f + action * 0.030f + feedback * 0.012f), 1.0f);
     }
 
     for (int i = 0; i < 26; ++i)
@@ -2700,7 +2725,7 @@ void PawlineGameImpl::DrawShaderPostProcess()
         const float y = 118.0f + static_cast<float>((i * 89 + m_selectedStage * 53) % 462);
         const float twinkle = 0.25f + 0.75f * Hash01(static_cast<float>(i), static_cast<float>(m_selectedStage), std::floor(m_stageTime * 3.0f));
         const float radius = 1.0f + static_cast<float>(i % 3) * 0.7f;
-        FillEllipse({x, y}, radius + twinkle * 1.5f, radius + twinkle * 1.5f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.035f + twinkle * 0.055f));
+        FillEllipse({x, y}, radius + twinkle * (1.5f + feedback * 1.2f), radius + twinkle * (1.5f + feedback * 1.2f), D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.035f + twinkle * 0.055f + feedback * 0.018f));
     }
 
     // 투사체 주변에만 얇은 블룸을 더해 화면 전체가 번쩍이지 않게 한다.
@@ -2716,7 +2741,7 @@ void PawlineGameImpl::DrawShaderPostProcess()
             continue;
         }
         const float pulse = 0.58f + 0.42f * std::sin(projectile.age * 15.0f + projectile.spin);
-        FillEllipse(screen, projectile.radius * (5.8f + pulse * 1.6f), projectile.radius * (3.8f + pulse * 1.0f), D2D1::ColorF(projectile.color.r, projectile.color.g, projectile.color.b, 0.035f + pulse * 0.026f));
+        FillEllipse(screen, projectile.radius * (5.8f + pulse * 1.6f + feedback * 2.2f), projectile.radius * (3.8f + pulse * 1.0f + feedback * 1.4f), D2D1::ColorF(projectile.color.r, projectile.color.g, projectile.color.b, 0.035f + pulse * 0.026f + feedback * 0.020f));
         FillEllipse({screen.x, screen.y + projectile.radius + 14.0f}, projectile.radius * 2.4f, projectile.radius * 0.48f, D2D1::ColorF(0x000000, 0.12f));
         StrokeEllipse(screen, projectile.radius * (2.6f + pulse * 0.8f), projectile.radius * (1.6f + pulse * 0.5f), D2D1::ColorF(0xFFFFFF, 0.055f + pulse * 0.045f), 1.2f);
     }
@@ -2730,7 +2755,12 @@ void PawlineGameImpl::DrawShaderPostProcess()
         }
         const Vec2 start = WorldToScreen(beam.start);
         const Vec2 end = WorldToScreen(beam.end);
-        DrawLine(start, end, D2D1::ColorF(beam.color.r, beam.color.g, beam.color.b, 0.018f * alpha), beam.width * 9.0f);
+        DrawLine(start, end, D2D1::ColorF(beam.color.r, beam.color.g, beam.color.b, (0.018f + feedback * 0.018f) * alpha), beam.width * (9.0f + feedback * 3.0f));
+        if (feedback > 0.05f)
+        {
+            DrawLine({start.x, start.y - 2.0f}, {end.x, end.y - 2.0f}, D2D1::ColorF(0x65D8FF, 0.075f * chroma * alpha), std::max(1.0f, beam.width * 1.2f));
+            DrawLine({start.x, start.y + 2.0f}, {end.x, end.y + 2.0f}, D2D1::ColorF(0xFF6A8A, 0.075f * chroma * alpha), std::max(1.0f, beam.width * 1.2f));
+        }
     }
 
     if (m_selectedStage >= 8)
@@ -2772,9 +2802,15 @@ void PawlineGameImpl::DrawShaderPostProcess()
             const D2D1_COLOR_F accent = unit.team == Team::Player
                                             ? PlayerStats(static_cast<PlayerUnit>(unit.kind)).accent
                                             : GetEnemyStats(static_cast<EnemyUnit>(unit.kind), ThreatLevel()).accent;
-            FillEllipse({screen.x + unit.attackDir * 20.0f, screen.y - 4.0f}, unit.radius * (3.1f + strike * 2.2f), unit.radius * (1.62f + strike * 1.02f), D2D1::ColorF(accent.r, accent.g, accent.b, 0.034f + strike * 0.070f));
+            FillEllipse({screen.x + unit.attackDir * 20.0f, screen.y - 4.0f}, unit.radius * (3.1f + strike * 2.2f + feedback * 0.65f), unit.radius * (1.62f + strike * 1.02f + feedback * 0.30f), D2D1::ColorF(accent.r, accent.g, accent.b, 0.034f + strike * 0.070f + feedback * 0.018f));
             FillEllipse({screen.x - 18.0f, screen.y + unit.radius + 14.0f}, unit.radius * 2.0f, unit.radius * 0.50f, D2D1::ColorF(0x000000, 0.18f + strike * 0.09f));
             StrokeEllipse({screen.x, screen.y + 4.0f}, unit.radius + 30.0f * strike, unit.radius * 0.60f + 16.0f * strike, D2D1::ColorF(accent.r, accent.g, accent.b, 0.23f * strike), 2.0f + strike * 1.9f);
+            if (feedback > 0.04f)
+            {
+                DrawLine({screen.x - unit.attackDir * (unit.radius + 42.0f), screen.y - 10.0f},
+                         {screen.x + unit.attackDir * (unit.radius + 72.0f), screen.y - 10.0f},
+                         D2D1::ColorF(accent.r, accent.g, accent.b, 0.11f * feedback), 2.4f + strike * 1.8f);
+            }
             DrawLine({screen.x - unit.radius * 0.55f, screen.y - unit.radius * 0.72f},
                      {screen.x + unit.radius * 0.55f, screen.y - unit.radius * 0.58f},
                      D2D1::ColorF(0xFFFFFF, 0.055f + strike * 0.11f), 1.6f);
@@ -2804,6 +2840,20 @@ void PawlineGameImpl::DrawShaderPostProcess()
     FillRect(D2D1::RectF(arena.left, arena.top, arena.left + 52.0f, arena.bottom), D2D1::ColorF(0x000000, 0.085f));
     FillRect(D2D1::RectF(arena.right - 52.0f, arena.top, arena.right, arena.bottom), D2D1::ColorF(0x000000, 0.085f));
 
+    if (feedback > 0.0f)
+    {
+        const float offset = 2.0f + chroma * 5.0f;
+        FillRect(D2D1::RectF(arena.left, arena.top, arena.right, arena.top + 62.0f), D2D1::ColorF(0x000000, 0.060f * feedback));
+        FillRect(D2D1::RectF(arena.left, arena.bottom - 70.0f, arena.right, arena.bottom), D2D1::ColorF(0x000000, 0.075f * feedback));
+        StrokeRoundRect(D2D1::RectF(arena.left - offset, arena.top - 1.0f, arena.right - offset, arena.bottom + 1.0f), 8.0f, D2D1::ColorF(0x65D8FF, 0.18f * chroma), 1.6f);
+        StrokeRoundRect(D2D1::RectF(arena.left + offset, arena.top + 1.0f, arena.right + offset, arena.bottom - 1.0f), 8.0f, D2D1::ColorF(0xFF6A8A, 0.16f * chroma), 1.6f);
+        for (int i = 0; i < 3; ++i)
+        {
+            const float y = kBattleTop + 90.0f + static_cast<float>(i) * 132.0f + std::sin(m_uiTime * 4.0f + static_cast<float>(i)) * 18.0f;
+            DrawLine({arena.left + 70.0f, y}, {arena.right - 70.0f, y + 10.0f}, D2D1::ColorF(0xFFFFFF, 0.030f * feedback), 3.0f);
+        }
+    }
+
     if (action > 0.0f)
     {
         FillRoundRect(D2D1::RectF(arena.left + 2.0f, arena.top + 2.0f, arena.right - 2.0f, arena.bottom - 2.0f), 8.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, action * 0.045f));
@@ -2812,7 +2862,7 @@ void PawlineGameImpl::DrawShaderPostProcess()
     }
 
     StrokeRoundRect(InflateRectF(arena, 1.0f, 1.0f), 9.0f, D2D1::ColorF(0x061019, 0.78f), 4.0f);
-    StrokeRoundRect(arena, 8.0f, FadeColor(stage.lineColor, 0.22f + action * 0.16f + actionLevel * 0.10f), 1.8f);
+    StrokeRoundRect(arena, 8.0f, FadeColor(stage.lineColor, 0.22f + action * 0.16f + actionLevel * 0.10f + feedback * 0.12f), 1.8f + feedback * 1.2f);
 
     const float leftHint = m_mouse.y >= kBattleTop && m_mouse.y <= kBattleBottom ? Clamp01((118.0f - m_mouse.x) / 118.0f) : 0.0f;
     const float rightHint = m_mouse.y >= kBattleTop && m_mouse.y <= kBattleBottom ? Clamp01((m_mouse.x - (kWidth - 118.0f)) / 118.0f) : 0.0f;
@@ -2958,6 +3008,19 @@ void PawlineGameImpl::DrawBossPresentation()
         DrawPixelTextCentered(L"BOSS INCOMING", D2D1::RectF(panel.left + 30.0f, panel.top + 70.0f, panel.right - 30.0f, panel.bottom - 18.0f), 3.2f, D2D1::ColorF(0xF3FBFF), alpha);
     }
 
+    if (m_bossPhaseBannerTimer > 0.0f)
+    {
+        const float alpha = m_bossPhaseBannerMax > 0.0f ? Clamp01(m_bossPhaseBannerTimer / m_bossPhaseBannerMax) : 0.0f;
+        const float pop = 1.0f + std::sin((1.0f - alpha) * kPi) * 0.06f;
+        const D2D1_RECT_F panel = D2D1::RectF(344.0f, 212.0f, 936.0f, 296.0f);
+        const D2D1_COLOR_F accent = m_bossPhaseBannerLevel >= 3 ? D2D1::ColorF(0xFFB347, alpha) : D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, alpha);
+        FillRect(D2D1::RectF(0.0f, kBattleTop, kWidth, kBattleBottom), D2D1::ColorF(0x000000, 0.14f * alpha));
+        DrawCartoonPanel(panel, D2D1::ColorF(0x130B10, 0.92f * alpha), accent, true);
+        DrawPixelTextCentered(m_bossPhaseBannerLevel >= 3 ? L"FINAL PHASE" : L"PHASE 2", D2D1::RectF(panel.left + 20.0f, panel.top + 14.0f, panel.right - 20.0f, panel.top + 50.0f), 3.8f * pop, D2D1::ColorF(0xF3FBFF), alpha);
+        DrawPixelTextCentered(m_bossPhaseBannerLevel >= 3 ? L"PATTERN OVERDRIVE" : L"PATTERN SHIFT", D2D1::RectF(panel.left + 26.0f, panel.top + 50.0f, panel.right - 26.0f, panel.bottom - 10.0f), 2.3f, D2D1::ColorF(0xF6FF83), alpha);
+        DrawLine({panel.left + 18.0f, panel.bottom - 9.0f}, {panel.right - 18.0f, panel.bottom - 9.0f}, D2D1::ColorF(0xFFFFFF, 0.22f * alpha), 2.0f);
+    }
+
     if (!boss)
     {
         return;
@@ -2973,6 +3036,11 @@ void PawlineGameImpl::DrawBossPresentation()
     FillRoundRect(bar, 6.0f, D2D1::ColorF(0x061019, 0.94f));
     FillRoundRect(D2D1::RectF(bar.left, bar.top, bar.left + (bar.right - bar.left) * pct, bar.bottom), 6.0f, D2D1::ColorF(0xFF9BA8));
     FillRoundRect(D2D1::RectF(bar.left, bar.top, bar.left + (bar.right - bar.left) * pct, bar.top + 7.0f), 5.0f, D2D1::ColorF(0xFFFFFF, 0.15f));
+    for (float mark : {0.25f, 0.50f})
+    {
+        const float x = bar.left + (bar.right - bar.left) * mark;
+        DrawLine({x, bar.top - 2.0f}, {x, bar.bottom + 2.0f}, D2D1::ColorF(0xF6FF83, 0.55f), 1.4f);
+    }
 }
 
 void PawlineGameImpl::DrawTutorialTips()

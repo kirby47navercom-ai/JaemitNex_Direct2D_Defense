@@ -574,6 +574,7 @@ void PawlineGameImpl::ResetToTitle()
     m_uiPulses.clear();
     m_telegraphs.clear();
     m_screenFlash = 0.0f;
+    ResetCombatFeedbackState();
     m_directorPressure = 0.0f;
     m_paused = false;
     m_escapeMenuOpen = false;
@@ -601,6 +602,7 @@ void PawlineGameImpl::ResetToMenu()
     m_uiPulses.clear();
     m_telegraphs.clear();
     m_screenFlash = 0.0f;
+    ResetCombatFeedbackState();
     m_directorPressure = 0.0f;
     m_paused = false;
     m_escapeMenuOpen = false;
@@ -646,13 +648,12 @@ void PawlineGameImpl::ResetGame()
     m_cannonCharge = 35.0f;
     m_cannonFlash = 0.0f;
     m_screenFlash = 0.0f;
+    ResetCombatFeedbackState();
     m_walletPulseTimer = WalletPulseInterval();
     m_stageGimmickTimer = 7.0f + static_cast<float>(m_selectedStage % 3) * 1.8f;
     m_stageGimmickPulse = 0.0f;
     m_stageAmbientTimer = 0.0f;
     m_bossPatternTimer = std::max(5.0f, 8.4f - static_cast<float>(m_selectedStage) * 0.26f);
-    m_bossBannerTimer = 0.0f;
-    m_bossWarningTimer = 0.0f;
     m_bossFocusX = 0.0f;
     m_cameraTrauma = 0.0f;
     m_cameraX = 0.0f;
@@ -667,8 +668,6 @@ void PawlineGameImpl::ResetGame()
     m_pauseBeforeEscape = false;
     m_gameOver = false;
     m_victory = false;
-    m_bossSpawned = false;
-    m_bossPhaseTwoTriggered = false;
     m_demoSpawnTimer = 0.70f;
     m_demoWalletTimer = 2.20f;
     SetMessage(stage.name + L": 유닛을 소환해서 적 기지를 밀어내자.");
@@ -732,6 +731,7 @@ void PawlineGameImpl::Update(float dt)
     {
         m_cameraTrauma = std::max(0.0f, m_cameraTrauma - dt * 1.35f);
     }
+    UpdateCombatFeedbackTimers(dt);
     if (m_showcaseMode)
     {
         m_showcaseTimer += dt;
@@ -757,8 +757,8 @@ void PawlineGameImpl::Update(float dt)
         return;
     }
 
-    // All gameplay systems consume gameDt, so speed control stays centralized.
-    const float gameDt = dt * m_gameSpeed;
+    // 모든 전투 시스템은 gameDt만 먹는다. 속도 조절과 히트스톱을 한곳에서 합성한다.
+    const float gameDt = dt * m_gameSpeed * CombatTimeScale();
     m_stageTime += gameDt;
     UpdateCamera(gameDt);
     m_energy = std::min(MaxEnergy(), m_energy + EnergyRegen() * gameDt);

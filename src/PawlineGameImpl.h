@@ -462,6 +462,14 @@ private:
 
     Vec2 ClientToVirtual(Vec2 pos) const;
 
+    void ResetCombatFeedbackState();
+
+    void UpdateCombatFeedbackTimers(float dt);
+
+    float CombatTimeScale() const;
+
+    float PostFxFeedbackIntensity() const;
+
     void UpdateEnemyDirector(float dt);
 
     void UpdateDirectorPressure(float dt);
@@ -560,11 +568,15 @@ private:
 
     void TriggerBossEntrance(Unit& boss, D2D1_COLOR_F color);
 
+    void TriggerBossPhaseChange(Unit& boss, int phase);
+
     float UnitKnockbackStep(const Unit& unit) const;
 
     void CheckUnitKnockback(Unit& target, Team sourceTeam);
 
     void TriggerUnitKnockback(Unit& unit, Team sourceTeam, float strength, float stunDuration, bool force);
+
+    void TriggerHitStop(float holdDuration, float slowScale, float slowDuration);
 
     int FindTargetIndex(const Unit& unit) const;
 
@@ -838,6 +850,10 @@ private:
 
     void DrawUnitLighting();
 
+    Vec2 StageLightDirection() const;
+
+    float UnitShadowLift(const Unit& unit) const;
+
     void DrawUnits();
 
     Vec2 UnitRenderPos(const Unit& unit) const;
@@ -1004,6 +1020,12 @@ private:
     float m_cannonCharge = 0.0f;
     float m_cannonFlash = 0.0f;
     float m_screenFlash = 0.0f;
+    float m_hitStopTimer = 0.0f;
+    float m_hitStopMax = 0.0f;
+    float m_slowMoTimer = 0.0f;
+    float m_slowMoMax = 0.0f;
+    float m_slowMoScale = 1.0f;
+    float m_postFxPulse = 0.0f;
     float m_uiTime = 0.0f;
     float m_walletPulseTimer = 0.0f;
     float m_stageGimmickTimer = 0.0f;
@@ -1012,6 +1034,8 @@ private:
     float m_bossPatternTimer = 7.0f;
     float m_bossBannerTimer = 0.0f;
     float m_bossWarningTimer = 0.0f;
+    float m_bossPhaseBannerTimer = 0.0f;
+    float m_bossPhaseBannerMax = 0.0f;
     float m_bossFocusX = 0.0f;
     float m_cameraTrauma = 0.0f;
     float m_cameraX = 0.0f;
@@ -1037,8 +1061,10 @@ private:
     bool m_pauseBeforeEscape = false;
     bool m_bossSpawned = false;
     bool m_bossPhaseTwoTriggered = false;
+    bool m_bossPhaseThreeTriggered = false;
     bool m_showcaseMode = false;
     bool m_debugMode = false;
+    int m_bossPhaseBannerLevel = 0;
     std::wstring m_message;
     float m_messageTimer = 0.0f;
 };
