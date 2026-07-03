@@ -62,6 +62,10 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
         {
             ResetToMenu();
         }
+        else if (Contains(TitleDemoButtonRect(), pos))
+        {
+            StartDemoRun();
+        }
         else if (Contains(TitleOptionsButtonRect(), pos))
         {
             m_screen = GameScreen::Options;
@@ -158,7 +162,7 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
     if (Contains(PauseButtonRect(), pos))
     {
         m_paused = !m_paused;
-        SetMessage(m_paused ? L"Paused." : L"Resumed.");
+        SetMessage(m_paused ? L"일시정지." : L"전투 재개.");
         return;
     }
     if (Contains(RestartButtonRect(), pos))
@@ -205,7 +209,7 @@ void PawlineGameImpl::OnMenuClick(Vec2 pos)
             return;
         }
         m_screen = GameScreen::Briefing;
-        SetMessage(L"Check your deck before launch.");
+        SetMessage(L"출격 전에 편성을 확인해줘.");
         return;
     }
     if (Contains(MenuShopButtonRect(), pos))
@@ -286,6 +290,12 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
         m_hitShakeEnabled = !m_hitShakeEnabled;
         return;
     }
+    if (Contains(OptionsFlashButtonRect(), pos))
+    {
+        m_reduceFlashes = !m_reduceFlashes;
+        SetMessage(m_reduceFlashes ? L"눈부심 줄이기 켜짐." : L"눈부심 줄이기 꺼짐.");
+        return;
+    }
     if (Contains(OptionsSpeedDownButtonRect(), pos))
     {
         m_defaultGameSpeed = std::max(0.5f, m_defaultGameSpeed - 0.5f);
@@ -312,6 +322,19 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
     {
         m_userViewScale = 0.96f;
         UpdateViewMetrics();
+        return;
+    }
+    if (Contains(OptionsResetProgressButtonRect(), pos))
+    {
+        if (m_resetConfirmTimer > 0.0f)
+        {
+            ResetProgressData();
+        }
+        else
+        {
+            m_resetConfirmTimer = 5.0f;
+            SetMessage(L"한 번 더 누르면 진행 데이터가 초기화돼.");
+        }
         return;
     }
     if (Contains(OptionsBackButtonRect(), pos))
@@ -540,17 +563,17 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         else if (key == 'E')
         {
             m_difficulty = Difficulty::Easy;
-            SetMessage(L"Difficulty EASY");
+            SetMessage(L"난이도 쉬움.");
         }
         else if (key == 'N')
         {
             m_difficulty = Difficulty::Normal;
-            SetMessage(L"Difficulty NORMAL");
+            SetMessage(L"난이도 보통.");
         }
         else if (key == 'H')
         {
             m_difficulty = Difficulty::Hard;
-            SetMessage(L"Difficulty HARD");
+            SetMessage(L"난이도 어려움.");
         }
         return;
     }
@@ -566,6 +589,10 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         if (key == VK_RETURN || key == VK_SPACE)
         {
             ResetToMenu();
+        }
+        else if (key == 'D')
+        {
+            StartDemoRun();
         }
         else if (key == 'O')
         {
@@ -587,6 +614,11 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         else if (key == 'H')
         {
             m_hitShakeEnabled = !m_hitShakeEnabled;
+        }
+        else if (key == 'F')
+        {
+            m_reduceFlashes = !m_reduceFlashes;
+            SetMessage(m_reduceFlashes ? L"눈부심 줄이기 켜짐." : L"눈부심 줄이기 꺼짐.");
         }
         else if (key == VK_LEFT || key == VK_OEM_MINUS || key == VK_OEM_4)
         {
@@ -610,6 +642,18 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         {
             m_userViewScale = 0.96f;
             UpdateViewMetrics();
+        }
+        else if (key == 'X')
+        {
+            if (m_resetConfirmTimer > 0.0f)
+            {
+                ResetProgressData();
+            }
+            else
+            {
+                m_resetConfirmTimer = 5.0f;
+                SetMessage(L"X를 한 번 더 누르면 진행 데이터가 초기화돼.");
+            }
         }
         return;
     }
@@ -640,7 +684,7 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
                 return;
             }
             m_screen = GameScreen::Briefing;
-            SetMessage(L"Check your deck before launch.");
+            SetMessage(L"출격 전에 편성을 확인해줘.");
         }
         else if (key == 'S' || key == 'B')
         {
@@ -727,7 +771,7 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         break;
     case 'P':
         m_paused = !m_paused;
-        SetMessage(m_paused ? L"Paused." : L"Resumed.");
+        SetMessage(m_paused ? L"일시정지." : L"전투 재개.");
         break;
     case 'R':
         ResetGame();

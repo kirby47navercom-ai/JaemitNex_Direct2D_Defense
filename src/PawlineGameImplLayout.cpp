@@ -9,52 +9,67 @@ D2D1_RECT_F PawlineGameImpl::CardRect(int index) const
 
 D2D1_RECT_F PawlineGameImpl::TitleStartButtonRect() const
 {
-    return D2D1::RectF(492.0f, 514.0f, 788.0f, 574.0f);
+    return D2D1::RectF(492.0f, 486.0f, 788.0f, 540.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::TitleDemoButtonRect() const
+{
+    return D2D1::RectF(492.0f, 552.0f, 788.0f, 606.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::TitleOptionsButtonRect() const
 {
-    return D2D1::RectF(492.0f, 586.0f, 788.0f, 646.0f);
+    return D2D1::RectF(492.0f, 618.0f, 788.0f, 672.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::TitleQuitButtonRect() const
 {
-    return D2D1::RectF(492.0f, 658.0f, 788.0f, 718.0f);
+    return D2D1::RectF(492.0f, 684.0f, 788.0f, 738.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsShakeButtonRect() const
 {
-    return D2D1::RectF(490.0f, 330.0f, 790.0f, 386.0f);
+    return D2D1::RectF(490.0f, 276.0f, 790.0f, 326.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::OptionsFlashButtonRect() const
+{
+    return D2D1::RectF(490.0f, 338.0f, 790.0f, 388.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsSpeedDownButtonRect() const
 {
-    return D2D1::RectF(490.0f, 430.0f, 544.0f, 486.0f);
+    return D2D1::RectF(490.0f, 438.0f, 544.0f, 488.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsSpeedUpButtonRect() const
 {
-    return D2D1::RectF(736.0f, 430.0f, 790.0f, 486.0f);
+    return D2D1::RectF(736.0f, 438.0f, 790.0f, 488.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsViewDownButtonRect() const
 {
-    return D2D1::RectF(490.0f, 540.0f, 544.0f, 596.0f);
+    return D2D1::RectF(490.0f, 540.0f, 544.0f, 590.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsViewUpButtonRect() const
 {
-    return D2D1::RectF(736.0f, 540.0f, 790.0f, 596.0f);
+    return D2D1::RectF(736.0f, 540.0f, 790.0f, 590.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsViewResetButtonRect() const
 {
-    return D2D1::RectF(552.0f, 604.0f, 728.0f, 650.0f);
+    return D2D1::RectF(552.0f, 598.0f, 728.0f, 640.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::OptionsResetProgressButtonRect() const
+{
+    return D2D1::RectF(490.0f, 654.0f, 790.0f, 700.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsBackButtonRect() const
 {
-    return D2D1::RectF(492.0f, 678.0f, 788.0f, 738.0f);
+    return D2D1::RectF(492.0f, 724.0f, 788.0f, 776.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::MenuStageRect(int index) const

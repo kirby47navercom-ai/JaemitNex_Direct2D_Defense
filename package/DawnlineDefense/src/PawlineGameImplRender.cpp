@@ -520,11 +520,12 @@ void PawlineGameImpl::DrawTitle()
     DrawString(L"수성에서 태양까지 이어지는 탑뷰 라인 디펜스", D2D1::RectF(250.0f, 418.0f, 1030.0f, 448.0f), m_centerFormat, D2D1::ColorF(0xBFD1DB));
 
     DrawButton(TitleStartButtonRect(), L"시작하기", true, D2D1::ColorF(0x173C4B));
+    DrawButton(TitleDemoButtonRect(), L"시연 모드", true, D2D1::ColorF(0x4B4321));
     DrawButton(TitleOptionsButtonRect(), L"옵션", true, D2D1::ColorF(0x283B27));
     DrawButton(TitleQuitButtonRect(), L"나가기", true, D2D1::ColorF(0x332337));
 
     const std::wstring route = L"수성  금성  지구  화성  목성  토성  천왕성  해왕성  명왕성  태양";
-    DrawString(route, D2D1::RectF(120.0f, 742.0f, 1160.0f, 772.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
+    DrawString(route, D2D1::RectF(120.0f, 748.0f, 1160.0f, 778.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
 }
 
 void PawlineGameImpl::DrawOptions()
@@ -544,21 +545,25 @@ void PawlineGameImpl::DrawOptions()
 
     DrawButton(OptionsShakeButtonRect(), m_hitShakeEnabled ? L"피격 흔들림 켜짐" : L"피격 흔들림 꺼짐", true, m_hitShakeEnabled ? D2D1::ColorF(0x173C4B) : D2D1::ColorF(0x302735));
     DrawString(L"H", D2D1::RectF(OptionsShakeButtonRect().right + 16.0f, OptionsShakeButtonRect().top + 14.0f, OptionsShakeButtonRect().right + 56.0f, OptionsShakeButtonRect().bottom), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+    DrawButton(OptionsFlashButtonRect(), m_reduceFlashes ? L"눈부심 줄이기 켜짐" : L"눈부심 줄이기 꺼짐", true, m_reduceFlashes ? D2D1::ColorF(0x283B27) : D2D1::ColorF(0x302735));
+    DrawString(L"F", D2D1::RectF(OptionsFlashButtonRect().right + 16.0f, OptionsFlashButtonRect().top + 12.0f, OptionsFlashButtonRect().right + 56.0f, OptionsFlashButtonRect().bottom), m_centerFormat, D2D1::ColorF(0x8EA9B8));
 
-    DrawString(L"기본 게임 속도", D2D1::RectF(490.0f, 398.0f, 790.0f, 424.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
+    DrawString(L"기본 게임 속도", D2D1::RectF(490.0f, 408.0f, 790.0f, 432.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
     DrawButton(OptionsSpeedDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));
-    DrawString(L"x" + ToWideFloat(m_defaultGameSpeed), D2D1::RectF(552.0f, 442.0f, 728.0f, 474.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
+    DrawString(L"x" + ToWideFloat(m_defaultGameSpeed), D2D1::RectF(552.0f, 448.0f, 728.0f, 478.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
     DrawButton(OptionsSpeedUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
 
-    DrawString(L"화면 안전 여백", D2D1::RectF(490.0f, 508.0f, 790.0f, 534.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
+    DrawString(L"화면 안전 여백", D2D1::RectF(490.0f, 512.0f, 790.0f, 536.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
     DrawButton(OptionsViewDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));
-    DrawString(ToWideInt(static_cast<int>(std::round(m_userViewScale * 100.0f))) + L"%", D2D1::RectF(552.0f, 552.0f, 728.0f, 584.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
+    DrawString(ToWideInt(static_cast<int>(std::round(m_userViewScale * 100.0f))) + L"%", D2D1::RectF(552.0f, 552.0f, 728.0f, 582.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
     DrawButton(OptionsViewUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
     DrawButton(OptionsViewResetButtonRect(), L"자동 맞춤", true, D2D1::ColorF(0x2D3722));
-    DrawString(L"화면이 잘리면 값을 낮춰줘.", D2D1::RectF(442.0f, 652.0f, 838.0f, 674.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+    DrawString(L"화면이 잘리면 값을 낮춰줘.", D2D1::RectF(442.0f, 642.0f, 838.0f, 662.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+    DrawButton(OptionsResetProgressButtonRect(), m_resetConfirmTimer > 0.0f ? L"정말 초기화하기" : L"진행 데이터 초기화", true, m_resetConfirmTimer > 0.0f ? D2D1::ColorF(0x4B232D) : D2D1::ColorF(0x302735));
+    DrawString(L"X", D2D1::RectF(OptionsResetProgressButtonRect().right + 16.0f, OptionsResetProgressButtonRect().top + 10.0f, OptionsResetProgressButtonRect().right + 56.0f, OptionsResetProgressButtonRect().bottom), m_centerFormat, D2D1::ColorF(0x8EA9B8));
 
     DrawButton(OptionsBackButtonRect(), L"뒤로", true, D2D1::ColorF(0x173C4B));
-    DrawString(L"Esc / Backspace", D2D1::RectF(OptionsBackButtonRect().left, OptionsBackButtonRect().bottom + 12.0f, OptionsBackButtonRect().right, OptionsBackButtonRect().bottom + 38.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+    DrawString(L"Esc / Backspace", D2D1::RectF(OptionsBackButtonRect().left, OptionsBackButtonRect().bottom + 4.0f, OptionsBackButtonRect().right, OptionsBackButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
 }
 
 void PawlineGameImpl::DrawMenu()
@@ -745,6 +750,7 @@ void PawlineGameImpl::DrawBriefing()
     DrawString(stage.gimmick, D2D1::RectF(324.0f, 304.0f, 488.0f, 344.0f), m_bodyFormat, D2D1::ColorF(0xF6FF83));
     DrawPixelText(L"ENEMIES", {324.0f, 372.0f}, 2.5f, D2D1::ColorF(0xFFB6C2));
     DrawString(StageEnemySummary(), D2D1::RectF(324.0f, 398.0f, 496.0f, 444.0f), m_bodyFormat, D2D1::ColorF(0xFFCAD1));
+    DrawBalancePanel(D2D1::RectF(78.0f, 520.0f, 516.0f, 666.0f));
 
     const D2D1_RECT_F plan = D2D1::RectF(560.0f, 136.0f, 1202.0f, 500.0f);
     DrawCartoonPanel(plan, D2D1::ColorF(0x0D1821, 0.96f), D2D1::ColorF(0x65B8FF));
@@ -844,6 +850,29 @@ void PawlineGameImpl::DrawSynergyPanel(D2D1_RECT_F rect)
     DrawCartoonPanel(rect, D2D1::ColorF(0x0F1A22, 0.96f), D2D1::ColorF(0xB8FF89));
     DrawPixelText(L"SYNERGY", {rect.left + 14.0f, rect.top + 12.0f}, 2.4f, D2D1::ColorF(0xB8FF89));
     DrawPixelTextCentered(SynergySummary(), D2D1::RectF(rect.left + 12.0f, rect.top + 38.0f, rect.right - 12.0f, rect.bottom - 10.0f), 1.55f, D2D1::ColorF(0xF3FBFF), 1.0f);
+}
+
+void PawlineGameImpl::DrawBalancePanel(D2D1_RECT_F rect)
+{
+    // 스테이지 위협도와 현재 편성 전투력을 비교해 출격 전 판단을 돕는다.
+    DrawCartoonPanel(rect, D2D1::ColorF(0x0F1A22, 0.96f), D2D1::ColorF(0xF6FF83));
+    DrawPixelText(L"BALANCE", {rect.left + 14.0f, rect.top + 12.0f}, 2.35f, D2D1::ColorF(0xF6FF83));
+
+    const float threat = StageThreatRating();
+    const float power = LoadoutPowerRating();
+    const float maxValue = std::max(1.0f, std::max(threat, power) * 1.18f);
+
+    auto drawBar = [&](float y, const std::wstring& label, float value, D2D1_COLOR_F color) {
+        DrawString(label, D2D1::RectF(rect.left + 18.0f, y - 2.0f, rect.left + 112.0f, y + 22.0f), m_smallFormat, D2D1::ColorF(0xD9E5F2));
+        const D2D1_RECT_F back = D2D1::RectF(rect.left + 122.0f, y + 4.0f, rect.right - 52.0f, y + 18.0f);
+        FillRoundRect(back, 5.0f, D2D1::ColorF(0x061019, 0.92f));
+        FillRoundRect(D2D1::RectF(back.left, back.top, back.left + (back.right - back.left) * Clamp01(value / maxValue), back.bottom), 5.0f, color);
+        DrawString(ToWideInt(static_cast<int>(std::round(value))), D2D1::RectF(rect.right - 48.0f, y - 2.0f, rect.right - 12.0f, y + 22.0f), m_smallFormat, D2D1::ColorF(0xF3FBFF));
+    };
+
+    drawBar(rect.top + 52.0f, L"위협", threat, D2D1::ColorF(0xFF9BA8));
+    drawBar(rect.top + 82.0f, L"전력", power, D2D1::ColorF(0x65B8FF));
+    DrawPixelTextCentered(BalanceAdvice(), D2D1::RectF(rect.left + 16.0f, rect.bottom - 34.0f, rect.right - 16.0f, rect.bottom - 10.0f), 1.65f, D2D1::ColorF(0xF3FBFF), 1.0f);
 }
 
 void PawlineGameImpl::DrawShopUnitDetail()
@@ -952,8 +981,9 @@ void PawlineGameImpl::DrawArena()
     if (m_cannonFlash > 0.0f)
     {
         const float alpha = Clamp01(m_cannonFlash / 0.42f);
-        FillRoundRect(D2D1::RectF(108.0f, kLaneY - 40.0f, kEnemyBaseX + 2.0f, kLaneY + 40.0f), 32.0f, D2D1::ColorF(0xF6FF83, 0.24f * alpha));
-        DrawLine({116.0f, kLaneY}, {kEnemyBaseX - 2.0f, kLaneY}, D2D1::ColorF(0xF6FF83, 0.88f * alpha), 11.0f);
+        const float flashScale = m_reduceFlashes ? 0.46f : 1.0f;
+        FillRoundRect(D2D1::RectF(108.0f, kLaneY - 40.0f, kEnemyBaseX + 2.0f, kLaneY + 40.0f), 32.0f, D2D1::ColorF(0xF6FF83, 0.24f * alpha * flashScale));
+        DrawLine({116.0f, kLaneY}, {kEnemyBaseX - 2.0f, kLaneY}, D2D1::ColorF(0xF6FF83, 0.88f * alpha * (m_reduceFlashes ? 0.70f : 1.0f)), 11.0f);
     }
 
     StrokeRoundRect(D2D1::RectF(24.0f, kBattleTop, kWorldWidth - 24.0f, kBattleBottom), 8.0f, D2D1::ColorF(0x2B4A5B), 1.2f);
@@ -2417,7 +2447,7 @@ void PawlineGameImpl::DrawScreenFlash()
     }
 
     const float alpha = Clamp01(m_screenFlash / 0.26f);
-    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0xF6FF83, 0.055f * alpha));
+    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0xF6FF83, 0.055f * alpha * (m_reduceFlashes ? 0.28f : 1.0f)));
 }
 
 void PawlineGameImpl::DrawFloatTexts()
@@ -2556,36 +2586,42 @@ void PawlineGameImpl::DrawBossPresentation()
 
 void PawlineGameImpl::DrawTutorialTips()
 {
-    if (m_screen != GameScreen::Playing || m_stageTime > 14.0f || m_escapeMenuOpen)
+    if (m_screen != GameScreen::Playing || m_stageTime > 18.0f || m_escapeMenuOpen)
     {
         return;
     }
 
     const float fadeIn = Clamp01(m_stageTime / 0.8f);
-    const float fadeOut = Clamp01((14.0f - m_stageTime) / 1.4f);
+    const float fadeOut = Clamp01((18.0f - m_stageTime) / 1.4f);
     const float alpha = std::min(fadeIn, fadeOut);
     const StageDefinition stage = CurrentStage();
 
-    auto tip = [&](D2D1_RECT_F rect, const std::wstring& title, const std::wstring& body, D2D1_COLOR_F accent) {
+    auto tip = [&](D2D1_RECT_F rect, const std::wstring& key, const std::wstring& body, D2D1_COLOR_F accent) {
         DrawCartoonPanel(rect, D2D1::ColorF(0x071017, 0.86f * alpha), accent, false);
-        DrawPixelText(title, {rect.left + 12.0f, rect.top + 10.0f}, 2.25f, D2D1::ColorF(0xF3FBFF, alpha), alpha);
-        DrawPixelText(body, {rect.left + 12.0f, rect.top + 36.0f}, 1.75f, D2D1::ColorF(0xCFE8F5, alpha), alpha);
+        DrawPixelText(key, {rect.left + 14.0f, rect.top + 12.0f}, 2.25f, D2D1::ColorF(0xF3FBFF, alpha), alpha);
+        DrawOutlinedString(body, D2D1::RectF(rect.left + 18.0f, rect.top + 40.0f, rect.right - 18.0f, rect.bottom - 8.0f), m_smallFormat, D2D1::ColorF(0xCFE8F5, alpha), 0.72f * alpha);
     };
 
-    tip(D2D1::RectF(60.0f, 512.0f, 312.0f, 584.0f), L"SUMMON", L"PRESS 1-5 OR CLICK CARDS", D2D1::ColorF(0x65B8FF, alpha));
-    DrawLine({144.0f, 584.0f}, {92.0f, 628.0f}, D2D1::ColorF(0x65B8FF, 0.42f * alpha), 2.4f);
-    DrawLine({92.0f, 628.0f}, {104.0f, 616.0f}, D2D1::ColorF(0x65B8FF, 0.42f * alpha), 2.4f);
-
-    tip(D2D1::RectF(452.0f, 512.0f, 726.0f, 584.0f), L"WALLET", L"W BOOSTS COST AND PULSE", D2D1::ColorF(0xB8FF89, alpha));
-    DrawLine({626.0f, 584.0f}, {728.0f, 628.0f}, D2D1::ColorF(0xB8FF89, 0.42f * alpha), 2.4f);
-
-    tip(D2D1::RectF(890.0f, 118.0f, 1194.0f, 190.0f), L"CAMERA", L"DRAG OR WHEEL THE LANE", stage.lineColor);
-    DrawLine({890.0f, 154.0f}, {802.0f, 104.0f}, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.42f * alpha), 2.4f);
-
-    if (m_stageTime > 4.5f)
+    if (m_stageTime < 4.0f)
     {
-        tip(D2D1::RectF(884.0f, 512.0f, 1194.0f, 584.0f), L"MOONBEAM", L"SPACE FIRES WHEN FULL", D2D1::ColorF(0xF6FF83, alpha));
-        DrawLine({918.0f, 584.0f}, {740.0f, 708.0f}, D2D1::ColorF(0xF6FF83, 0.38f * alpha), 2.4f);
+        tip(D2D1::RectF(58.0f, 512.0f, 390.0f, 590.0f), L"GUIDE 1", L"카드나 1~5 키로 유닛을 소환해.", D2D1::ColorF(0x65B8FF, alpha));
+        DrawLine({126.0f, 590.0f}, {92.0f, 628.0f}, D2D1::ColorF(0x65B8FF, 0.42f * alpha), 2.4f);
+        DrawLine({92.0f, 628.0f}, {106.0f, 616.0f}, D2D1::ColorF(0x65B8FF, 0.42f * alpha), 2.4f);
+    }
+    else if (m_stageTime < 8.0f)
+    {
+        tip(D2D1::RectF(436.0f, 512.0f, 772.0f, 590.0f), L"GUIDE 2", L"W 월렛은 비용 감소, 회복, 보급 펄스를 만든다.", D2D1::ColorF(0xB8FF89, alpha));
+        DrawLine({650.0f, 590.0f}, {736.0f, 628.0f}, D2D1::ColorF(0xB8FF89, 0.42f * alpha), 2.4f);
+    }
+    else if (m_stageTime < 12.0f)
+    {
+        tip(D2D1::RectF(880.0f, 118.0f, 1198.0f, 196.0f), L"GUIDE 3", L"마우스를 가장자리로 가져가거나 드래그해서 전선을 봐.", stage.lineColor);
+        DrawLine({880.0f, 158.0f}, {804.0f, 104.0f}, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.42f * alpha), 2.4f);
+    }
+    else
+    {
+        tip(D2D1::RectF(870.0f, 512.0f, 1214.0f, 590.0f), L"GUIDE 4", L"SPACE 캐논은 100%일 때 전선을 한 번에 정리해.", D2D1::ColorF(0xF6FF83, alpha));
+        DrawLine({940.0f, 590.0f}, {736.0f, 708.0f}, D2D1::ColorF(0xF6FF83, 0.38f * alpha), 2.4f);
     }
 }
 
@@ -2599,6 +2635,38 @@ void PawlineGameImpl::DrawShowcaseBadge()
     const D2D1_RECT_F badge = D2D1::RectF(1010.0f, 112.0f, 1238.0f, 148.0f);
     DrawCartoonPanel(badge, D2D1::ColorF(0x0F1A22, 0.92f), D2D1::ColorF(0xF6FF83), true);
     DrawPixelTextCentered(L"DEMO MODE", badge, 2.4f, D2D1::ColorF(0xF6FF83), 1.0f);
+    const D2D1_RECT_F panel = D2D1::RectF(1010.0f, 154.0f, 1238.0f, 222.0f);
+    DrawCartoonPanel(panel, D2D1::ColorF(0x071017, 0.86f), CurrentStage().lineColor);
+    DrawOutlinedString(DemoStepText(), D2D1::RectF(panel.left + 12.0f, panel.top + 8.0f, panel.right - 12.0f, panel.top + 34.0f), m_smallFormat, D2D1::ColorF(0xEAF7FF), 0.68f);
+    DrawString(CurrentStage().name + L"  " + ToWideTime(m_stageTime), D2D1::RectF(panel.left + 12.0f, panel.top + 38.0f, panel.right - 12.0f, panel.bottom - 8.0f), m_smallFormat, D2D1::ColorF(0xF6FF83));
+    const D2D1_RECT_F bar = D2D1::RectF(panel.left + 14.0f, panel.bottom - 10.0f, panel.right - 14.0f, panel.bottom - 5.0f);
+    FillRoundRect(bar, 3.0f, D2D1::ColorF(0x061019, 0.90f));
+    FillRoundRect(D2D1::RectF(bar.left, bar.top, bar.left + (bar.right - bar.left) * Clamp01(m_showcaseTimer / 90.0f), bar.bottom), 3.0f, D2D1::ColorF(0xF6FF83));
+}
+
+std::wstring PawlineGameImpl::DemoStepText() const
+{
+    if (m_showcaseTimer < 5.0f)
+    {
+        return L"1/5 유닛 소환";
+    }
+    if (m_showcaseTimer < 12.0f)
+    {
+        return L"2/5 월렛 성장";
+    }
+    if (m_showcaseTimer < 22.0f)
+    {
+        return L"3/5 카메라 이동";
+    }
+    if (FindBossUnit())
+    {
+        return L"4/5 보스 패턴";
+    }
+    if (m_cannonCharge > 70.0f)
+    {
+        return L"4/5 캐논 준비";
+    }
+    return L"5/5 전선 압박";
 }
 
 void PawlineGameImpl::DrawDebugBadge()
@@ -2608,7 +2676,7 @@ void PawlineGameImpl::DrawDebugBadge()
         return;
     }
 
-    const D2D1_RECT_F badge = D2D1::RectF(1010.0f, m_showcaseMode && m_screen == GameScreen::Playing ? 154.0f : 112.0f, 1238.0f, m_showcaseMode && m_screen == GameScreen::Playing ? 190.0f : 148.0f);
+    const D2D1_RECT_F badge = D2D1::RectF(1010.0f, m_showcaseMode && m_screen == GameScreen::Playing ? 230.0f : 112.0f, 1238.0f, m_showcaseMode && m_screen == GameScreen::Playing ? 266.0f : 148.0f);
     DrawCartoonPanel(badge, D2D1::ColorF(0x1E1520, 0.92f), D2D1::ColorF(0xFF9BA8), true);
     DrawPixelTextCentered(L"DEBUG F2", badge, 2.3f, D2D1::ColorF(0xFFB6C2), 1.0f);
 }
@@ -2931,13 +2999,18 @@ void PawlineGameImpl::DrawEscapeMenuClean()
 void PawlineGameImpl::DrawResultScreen()
 {
     FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0x000000, 0.54f));
-    const D2D1_RECT_F panel = D2D1::RectF(340.0f, 210.0f, 940.0f, 555.0f);
+    const D2D1_RECT_F panel = D2D1::RectF(340.0f, 210.0f, 940.0f, 650.0f);
+    const bool finalClear = m_victory && m_selectedStage == kStageCount - 1;
     FillRoundRect(panel, 10.0f, D2D1::ColorF(0x0A121A, 0.96f));
     StrokeRoundRect(panel, 10.0f, m_victory ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xFF9BA8), 2.0f);
+    if (finalClear)
+    {
+        DrawFinalClearScene(panel);
+    }
 
     const StageDefinition stage = CurrentStage();
-    const std::wstring title = m_victory ? L"STAGE CLEAR" : L"BASE BROKEN";
-    const std::wstring subtitle = m_victory ? L"The lane is yours." : L"The enemy pushed through.";
+    const std::wstring title = finalClear ? L"CAMPAIGN CLEAR" : (m_victory ? L"STAGE CLEAR" : L"BASE BROKEN");
+    const std::wstring subtitle = finalClear ? L"수성에서 태양까지, 방어선 완주" : (m_victory ? L"The lane is yours." : L"The enemy pushed through.");
     DrawPixelTextCentered(title, D2D1::RectF(panel.left + 34.0f, panel.top + 30.0f, panel.right - 34.0f, panel.top + 78.0f), 4.2f, m_victory ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xFFB6C2), 1.0f);
     DrawPixelTextCentered(subtitle, D2D1::RectF(panel.left + 34.0f, panel.top + 84.0f, panel.right - 34.0f, panel.top + 112.0f), 2.2f, D2D1::ColorF(0xEAF7FF), 1.0f);
 
@@ -2976,7 +3049,7 @@ void PawlineGameImpl::DrawResultScreen()
                           2.2f,
                           m_victory ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0x8EA9B8),
                           1.0f);
-    DrawPixelTextCentered(GrowthRecommendation(),
+    DrawPixelTextCentered(finalClear ? L"태양 방어선 완주" : GrowthRecommendation(),
                           D2D1::RectF(panel.left + 64.0f, panel.top + 374.0f, panel.right - 64.0f, panel.top + 408.0f),
                           2.1f,
                           D2D1::ColorF(0xF6FF83),
@@ -2985,4 +3058,29 @@ void PawlineGameImpl::DrawResultScreen()
     DrawButton(ResultRetryButtonRect(), L"Retry", true, D2D1::ColorF(0x173C4B));
     DrawButton(ResultNextButtonRect(), (m_victory && m_selectedStage < kStageCount - 1) ? L"Next" : L"Close", true, D2D1::ColorF(0x283B27));
     DrawButton(ResultMenuButtonRect(), L"Menu", true, D2D1::ColorF(0x332337));
+}
+
+void PawlineGameImpl::DrawFinalClearScene(D2D1_RECT_F panel)
+{
+    // 마지막 스테이지 클리어 전용 연출. 낮은 알파의 태양광과 행성 경로만 깔아 통계 UI를 가리지 않는다.
+    const Vec2 sun = {panel.right - 92.0f, panel.top + 92.0f};
+    for (int i = 0; i < 18; ++i)
+    {
+        const float a = static_cast<float>(i) / 18.0f * kPi * 2.0f + m_uiTime * 0.25f;
+        DrawLine({sun.x + std::cos(a) * 38.0f, sun.y + std::sin(a) * 38.0f},
+                 {sun.x + std::cos(a) * 88.0f, sun.y + std::sin(a) * 88.0f},
+                 D2D1::ColorF(0xFFB347, 0.18f), 3.0f);
+    }
+    FillEllipse(sun, 44.0f, 44.0f, D2D1::ColorF(0xFFB347, 0.22f));
+    FillEllipse(sun, 23.0f, 23.0f, D2D1::ColorF(0xFFF0B5, 0.45f));
+
+    const float y = panel.top + 420.0f;
+    DrawLine({panel.left + 74.0f, y}, {panel.right - 74.0f, y}, D2D1::ColorF(0xF6FF83, 0.18f), 2.0f);
+    for (int i = 0; i < kStageCount; ++i)
+    {
+        const float t = static_cast<float>(i) / static_cast<float>(kStageCount - 1);
+        const Vec2 node = {Lerp(panel.left + 74.0f, panel.right - 74.0f, t), y};
+        const StageDefinition stage = GetStageDefinition(i);
+        FillEllipse(node, i == kStageCount - 1 ? 8.0f : 5.0f, i == kStageCount - 1 ? 8.0f : 5.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.72f));
+    }
 }

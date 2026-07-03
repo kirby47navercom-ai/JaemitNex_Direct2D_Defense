@@ -410,11 +410,15 @@ private:
 
     void SaveProgress() const;
 
+    void ResetProgressData();
+
     void ResetToTitle();
 
     void ResetToMenu();
 
     void ResetGame();
+
+    void StartDemoRun();
 
     void Update(float dt);
 
@@ -434,11 +438,21 @@ private:
 
     void UpdateEnemyDirector(float dt);
 
+    void UpdateDirectorPressure(float dt);
+
+    float DirectorSpawnMultiplier() const;
+
     EnemyUnit PickStageEnemy(int value, int phase) const;
 
     EnemyUnit StageBossType() const;
 
     std::wstring StageEnemySummary() const;
+
+    float StageThreatRating() const;
+
+    float LoadoutPowerRating() const;
+
+    std::wstring BalanceAdvice() const;
 
     float GimmickInterval() const;
 
@@ -616,11 +630,15 @@ private:
 
     D2D1_RECT_F TitleStartButtonRect() const;
 
+    D2D1_RECT_F TitleDemoButtonRect() const;
+
     D2D1_RECT_F TitleOptionsButtonRect() const;
 
     D2D1_RECT_F TitleQuitButtonRect() const;
 
     D2D1_RECT_F OptionsShakeButtonRect() const;
+
+    D2D1_RECT_F OptionsFlashButtonRect() const;
 
     D2D1_RECT_F OptionsSpeedDownButtonRect() const;
 
@@ -631,6 +649,8 @@ private:
     D2D1_RECT_F OptionsViewUpButtonRect() const;
 
     D2D1_RECT_F OptionsViewResetButtonRect() const;
+
+    D2D1_RECT_F OptionsResetProgressButtonRect() const;
 
     D2D1_RECT_F OptionsBackButtonRect() const;
 
@@ -826,9 +846,13 @@ private:
 
     void DrawSynergyPanel(D2D1_RECT_F rect);
 
+    void DrawBalancePanel(D2D1_RECT_F rect);
+
     void DrawShopUnitDetail();
 
     void DrawShowcaseBadge();
+
+    std::wstring DemoStepText() const;
 
     void DrawDebugBadge();
 
@@ -859,6 +883,8 @@ private:
     void DrawEscapeMenuClean();
 
     void DrawResultScreen();
+
+    void DrawFinalClearScene(D2D1_RECT_F panel);
 
 private:
     HWND m_hwnd = nullptr;
@@ -921,6 +947,7 @@ private:
     float m_gameSpeed = 1.0f;
     float m_defaultGameSpeed = 1.0f;
     float m_enemyTimer = 0.0f;
+    float m_directorPressure = 0.0f;
     float m_nextBossTime = 38.0f;
     float m_cannonCharge = 0.0f;
     float m_cannonFlash = 0.0f;
@@ -947,11 +974,13 @@ private:
     float m_showcaseTimer = 0.0f;
     float m_demoSpawnTimer = 0.0f;
     float m_demoWalletTimer = 0.0f;
+    float m_resetConfirmTimer = 0.0f;
     Difficulty m_difficulty = Difficulty::Normal;
     bool m_paused = false;
     bool m_gameOver = false;
     bool m_victory = false;
     bool m_hitShakeEnabled = true;
+    bool m_reduceFlashes = false;
     bool m_escapeMenuOpen = false;
     bool m_pauseBeforeEscape = false;
     bool m_bossPhaseTwoTriggered = false;

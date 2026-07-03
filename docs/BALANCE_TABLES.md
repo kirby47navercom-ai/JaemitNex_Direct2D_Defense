@@ -32,6 +32,22 @@ This document mirrors the runtime values in `src/GameData.cpp` so the stage curv
 | Normal | 100% | 100% | 100% | 100% | 100% |
 | Hard | 92% | 118% | 122% | 86% | 128% |
 
+## Briefing Balance Read
+
+The briefing screen compares the selected stage threat and current loadout power before launch.
+
+- Stage threat uses enemy base HP, enemy interval, threat scale, first boss timing, and difficulty.
+- Loadout power uses unit HP, damage, range, speed, attack cadence, cost, level, and active synergies.
+- The panel recommends shop upgrades when power is low, normal launch when values are close, and hard difficulty when power is clearly above the stage curve.
+
+## AI Director
+
+During combat, the enemy director watches lane state and base HP.
+
+- If player units and player base HP are strongly ahead, spawn intervals tighten slightly and rare elite spawns can appear.
+- If the player base is in danger, spawn intervals loosen slightly so the run is recoverable.
+- The multiplier is intentionally small, between 0.84x and 1.16x, so the authored stage curve still leads the balance.
+
 ## Loadout Synergy
 
 | Synergy | Required Units | Effect |

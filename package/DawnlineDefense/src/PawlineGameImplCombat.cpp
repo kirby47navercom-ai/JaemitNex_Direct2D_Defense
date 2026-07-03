@@ -5,6 +5,7 @@ void PawlineGameImpl::UpdateEnemyDirector(float dt)
 {
     // The director scales spawn timing from the selected stage and elapsed time,
     // giving later planets denser waves without hard-coding every spawn.
+    UpdateDirectorPressure(dt);
     m_enemyTimer -= dt;
     const float threat = ThreatLevel();
     const StageDefinition stage = CurrentStage();
@@ -37,10 +38,59 @@ void PawlineGameImpl::UpdateEnemyDirector(float dt)
     const int value = roll(m_rng);
     const EnemyUnit type = PickStageEnemy(value, phase);
 
-    SpawnEnemy(type);
+    const bool directorElite = m_directorPressure > 0.62f && value > 88 && m_stageTime > 28.0f && type != EnemyUnit::Boss;
+    SpawnEnemy(type, directorElite);
     const float difficultyInterval = m_difficulty == Difficulty::Easy ? 1.15f : (m_difficulty == Difficulty::Hard ? 0.86f : 1.0f);
-    const float interval = std::max(0.48f, (stage.enemyInterval - threat * 0.11f) * difficultyInterval);
+    const float interval = std::max(0.48f, (stage.enemyInterval - threat * 0.11f) * difficultyInterval * DirectorSpawnMultiplier());
     m_enemyTimer += interval;
+}
+
+void PawlineGameImpl::UpdateDirectorPressure(float dt)
+{
+    // AI 디렉터는 현재 전선 상태를 보고 적 웨이브 압력을 미세 조정한다.
+    // 플레이어가 압도하면 조금 더 빠르게, 기지가 위험하면 조금 늦게 보내서 흐름을 부드럽게 만든다.
+    int playerCount = 0;
+    int enemyCount = 0;
+    for (const Unit& unit : m_units)
+    {
+        if (!unit.alive)
+        {
+            continue;
+        }
+        if (unit.team == Team::Player)
+        {
+            ++playerCount;
+        }
+        else
+        {
+            ++enemyCount;
+        }
+    }
+
+    const float playerHpPct = m_playerBaseMaxHp > 0.0f ? Clamp01(m_playerBaseHp / m_playerBaseMaxHp) : 0.0f;
+    const float enemyHpPct = m_enemyBaseMaxHp > 0.0f ? Clamp01(m_enemyBaseHp / m_enemyBaseMaxHp) : 0.0f;
+    const float baseLead = (playerHpPct - enemyHpPct) * 0.68f;
+    const float laneLead = static_cast<float>(playerCount - enemyCount) * 0.065f;
+    const float lateGameNudge = Clamp01((m_stageTime - 48.0f) / 92.0f) * 0.16f;
+    float target = std::max(-1.0f, std::min(1.0f, baseLead + laneLead + lateGameNudge));
+
+    if (playerHpPct < 0.34f)
+    {
+        target -= 0.42f;
+    }
+    if (enemyHpPct < 0.26f && playerHpPct > 0.55f)
+    {
+        target += 0.24f;
+    }
+    target = std::max(-1.0f, std::min(1.0f, target));
+
+    const float follow = 1.0f - std::pow(0.001f, std::min(dt, 0.05f) * 0.55f);
+    m_directorPressure = Lerp(m_directorPressure, target, follow);
+}
+
+float PawlineGameImpl::DirectorSpawnMultiplier() const
+{
+    return std::max(0.84f, std::min(1.16f, 1.0f - m_directorPressure * 0.12f));
 }
 
 EnemyUnit PawlineGameImpl::PickStageEnemy(int value, int phase) const
@@ -186,6 +236,78 @@ std::wstring PawlineGameImpl::StageEnemySummary() const
     default:
         return L"플레어 / 혜성 / 태양";
     }
+}
+
+float PawlineGameImpl::StageThreatRating() const
+{
+    const StageDefinition stage = CurrentStage();
+    const float intervalPressure = std::max(0.0f, 2.55f - stage.enemyInterval) * 16.0f;
+    const float bossPressure = std::max(0.0f, 48.0f - stage.bossFirstTime) * 0.92f;
+    const float hpPressure = stage.enemyHp * 0.010f;
+    const float difficulty = m_difficulty == Difficulty::Easy ? 0.86f : (m_difficulty == Difficulty::Hard ? 1.17f : 1.0f);
+    return (48.0f + hpPressure + stage.threatScale * 28.0f + intervalPressure + bossPressure) * difficulty;
+}
+
+float PawlineGameImpl::LoadoutPowerRating() const
+{
+    float total = 0.0f;
+    for (PlayerUnit unit : m_loadout)
+    {
+        const UnitStats stats = PlayerStats(unit);
+        const float level = 1.0f + static_cast<float>(UnitLevel(unit) - 1) * 0.135f;
+        const float durability = stats.hp * 0.030f;
+        const float damage = stats.damage * (stats.ranged ? 0.92f : 0.78f);
+        const float control = stats.range * 0.090f + stats.speed * 0.070f;
+        const float cadence = std::max(0.0f, 2.4f - stats.attackDelay) * 8.0f;
+        const float costPenalty = static_cast<float>(stats.cost) * 0.018f;
+        total += std::max(8.0f, durability + damage + control + cadence - costPenalty) * level;
+    }
+
+    float synergyBonus = 0.0f;
+    if (HasLoadoutUnit(PlayerUnit::Box) && HasLoadoutUnit(PlayerUnit::Frost))
+    {
+        synergyBonus += 8.0f;
+    }
+    if (HasLoadoutUnit(PlayerUnit::Spark) && HasLoadoutUnit(PlayerUnit::Prism))
+    {
+        synergyBonus += 9.0f;
+    }
+    if (HasLoadoutUnit(PlayerUnit::Dash) && HasLoadoutUnit(PlayerUnit::Comet))
+    {
+        synergyBonus += 7.0f;
+    }
+    if (HasLoadoutUnit(PlayerUnit::Orbit) && HasLoadoutUnit(PlayerUnit::Nebula))
+    {
+        synergyBonus += 8.0f;
+    }
+    if (HasLoadoutUnit(PlayerUnit::Mint))
+    {
+        synergyBonus += 6.0f;
+    }
+    if (HasLoadoutUnit(PlayerUnit::Solar) && HasLoadoutUnit(PlayerUnit::Bell))
+    {
+        synergyBonus += 7.0f;
+    }
+    return total / static_cast<float>(kLoadoutSize) + synergyBonus;
+}
+
+std::wstring PawlineGameImpl::BalanceAdvice() const
+{
+    const float threat = StageThreatRating();
+    const float power = LoadoutPowerRating();
+    if (power < threat * 0.86f)
+    {
+        return L"상점 강화 추천";
+    }
+    if (power < threat * 1.02f)
+    {
+        return L"보통 난이도 적정";
+    }
+    if (power > threat * 1.30f)
+    {
+        return L"어려움 도전 가능";
+    }
+    return L"안정적인 편성";
 }
 
 float PawlineGameImpl::GimmickInterval() const
@@ -1721,14 +1843,14 @@ void PawlineGameImpl::TryUpgradeWallet()
 {
     if (m_walletLevel >= 5)
     {
-        SetMessage(L"Wallet is already max level.");
+        SetMessage(L"월렛은 이미 최대 레벨이야.");
         return;
     }
 
     const int cost = WalletUpgradeCost();
     if (m_energy < static_cast<float>(cost))
     {
-        SetMessage(L"Not enough energy to upgrade wallet.");
+        SetMessage(L"월렛 강화 에너지가 부족해.");
         return;
     }
 
@@ -1736,9 +1858,9 @@ void PawlineGameImpl::TryUpgradeWallet()
     ++m_walletLevel;
     m_walletPulseTimer = std::min(m_walletPulseTimer, 1.0f);
     TriggerWalletPulse(true);
-    AddFloatText({640.0f, 570.0f}, L"Wallet Lv." + ToWideInt(m_walletLevel), D2D1::ColorF(0xB8FF89), 1.1f);
+    AddFloatText({640.0f, 570.0f}, L"월렛 Lv." + ToWideInt(m_walletLevel), D2D1::ColorF(0xB8FF89), 1.1f);
     AddRing({kPlayerBaseX + 58.0f, kLaneY}, 152.0f, 0.58f, D2D1::ColorF(0xB8FF89, 0.48f), 4.0f);
-    SetMessage(L"Wallet upgraded. Cheaper summons, stronger units, supply pulse.");
+    SetMessage(L"월렛 강화. 소환 비용 감소, 아군 강화, 보급 펄스 활성.");
 }
 
 void PawlineGameImpl::TryFireCannon()
@@ -1751,7 +1873,7 @@ void PawlineGameImpl::TryFireCannon()
 
     m_cannonCharge = 0.0f;
     m_cannonFlash = 0.42f;
-    m_screenFlash = 0.12f;
+    m_screenFlash = m_reduceFlashes ? 0.04f : 0.12f;
     AddCameraTrauma(0.55f);
     const float damage = 210.0f + static_cast<float>(m_walletLevel) * 48.0f;
     AddBeam({116.0f, kLaneY}, {kEnemyBaseX - 2.0f, kLaneY}, 20.0f, 0.34f, D2D1::ColorF(0xF6FF83, 0.92f));

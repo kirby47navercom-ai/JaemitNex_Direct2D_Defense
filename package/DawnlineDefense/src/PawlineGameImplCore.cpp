@@ -537,6 +537,30 @@ void PawlineGameImpl::SaveProgress() const
     file << L"\n";
 }
 
+void PawlineGameImpl::ResetProgressData()
+{
+    // 제출 전 테스트 중에도 안전하게 처음 상태로 되돌릴 수 있는 진행 초기화다.
+    m_lumen = 0;
+    m_unitUnlocked = {
+        true, true, true, true, true,
+        false, false, false, false, false,
+        false, false, false, false};
+    m_unitLevels = {
+        1, 1, 1, 1, 1,
+        1, 1, 1, 1, 1,
+        1, 1, 1, 1};
+    m_stageCleared = {
+        false, false, false, false, false,
+        false, false, false, false, false};
+    m_loadout = {PlayerUnit::Paw, PlayerUnit::Box, PlayerUnit::Spark, PlayerUnit::Dash, PlayerUnit::Bell};
+    m_selectedStage = 0;
+    m_selectedLoadoutSlot = 0;
+    m_shopSelectedUnit = 0;
+    m_resetConfirmTimer = 0.0f;
+    SaveProgress();
+    SetMessage(L"진행 데이터를 처음 상태로 돌렸어.");
+}
+
 void PawlineGameImpl::ResetToTitle()
 {
     m_screen = GameScreen::Title;
@@ -550,6 +574,7 @@ void PawlineGameImpl::ResetToTitle()
     m_uiPulses.clear();
     m_telegraphs.clear();
     m_screenFlash = 0.0f;
+    m_directorPressure = 0.0f;
     m_paused = false;
     m_escapeMenuOpen = false;
     m_pauseBeforeEscape = false;
@@ -558,6 +583,7 @@ void PawlineGameImpl::ResetToTitle()
     m_showcaseMode = false;
     m_demoSpawnTimer = 0.0f;
     m_demoWalletTimer = 0.0f;
+    m_resetConfirmTimer = 0.0f;
     m_message.clear();
     m_messageTimer = 0.0f;
 }
@@ -575,6 +601,7 @@ void PawlineGameImpl::ResetToMenu()
     m_uiPulses.clear();
     m_telegraphs.clear();
     m_screenFlash = 0.0f;
+    m_directorPressure = 0.0f;
     m_paused = false;
     m_escapeMenuOpen = false;
     m_pauseBeforeEscape = false;
@@ -583,6 +610,7 @@ void PawlineGameImpl::ResetToMenu()
     m_showcaseMode = false;
     m_demoSpawnTimer = 0.0f;
     m_demoWalletTimer = 0.0f;
+    m_resetConfirmTimer = 0.0f;
     m_message.clear();
     m_messageTimer = 0.0f;
 }
@@ -613,6 +641,7 @@ void PawlineGameImpl::ResetGame()
     m_stageTime = 0.0f;
     m_gameSpeed = m_defaultGameSpeed;
     m_enemyTimer = stage.enemyInterval * (m_difficulty == Difficulty::Easy ? 1.15f : (m_difficulty == Difficulty::Hard ? 0.86f : 1.0f));
+    m_directorPressure = 0.0f;
     m_nextBossTime = stage.bossFirstTime;
     m_cannonCharge = 35.0f;
     m_cannonFlash = 0.0f;
@@ -641,7 +670,20 @@ void PawlineGameImpl::ResetGame()
     m_bossPhaseTwoTriggered = false;
     m_demoSpawnTimer = 0.70f;
     m_demoWalletTimer = 2.20f;
-    SetMessage(stage.name + L": summon units and break the enemy base.");
+    SetMessage(stage.name + L": 유닛을 소환해서 적 기지를 밀어내자.");
+}
+
+void PawlineGameImpl::StartDemoRun()
+{
+    // 제출 영상용 자동 시연. 플레이어가 직접 조작하지 않아도 전투, 월렛, 캐논, 카메라가 보인다.
+    m_selectedStage = HighestUnlockedStage();
+    m_difficulty = Difficulty::Normal;
+    ResetGame();
+    m_showcaseMode = true;
+    m_showcaseTimer = 0.0f;
+    m_demoSpawnTimer = 0.35f;
+    m_demoWalletTimer = 1.0f;
+    SetMessage(L"시연 모드 시작. F1로 켜고 끌 수 있어.");
 }
 
 void PawlineGameImpl::Update(float dt)
@@ -668,6 +710,10 @@ void PawlineGameImpl::Update(float dt)
     if (m_screenFlash > 0.0f)
     {
         m_screenFlash -= dt;
+    }
+    if (m_resetConfirmTimer > 0.0f)
+    {
+        m_resetConfirmTimer = std::max(0.0f, m_resetConfirmTimer - dt);
     }
     if (m_stageGimmickPulse > 0.0f)
     {
@@ -742,7 +788,7 @@ void PawlineGameImpl::Update(float dt)
         m_resultScore = m_score + static_cast<int>(std::max(0.0f, m_playerBaseHp)) + m_walletLevel * 300;
         m_resultTime = m_stageTime;
         GrantStageReward();
-        SetMessage(L"Enemy base destroyed. Lumen earned.");
+        SetMessage(L"적 기지 파괴. LUMEN 획득.");
     }
     if (m_playerBaseHp <= 0.0f)
     {
@@ -751,7 +797,7 @@ void PawlineGameImpl::Update(float dt)
         m_playerBaseHp = 0.0f;
         m_resultScore = m_score;
         m_resultTime = m_stageTime;
-        SetMessage(L"Home base fell. Press R to rebuild.");
+        SetMessage(L"아군 기지가 무너졌어. R로 다시 도전.");
     }
 }
 
