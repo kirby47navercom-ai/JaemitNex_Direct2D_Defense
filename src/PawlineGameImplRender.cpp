@@ -155,6 +155,23 @@ void PawlineGameImpl::Render()
         return;
     }
 
+    if (m_screen == GameScreen::Briefing)
+    {
+        DrawBriefing();
+        DrawMessage();
+        DrawUiPulses();
+        if (m_escapeMenuOpen)
+        {
+            DrawEscapeMenuClean();
+        }
+        hr = m_renderTarget->EndDraw();
+        if (hr == D2DERR_RECREATE_TARGET)
+        {
+            DiscardDeviceResources();
+        }
+        return;
+    }
+
     if (m_screen == GameScreen::Shop)
     {
         DrawShop();
@@ -195,6 +212,7 @@ void PawlineGameImpl::Render()
     DrawHeader();
     DrawCameraHud();
     DrawBossPresentation();
+    DrawTutorialTips();
     DrawCommandBar();
     DrawUiPulses();
     DrawMessage();
@@ -571,6 +589,76 @@ void PawlineGameImpl::DrawMenu()
     DrawButton(StartGameButtonRect(), L"Start Stage", true, D2D1::ColorF(0x173C4B));
     DrawString(L"S / B", D2D1::RectF(MenuShopButtonRect().left, MenuShopButtonRect().bottom + 4.0f, MenuShopButtonRect().right, MenuShopButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
     DrawString(L"Enter / Space", D2D1::RectF(StartGameButtonRect().left, StartGameButtonRect().bottom + 4.0f, StartGameButtonRect().right, StartGameButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+}
+
+void PawlineGameImpl::DrawBriefing()
+{
+    const StageDefinition stage = CurrentStage();
+    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0x071017));
+    FillEllipse({250.0f, 184.0f}, 360.0f, 170.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.10f));
+    FillEllipse({1040.0f, 554.0f}, 420.0f, 210.0f, D2D1::ColorF(stage.laneColor.r, stage.laneColor.g, stage.laneColor.b, 0.30f));
+    for (int i = 0; i < 120; ++i)
+    {
+        const float x = 34.0f + std::fmod(static_cast<float>(i * 127 + m_selectedStage * 31), 1212.0f);
+        const float y = 28.0f + std::fmod(static_cast<float>(i * 83 + m_selectedStage * 47), 732.0f);
+        const float alpha = 0.10f + Hash01(static_cast<float>(i), static_cast<float>(m_selectedStage), std::floor(m_uiTime * 2.0f)) * 0.18f;
+        FillEllipse({x, y}, 1.2f, 1.2f, D2D1::ColorF(0xEAF7FF, alpha));
+    }
+
+    DrawPixelText(L"MISSION BRIEF", {74.0f, 48.0f}, 5.0f, D2D1::ColorF(0xF3FBFF));
+    DrawPixelText(L"LUMEN " + ToWideInt(m_lumen), {1028.0f, 54.0f}, 2.8f, D2D1::ColorF(0xF6FF83));
+
+    const D2D1_RECT_F planet = D2D1::RectF(78.0f, 136.0f, 516.0f, 500.0f);
+    DrawCartoonPanel(planet, D2D1::ColorF(0x0D1821, 0.96f), stage.lineColor);
+    FillEllipse({208.0f, 282.0f}, 84.0f, 84.0f, D2D1::ColorF(stage.laneColor.r, stage.laneColor.g, stage.laneColor.b, 0.92f));
+    FillEllipse({176.0f, 246.0f}, 34.0f, 16.0f, D2D1::ColorF(0xFFFFFF, 0.10f));
+    StrokeEllipse({208.0f, 282.0f}, 84.0f, 84.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.92f), 4.0f);
+    if (m_selectedStage == 5)
+    {
+        StrokeEllipse({208.0f, 282.0f}, 138.0f, 42.0f, D2D1::ColorF(0xE6D392, 0.62f), 4.0f);
+    }
+    if (m_selectedStage == 9)
+    {
+        for (int i = 0; i < 12; ++i)
+        {
+            const float a = static_cast<float>(i) / 12.0f * kPi * 2.0f + m_uiTime * 0.4f;
+            DrawLine({208.0f + std::cos(a) * 94.0f, 282.0f + std::sin(a) * 94.0f},
+                     {208.0f + std::cos(a) * 126.0f, 282.0f + std::sin(a) * 126.0f},
+                     D2D1::ColorF(0xFFB347, 0.46f), 4.0f);
+        }
+    }
+    DrawString(stage.name, D2D1::RectF(324.0f, 170.0f, 488.0f, 216.0f), m_titleFormat, D2D1::ColorF(0xF3FBFF));
+    DrawString(stage.subtitle, D2D1::RectF(324.0f, 224.0f, 488.0f, 252.0f), m_bodyFormat, D2D1::ColorF(0xBFD1DB));
+    DrawPixelText(L"EVENT", {324.0f, 278.0f}, 2.5f, D2D1::ColorF(0xF6FF83));
+    DrawString(stage.gimmick, D2D1::RectF(324.0f, 304.0f, 488.0f, 344.0f), m_bodyFormat, D2D1::ColorF(0xF6FF83));
+    DrawPixelText(L"ENEMIES", {324.0f, 372.0f}, 2.5f, D2D1::ColorF(0xFFB6C2));
+    DrawString(StageEnemySummary(), D2D1::RectF(324.0f, 398.0f, 496.0f, 444.0f), m_bodyFormat, D2D1::ColorF(0xFFCAD1));
+
+    const D2D1_RECT_F plan = D2D1::RectF(560.0f, 136.0f, 1202.0f, 500.0f);
+    DrawCartoonPanel(plan, D2D1::ColorF(0x0D1821, 0.96f), D2D1::ColorF(0x65B8FF));
+    DrawPixelText(L"LOADOUT CHECK", {598.0f, 166.0f}, 3.4f, D2D1::ColorF(0xEAF7FF));
+    DrawPixelText(L"CLICK A SLOT TO EDIT", {598.0f, 210.0f}, 2.2f, D2D1::ColorF(0x9AB2BF));
+    for (int i = 0; i < kLoadoutSize; ++i)
+    {
+        const D2D1_RECT_F src = MenuLoadoutSlotRect(i);
+        const D2D1_RECT_F rect = D2D1::RectF(604.0f + static_cast<float>(i) * 112.0f, 260.0f, 700.0f + static_cast<float>(i) * 112.0f, 390.0f);
+        const PlayerUnit unit = m_loadout[i];
+        const UnitStats stats = PlayerStats(unit);
+        const bool hover = Contains(src, m_mouse) || Contains(rect, m_mouse);
+        DrawCartoonPanel(rect, hover ? D2D1::ColorF(0x142633, 0.98f) : D2D1::ColorF(0x0F1A22, 0.98f), stats.accent, hover);
+        DrawPlayerIcon(unit, {rect.left + 48.0f, rect.top + 38.0f}, 0.78f, true);
+        DrawPixelTextCentered(stats.name, D2D1::RectF(rect.left + 6.0f, rect.top + 76.0f, rect.right - 6.0f, rect.top + 100.0f), 1.55f, D2D1::ColorF(0xF3FBFF), 1.0f);
+        DrawPixelTextCentered(L"KEY " + ToWideInt(i + 1), D2D1::RectF(rect.left + 8.0f, rect.bottom - 26.0f, rect.right - 8.0f, rect.bottom - 7.0f), 1.55f, D2D1::ColorF(0xCFE8F5), 1.0f);
+    }
+    DrawString(L"Enemy Base HP  " + ToWideInt(static_cast<int>(stage.enemyHp)), D2D1::RectF(604.0f, 420.0f, 820.0f, 448.0f), m_bodyFormat, D2D1::ColorF(0xFFB6C2));
+    DrawString(L"Start Energy  " + ToWideInt(static_cast<int>(stage.startEnergy)), D2D1::RectF(836.0f, 420.0f, 1060.0f, 448.0f), m_bodyFormat, D2D1::ColorF(0xB8FF89));
+    DrawString(L"Boss First  " + ToWideInt(static_cast<int>(stage.bossFirstTime)) + L"s", D2D1::RectF(604.0f, 454.0f, 820.0f, 482.0f), m_bodyFormat, D2D1::ColorF(0xFFB347));
+    DrawString(L"Event Every  " + ToWideInt(static_cast<int>(GimmickInterval())) + L"s", D2D1::RectF(836.0f, 454.0f, 1060.0f, 482.0f), m_bodyFormat, D2D1::ColorF(0xF6FF83));
+
+    DrawButton(BriefingBackButtonRect(), L"Back", true, D2D1::ColorF(0x173C4B));
+    DrawButton(BriefingShopButtonRect(), L"Shop", true, D2D1::ColorF(0x4B4321));
+    DrawButton(BriefingStartButtonRect(), L"Launch", true, D2D1::ColorF(0x283B27));
+    DrawPixelTextCentered(L"ENTER / SPACE", D2D1::RectF(BriefingStartButtonRect().left, BriefingStartButtonRect().bottom + 8.0f, BriefingStartButtonRect().right, BriefingStartButtonRect().bottom + 28.0f), 1.8f, D2D1::ColorF(0x8EA9B8), 1.0f);
 }
 
 void PawlineGameImpl::DrawShop()
@@ -2196,6 +2284,41 @@ void PawlineGameImpl::DrawBossPresentation()
     FillRoundRect(D2D1::RectF(bar.left, bar.top, bar.left + (bar.right - bar.left) * pct, bar.top + 7.0f), 5.0f, D2D1::ColorF(0xFFFFFF, 0.15f));
 }
 
+void PawlineGameImpl::DrawTutorialTips()
+{
+    if (m_screen != GameScreen::Playing || m_stageTime > 14.0f || m_escapeMenuOpen)
+    {
+        return;
+    }
+
+    const float fadeIn = Clamp01(m_stageTime / 0.8f);
+    const float fadeOut = Clamp01((14.0f - m_stageTime) / 1.4f);
+    const float alpha = std::min(fadeIn, fadeOut);
+    const StageDefinition stage = CurrentStage();
+
+    auto tip = [&](D2D1_RECT_F rect, const std::wstring& title, const std::wstring& body, D2D1_COLOR_F accent) {
+        DrawCartoonPanel(rect, D2D1::ColorF(0x071017, 0.86f * alpha), accent, false);
+        DrawPixelText(title, {rect.left + 12.0f, rect.top + 10.0f}, 2.25f, D2D1::ColorF(0xF3FBFF, alpha), alpha);
+        DrawPixelText(body, {rect.left + 12.0f, rect.top + 36.0f}, 1.75f, D2D1::ColorF(0xCFE8F5, alpha), alpha);
+    };
+
+    tip(D2D1::RectF(60.0f, 512.0f, 312.0f, 584.0f), L"SUMMON", L"PRESS 1-5 OR CLICK CARDS", D2D1::ColorF(0x65B8FF, alpha));
+    DrawLine({144.0f, 584.0f}, {92.0f, 628.0f}, D2D1::ColorF(0x65B8FF, 0.42f * alpha), 2.4f);
+    DrawLine({92.0f, 628.0f}, {104.0f, 616.0f}, D2D1::ColorF(0x65B8FF, 0.42f * alpha), 2.4f);
+
+    tip(D2D1::RectF(452.0f, 512.0f, 726.0f, 584.0f), L"WALLET", L"W BOOSTS COST AND PULSE", D2D1::ColorF(0xB8FF89, alpha));
+    DrawLine({626.0f, 584.0f}, {728.0f, 628.0f}, D2D1::ColorF(0xB8FF89, 0.42f * alpha), 2.4f);
+
+    tip(D2D1::RectF(890.0f, 118.0f, 1194.0f, 190.0f), L"CAMERA", L"DRAG OR WHEEL THE LANE", stage.lineColor);
+    DrawLine({890.0f, 154.0f}, {802.0f, 104.0f}, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.42f * alpha), 2.4f);
+
+    if (m_stageTime > 4.5f)
+    {
+        tip(D2D1::RectF(884.0f, 512.0f, 1194.0f, 584.0f), L"MOONBEAM", L"SPACE FIRES WHEN FULL", D2D1::ColorF(0xF6FF83, alpha));
+        DrawLine({918.0f, 584.0f}, {740.0f, 708.0f}, D2D1::ColorF(0xF6FF83, 0.38f * alpha), 2.4f);
+    }
+}
+
 void PawlineGameImpl::DrawBattleLogo()
 {
     const StageDefinition stage = CurrentStage();
@@ -2533,6 +2656,32 @@ void PawlineGameImpl::DrawResultScreen()
                D2D1::RectF(panel.left + 94.0f, panel.top + 268.0f, panel.right - 94.0f, panel.top + 296.0f),
                m_bodyFormat,
                m_victory ? D2D1::ColorF(0xF6FF83) : D2D1::ColorF(0x8EA9B8));
+
+    const float hpPct = m_playerBaseMaxHp > 0.0f ? Clamp01(m_playerBaseHp / m_playerBaseMaxHp) : 0.0f;
+    int medalCount = m_victory ? 1 : 0;
+    if (m_victory && hpPct > 0.45f)
+    {
+        ++medalCount;
+    }
+    if (m_victory && m_resultTime < CurrentStage().bossFirstTime + 55.0f)
+    {
+        ++medalCount;
+    }
+    const std::wstring rank = medalCount >= 3 ? L"RANK S" : (medalCount == 2 ? L"RANK A" : (medalCount == 1 ? L"RANK B" : L"RANK C"));
+    DrawPixelTextCentered(rank, D2D1::RectF(panel.left + 94.0f, panel.top + 314.0f, panel.left + 262.0f, panel.top + 352.0f), 3.2f, m_victory ? D2D1::ColorF(0xF6FF83) : D2D1::ColorF(0xFFB6C2), 1.0f);
+    for (int i = 0; i < 3; ++i)
+    {
+        const Vec2 medal = {panel.left + 330.0f + static_cast<float>(i) * 62.0f, panel.top + 334.0f};
+        const bool earned = i < medalCount;
+        FillEllipse(medal, 20.0f, 20.0f, earned ? D2D1::ColorF(0xF6FF83, 0.24f) : D2D1::ColorF(0x0F1A22, 0.86f));
+        StrokeEllipse(medal, 20.0f, 20.0f, earned ? D2D1::ColorF(0xF6FF83) : D2D1::ColorF(0x394955), 2.0f);
+        DrawPixelTextCentered(earned ? L"OK" : L"--", D2D1::RectF(medal.x - 18.0f, medal.y - 10.0f, medal.x + 18.0f, medal.y + 12.0f), 1.8f, earned ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x65727C), 1.0f);
+    }
+    DrawPixelTextCentered(m_victory ? L"CLEAR REWARD BANKED" : L"NO REWARD TRY AGAIN",
+                          D2D1::RectF(panel.left + 532.0f, panel.top + 316.0f, panel.right - 52.0f, panel.top + 352.0f),
+                          2.2f,
+                          m_victory ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0x8EA9B8),
+                          1.0f);
 
     DrawButton(ResultRetryButtonRect(), L"Retry", true, D2D1::ColorF(0x173C4B));
     DrawButton(ResultNextButtonRect(), (m_victory && m_selectedStage < kStageCount - 1) ? L"Next" : L"Close", true, D2D1::ColorF(0x283B27));

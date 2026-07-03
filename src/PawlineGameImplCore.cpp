@@ -566,7 +566,7 @@ void PawlineGameImpl::Update(float dt)
         m_bossWarningTimer -= dt;
     }
 
-    if (m_screen == GameScreen::Title || m_screen == GameScreen::Options || m_screen == GameScreen::Menu || m_screen == GameScreen::Shop || m_screen == GameScreen::Result)
+    if (m_screen == GameScreen::Title || m_screen == GameScreen::Options || m_screen == GameScreen::Menu || m_screen == GameScreen::Shop || m_screen == GameScreen::Briefing || m_screen == GameScreen::Result)
     {
         if (m_screen == GameScreen::Result)
         {

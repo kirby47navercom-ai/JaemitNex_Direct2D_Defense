@@ -152,6 +152,7 @@ enum class GameScreen
     Options,
     Menu,
     Shop,
+    Briefing,
     Playing,
     Result
 };
@@ -495,6 +496,8 @@ private:
 
     void OnShopClick(Vec2 pos);
 
+    void OnBriefingClick(Vec2 pos);
+
     void OnOptionsClick(Vec2 pos);
 
     void OnEscapeMenuClick(Vec2 pos);
@@ -538,6 +541,12 @@ private:
     D2D1_RECT_F StartGameButtonRect() const;
 
     D2D1_RECT_F MenuShopButtonRect() const;
+
+    D2D1_RECT_F BriefingStartButtonRect() const;
+
+    D2D1_RECT_F BriefingBackButtonRect() const;
+
+    D2D1_RECT_F BriefingShopButtonRect() const;
 
     D2D1_RECT_F ShopBackButtonRect() const;
 
@@ -616,6 +625,8 @@ private:
     void DrawOptions();
 
     void DrawMenu();
+
+    void DrawBriefing();
 
     void DrawShop();
 
@@ -696,6 +707,8 @@ private:
     void DrawStageGimmickOverlay();
 
     void DrawBossPresentation();
+
+    void DrawTutorialTips();
 
     void DrawHeader();
 
