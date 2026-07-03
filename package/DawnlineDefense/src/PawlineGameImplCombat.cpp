@@ -216,21 +216,21 @@ std::wstring PawlineGameImpl::StageEnemySummary() const
     switch (m_selectedStage)
     {
     case 0:
-        return L"먼지 / 침돌이 / 양철";
+        return L"먼지졸병 / 가시러너 / 철갑병";
     case 1:
-        return L"황산 / 반사 / 침돌이";
+        return L"산성사수 / 거울사수 / 가시러너";
     case 2:
-        return L"이끼 / 포자 / 양철";
+        return L"포자병 / 포자포병 / 철갑병";
     case 3:
-        return L"녹슨 / 먼지 / 양철";
+        return L"녹슨망치 / 먼지졸병 / 철갑병";
     case 4:
-        return L"폭풍 / 지진 / 황산";
+        return L"중력방패 / 지진돌격 / 산성사수";
     case 5:
-        return L"고리 / 침돌이 / 폭풍";
+        return L"고리사수 / 가시러너 / 중력방패";
     case 6:
-        return L"빙결 / 고리 / 파도";
+        return L"얼음러너 / 고리사수 / 해류사수";
     case 7:
-        return L"파도 / 빙결 / 공허";
+        return L"해류사수 / 얼음러너 / 공허장갑";
     case 8:
         return L"공허 / 지진 / 녹슨";
     default:
@@ -402,15 +402,15 @@ void PawlineGameImpl::TriggerBossPattern(Unit& boss)
     switch (bossType)
     {
     case EnemyUnit::Brute:
-        SetMessage(L"양철 보스: 압축 파동.");
+        SetMessage(L"철갑 보스: 압축 파동.");
         AddTelegraph(TelegraphKind::BossPulseCircle, TelegraphShape::Circle, bossCenter, bossCenter, 190.0f, 0.0f, 1.08f, 58.0f + threat * 3.6f, D2D1::ColorF(0xCFA27B));
         return;
     case EnemyUnit::Sulfur:
-        SetMessage(L"황산 보스: 산성 장막.");
+        SetMessage(L"산성 보스: 산성 장막.");
         AddTelegraph(TelegraphKind::VenusFog, TelegraphShape::FullLane, {std::max(kPlayerBaseX + 90.0f, bossCenter.x - 620.0f), kLaneY}, {bossCenter.x + 120.0f, kLaneY}, 360.0f, 0.0f, 0.95f, 16.0f + threat * 1.3f, D2D1::ColorF(0xE0B16D));
         return;
     case EnemyUnit::Moss:
-        SetMessage(L"이끼 보스: 포자 증식.");
+        SetMessage(L"포자 보스: 포자 증식.");
         AddTelegraph(TelegraphKind::BossReinforce, TelegraphShape::Circle, {std::max(kPlayerBaseX + 360.0f, bossCenter.x - 260.0f), RandomLaneY()}, bossCenter, 112.0f, 0.0f, 0.90f, 0.0f, D2D1::ColorF(0xB8FF89));
         return;
     case EnemyUnit::Rust:
@@ -419,20 +419,20 @@ void PawlineGameImpl::TriggerBossPattern(Unit& boss)
         AddTelegraph(TelegraphKind::MarsMeteor, TelegraphShape::Circle, {std::max(kPlayerBaseX + 380.0f, bossCenter.x - 180.0f), RandomLaneY()}, bossCenter, 112.0f, 0.0f, 1.06f, 48.0f + threat * 3.0f, D2D1::ColorF(0xFFB08B));
         return;
     case EnemyUnit::Storm:
-        SetMessage(L"폭풍 보스: 중력 소용돌이.");
+        SetMessage(L"중력 보스: 중력 소용돌이.");
         AddTelegraph(TelegraphKind::JupiterGravity, TelegraphShape::Circle, {std::max(kPlayerBaseX + 430.0f, bossCenter.x - 260.0f), kLaneY}, bossCenter, 330.0f, 0.0f, 1.12f, 18.0f + threat * 1.8f, D2D1::ColorF(0xD8A66A));
         return;
     case EnemyUnit::Ring:
-        SetMessage(L"고리 보스: 고리 창 소환.");
+        SetMessage(L"고리 보스: 고리탄 소환.");
         AddTelegraph(TelegraphKind::SaturnReinforce, TelegraphShape::Circle, {std::max(kPlayerBaseX + 390.0f, bossCenter.x - 300.0f), RandomLaneY()}, bossCenter, 120.0f, 0.0f, 0.88f, 0.0f, D2D1::ColorF(0xE6D392));
         AddTelegraph(TelegraphKind::BossFlareLine, TelegraphShape::Line, bossCenter, {std::max(kPlayerBaseX + 80.0f, bossCenter.x - 560.0f), bossCenter.y - 54.0f}, 0.0f, 62.0f, 1.05f, 46.0f + threat * 2.5f, D2D1::ColorF(0xE6D392));
         return;
     case EnemyUnit::Frost:
-        SetMessage(L"빙결 보스: 얼음 가름.");
+        SetMessage(L"얼음 보스: 얼음 가름.");
         AddTelegraph(TelegraphKind::UranusIce, TelegraphShape::Line, {bossCenter.x, bossCenter.y - 96.0f}, {std::max(kPlayerBaseX + 70.0f, bossCenter.x - 680.0f), bossCenter.y + 86.0f}, 0.0f, 104.0f, 0.88f, 34.0f + threat * 2.5f, D2D1::ColorF(0xD9FFF8));
         return;
     case EnemyUnit::Tide:
-        SetMessage(L"파도 보스: 심해 밀물.");
+        SetMessage(L"해류 보스: 심해 밀물.");
         AddTelegraph(TelegraphKind::NeptuneTide, TelegraphShape::FullLane, {std::max(kPlayerBaseX + 90.0f, bossCenter.x - 620.0f), kLaneY + 28.0f}, {bossCenter.x + 120.0f, kLaneY + 28.0f}, 380.0f, 0.0f, 0.90f, 34.0f + threat * 2.4f, D2D1::ColorF(0x75A7FF));
         return;
     case EnemyUnit::Quake:
@@ -440,7 +440,7 @@ void PawlineGameImpl::TriggerBossPattern(Unit& boss)
         AddTelegraph(TelegraphKind::PlutoVoid, TelegraphShape::Circle, {std::max(kPlayerBaseX + 420.0f, bossCenter.x - 260.0f), kLaneY}, bossCenter, 250.0f, 0.0f, 1.02f, 54.0f + threat * 3.2f, D2D1::ColorF(0xC8B7FF));
         return;
     case EnemyUnit::Boss:
-        SetMessage(L"태양 관문: 삼중 플레어.");
+        SetMessage(L"태양문지기: 삼중 플레어.");
         AddTelegraph(TelegraphKind::SolarFlare, TelegraphShape::Line, bossCenter, {std::max(kPlayerBaseX + 80.0f, bossCenter.x - 760.0f), bossCenter.y - 92.0f}, 0.0f, 94.0f, 0.88f, 72.0f + threat * 4.0f, D2D1::ColorF(0xFFB347));
         AddTelegraph(TelegraphKind::SolarFlare, TelegraphShape::Line, {bossCenter.x, bossCenter.y + 50.0f}, {std::max(kPlayerBaseX + 80.0f, bossCenter.x - 720.0f), bossCenter.y + 96.0f}, 0.0f, 84.0f, 1.06f, 58.0f + threat * 3.3f, D2D1::ColorF(0xFFF4B8));
         return;

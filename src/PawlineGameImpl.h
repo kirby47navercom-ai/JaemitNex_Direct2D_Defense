@@ -779,6 +779,10 @@ private:
 
     bool IsUnitInLoadout(PlayerUnit unit) const;
 
+    void DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, float time, float cameraX, bool showRoute);
+
+    void DrawOrbitalPlanet(Vec2 center, float radius, int stageIndex, float alpha, float time);
+
     void DrawTitle();
 
     void DrawOptions();

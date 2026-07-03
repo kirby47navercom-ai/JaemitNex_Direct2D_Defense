@@ -9,25 +9,25 @@ StageDefinition GetStageDefinition(int index)
         {L"수성", L"가까운 첫 궤도", L"먼지형과 침형 적",
          2200.0f, 2500.0f, 190.0f, 2.36f, 0.96f, 42.0f,
          D2D1::ColorF(0x101B22), D2D1::ColorF(0x1C3037), D2D1::ColorF(0x13262D), D2D1::ColorF(0x8A9EA8)},
-        {L"금성", L"짙은 대기권", L"황산 안개 원거리 적",
+        {L"금성", L"짙은 대기권", L"산성사수 원거리 적",
          2250.0f, 2850.0f, 205.0f, 2.18f, 1.05f, 39.0f,
          D2D1::ColorF(0x191722), D2D1::ColorF(0x332936), D2D1::ColorF(0x241E2B), D2D1::ColorF(0xE0B16D)},
-        {L"지구", L"푸른 방어선", L"이끼형 균형 웨이브",
+        {L"지구", L"푸른 방어선", L"포자병 균형 웨이브",
          2350.0f, 3200.0f, 220.0f, 2.05f, 1.14f, 36.0f,
          D2D1::ColorF(0x0E1D29), D2D1::ColorF(0x14303A), D2D1::ColorF(0x102731), D2D1::ColorF(0x56A7B7)},
         {L"화성", L"붉은 모래 전선", L"녹슨 장갑형 압박",
          2400.0f, 3550.0f, 230.0f, 1.98f, 1.24f, 33.0f,
          D2D1::ColorF(0x1D1718), D2D1::ColorF(0x3A2528), D2D1::ColorF(0x291D20), D2D1::ColorF(0xDD7666)},
-        {L"목성", L"거대한 폭풍권", L"폭풍 방패형 중심",
+        {L"목성", L"거대한 폭풍권", L"중력방패 중심",
          2600.0f, 4200.0f, 250.0f, 1.90f, 1.36f, 30.0f,
          D2D1::ColorF(0x1E1B16), D2D1::ColorF(0x3A3127), D2D1::ColorF(0x2B261F), D2D1::ColorF(0xD8A66A)},
-        {L"토성", L"고리 위 방어전", L"고리 창병 원거리전",
+        {L"토성", L"고리 위 방어전", L"고리사수 원거리전",
          2650.0f, 4650.0f, 260.0f, 1.78f, 1.48f, 28.0f,
          D2D1::ColorF(0x171B20), D2D1::ColorF(0x2D3037), D2D1::ColorF(0x222731), D2D1::ColorF(0xCDBB83)},
-        {L"천왕성", L"기울어진 얼음 궤도", L"빙결 질주형 압박",
+        {L"천왕성", L"기울어진 얼음 궤도", L"얼음러너 압박",
          2750.0f, 5200.0f, 275.0f, 1.68f, 1.62f, 25.0f,
          D2D1::ColorF(0x101D22), D2D1::ColorF(0x19353A), D2D1::ColorF(0x122B31), D2D1::ColorF(0x80E5D4)},
-        {L"해왕성", L"먼 푸른 심해", L"파도 망령 원거리 러시",
+        {L"해왕성", L"먼 푸른 심해", L"해류사수 원거리 러시",
          2850.0f, 5850.0f, 290.0f, 1.56f, 1.78f, 23.0f,
          D2D1::ColorF(0x101928), D2D1::ColorF(0x182C48), D2D1::ColorF(0x13243C), D2D1::ColorF(0x75A7FF)},
         {L"명왕성", L"가장 먼 어둠", L"공허 중장갑과 빠른 보스",
@@ -46,7 +46,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
     switch (unit)
     {
     case PlayerUnit::Paw:
-        stats.name = L"초보 발냥이";
+        stats.name = L"기본냥";
         stats.cost = 75;
         stats.cooldown = 1.35f;
         stats.hp = 130.0f;
@@ -59,7 +59,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
         stats.accent = D2D1::ColorF(0x65B8FF);
         break;
     case PlayerUnit::Box:
-        stats.name = L"상자 수비냥";
+        stats.name = L"방패냥";
         stats.cost = 145;
         stats.cooldown = 4.3f;
         stats.hp = 460.0f;
@@ -72,7 +72,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
         stats.accent = D2D1::ColorF(0xDCA85B);
         break;
     case PlayerUnit::Spark:
-        stats.name = L"번개 냥술사";
+        stats.name = L"전기냥";
         stats.cost = 265;
         stats.cooldown = 6.4f;
         stats.hp = 96.0f;
@@ -86,7 +86,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
         stats.accent = D2D1::ColorF(0xBA7BFF);
         break;
     case PlayerUnit::Dash:
-        stats.name = L"돌진 꼬마냥";
+        stats.name = L"질주냥";
         stats.cost = 115;
         stats.cooldown = 2.05f;
         stats.hp = 86.0f;
@@ -99,7 +99,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
         stats.accent = D2D1::ColorF(0x62DD88);
         break;
     case PlayerUnit::Bell:
-        stats.name = L"종소리 예언냥";
+        stats.name = L"종냥";
         stats.cost = 220;
         stats.cooldown = 5.15f;
         stats.hp = 118.0f;
@@ -113,7 +113,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
         stats.accent = D2D1::ColorF(0xF2C94C);
         break;
     case PlayerUnit::Titan:
-        stats.name = L"찹쌀 거대냥";
+        stats.name = L"거대냥";
         stats.cost = 390;
         stats.cooldown = 9.2f;
         stats.hp = 760.0f;
@@ -126,7 +126,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
         stats.accent = D2D1::ColorF(0xFF83B7);
         break;
     case PlayerUnit::Frost:
-        stats.name = L"서리 방패냥";
+        stats.name = L"얼음방패냥";
         stats.cost = 185;
         stats.cooldown = 4.85f;
         stats.hp = 330.0f;
@@ -139,7 +139,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
         stats.accent = D2D1::ColorF(0x74E8FF);
         break;
     case PlayerUnit::Comet:
-        stats.name = L"혜성 돌격냥";
+        stats.name = L"혜성냥";
         stats.cost = 155;
         stats.cooldown = 3.05f;
         stats.hp = 104.0f;
@@ -152,7 +152,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
         stats.accent = D2D1::ColorF(0xFF9F4A);
         break;
     case PlayerUnit::Orbit:
-        stats.name = L"궤도 마도냥";
+        stats.name = L"궤도냥";
         stats.cost = 330;
         stats.cooldown = 7.2f;
         stats.hp = 112.0f;
@@ -166,7 +166,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
         stats.accent = D2D1::ColorF(0x88A8FF);
         break;
     case PlayerUnit::Solar:
-        stats.name = L"태양 용사냥";
+        stats.name = L"태양검냥";
         stats.cost = 480;
         stats.cooldown = 10.6f;
         stats.hp = 520.0f;
@@ -179,7 +179,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
         stats.accent = D2D1::ColorF(0xFFB347);
         break;
     case PlayerUnit::Mint:
-        stats.name = L"민트 치유냥";
+        stats.name = L"지원냥";
         stats.cost = 245;
         stats.cooldown = 5.7f;
         stats.hp = 170.0f;
@@ -193,7 +193,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
         stats.accent = D2D1::ColorF(0x61E6B0);
         break;
     case PlayerUnit::Drill:
-        stats.name = L"드릴 굴착냥";
+        stats.name = L"드릴냥";
         stats.cost = 315;
         stats.cooldown = 6.8f;
         stats.hp = 420.0f;
@@ -206,7 +206,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
         stats.accent = D2D1::ColorF(0xCDAA72);
         break;
     case PlayerUnit::Prism:
-        stats.name = L"프리즘 저격냥";
+        stats.name = L"프리즘냥";
         stats.cost = 430;
         stats.cooldown = 8.9f;
         stats.hp = 92.0f;
@@ -220,7 +220,7 @@ UnitStats GetPlayerStats(PlayerUnit unit)
         stats.accent = D2D1::ColorF(0xE19BFF);
         break;
     case PlayerUnit::Nebula:
-        stats.name = L"성운 여왕냥";
+        stats.name = L"성운포냥";
         stats.cost = 620;
         stats.cooldown = 13.4f;
         stats.hp = 420.0f;
@@ -243,7 +243,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
     switch (unit)
     {
     case EnemyUnit::Dust:
-        stats.name = L"먼지 조각병";
+        stats.name = L"먼지졸병";
         stats.reward = 34 + static_cast<int>(threat * 3.0f);
         stats.hp = 88.0f + threat * 24.0f;
         stats.damage = 18.0f + threat * 2.5f;
@@ -255,7 +255,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0x8FA8B8);
         break;
     case EnemyUnit::Brute:
-        stats.name = L"양철 괴력병";
+        stats.name = L"철갑병";
         stats.reward = 78 + static_cast<int>(threat * 5.0f);
         stats.hp = 310.0f + threat * 78.0f;
         stats.damage = 31.0f + threat * 4.0f;
@@ -267,7 +267,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0xD5A8EA);
         break;
     case EnemyUnit::Skitter:
-        stats.name = L"침돌이";
+        stats.name = L"가시러너";
         stats.reward = 45 + static_cast<int>(threat * 4.0f);
         stats.hp = 66.0f + threat * 20.0f;
         stats.damage = 16.0f + threat * 2.0f;
@@ -279,7 +279,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0xFFE76A);
         break;
     case EnemyUnit::Sulfur:
-        stats.name = L"황산 망령";
+        stats.name = L"산성사수";
         stats.reward = 50 + static_cast<int>(threat * 4.0f);
         stats.hp = 94.0f + threat * 25.0f;
         stats.damage = 19.0f + threat * 2.4f;
@@ -292,7 +292,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0xFFD27A);
         break;
     case EnemyUnit::Moss:
-        stats.name = L"이끼 포자병";
+        stats.name = L"포자병";
         stats.reward = 58 + static_cast<int>(threat * 4.0f);
         stats.hp = 145.0f + threat * 36.0f;
         stats.damage = 22.0f + threat * 2.8f;
@@ -304,7 +304,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0x7BDB88);
         break;
     case EnemyUnit::Rust:
-        stats.name = L"녹슨 파쇄병";
+        stats.name = L"녹슨망치";
         stats.reward = 86 + static_cast<int>(threat * 6.0f);
         stats.hp = 390.0f + threat * 88.0f;
         stats.damage = 36.0f + threat * 4.5f;
@@ -316,7 +316,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0xFF8B60);
         break;
     case EnemyUnit::Storm:
-        stats.name = L"폭풍 방패병";
+        stats.name = L"중력방패";
         stats.reward = 106 + static_cast<int>(threat * 7.0f);
         stats.hp = 520.0f + threat * 108.0f;
         stats.damage = 32.0f + threat * 4.0f;
@@ -328,7 +328,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0xF1D09A);
         break;
     case EnemyUnit::Ring:
-        stats.name = L"고리 창병";
+        stats.name = L"고리사수";
         stats.reward = 72 + static_cast<int>(threat * 5.0f);
         stats.hp = 160.0f + threat * 42.0f;
         stats.damage = 34.0f + threat * 3.8f;
@@ -341,7 +341,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0xE6D392);
         break;
     case EnemyUnit::Frost:
-        stats.name = L"빙결 질주병";
+        stats.name = L"얼음러너";
         stats.reward = 62 + static_cast<int>(threat * 5.0f);
         stats.hp = 118.0f + threat * 30.0f;
         stats.damage = 21.0f + threat * 2.7f;
@@ -353,7 +353,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0xB9FFF5);
         break;
     case EnemyUnit::Tide:
-        stats.name = L"파도 망령";
+        stats.name = L"해류사수";
         stats.reward = 76 + static_cast<int>(threat * 6.0f);
         stats.hp = 132.0f + threat * 35.0f;
         stats.damage = 28.0f + threat * 3.5f;
@@ -366,7 +366,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0x75A7FF);
         break;
     case EnemyUnit::Void:
-        stats.name = L"공허 껍질병";
+        stats.name = L"공허장갑";
         stats.reward = 122 + static_cast<int>(threat * 8.0f);
         stats.hp = 650.0f + threat * 128.0f;
         stats.damage = 48.0f + threat * 5.4f;
@@ -378,7 +378,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0xC8B7FF);
         break;
     case EnemyUnit::Flare:
-        stats.name = L"플레어 주자";
+        stats.name = L"화염러너";
         stats.reward = 92 + static_cast<int>(threat * 7.0f);
         stats.hp = 190.0f + threat * 48.0f;
         stats.damage = 38.0f + threat * 4.6f;
@@ -390,7 +390,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0xFFB347);
         break;
     case EnemyUnit::Spore:
-        stats.name = L"포자 등불병";
+        stats.name = L"포자포병";
         stats.reward = 82 + static_cast<int>(threat * 6.0f);
         stats.hp = 210.0f + threat * 54.0f;
         stats.damage = 31.0f + threat * 3.6f;
@@ -403,7 +403,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0xF0A8FF);
         break;
     case EnemyUnit::Quake:
-        stats.name = L"지진 황소병";
+        stats.name = L"지진돌격";
         stats.reward = 145 + static_cast<int>(threat * 9.0f);
         stats.hp = 820.0f + threat * 150.0f;
         stats.damage = 58.0f + threat * 6.2f;
@@ -415,7 +415,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0xD6B08C);
         break;
     case EnemyUnit::Mirror:
-        stats.name = L"반사 임프";
+        stats.name = L"거울사수";
         stats.reward = 88 + static_cast<int>(threat * 7.0f);
         stats.hp = 165.0f + threat * 44.0f;
         stats.damage = 35.0f + threat * 4.1f;
@@ -428,7 +428,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0x9CEBFF);
         break;
     case EnemyUnit::Comet:
-        stats.name = L"혜성 사냥견";
+        stats.name = L"혜성추격";
         stats.reward = 96 + static_cast<int>(threat * 7.0f);
         stats.hp = 150.0f + threat * 40.0f;
         stats.damage = 42.0f + threat * 4.8f;
@@ -440,7 +440,7 @@ UnitStats GetEnemyStats(EnemyUnit unit, float threat)
         stats.accent = D2D1::ColorF(0xFFDB7A);
         break;
     case EnemyUnit::Boss:
-        stats.name = L"태양 관문";
+        stats.name = L"태양문지기";
         stats.reward = 240 + static_cast<int>(threat * 12.0f);
         stats.hp = 1180.0f + threat * 180.0f;
         stats.damage = 74.0f + threat * 7.0f;

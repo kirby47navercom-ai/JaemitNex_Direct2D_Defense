@@ -52,12 +52,12 @@ During combat, the enemy director watches lane state and base HP.
 
 | Synergy | Required Units | Effect |
 | --- | --- | --- |
-| Guard Wall | 상자 수비냥 + 서리 방패냥 | Front-line HP +10% |
-| Arc Focus | 번개 냥술사 + 프리즘 저격냥 | Ranged damage +8% |
-| Rush Pack | 돌진 꼬마냥 + 혜성 돌격냥 | Rush speed/damage +7% |
-| Star Scope | 궤도 마도냥 + 성운 여왕냥 | Ranged range +6% |
-| Mint Supply | 민트 치유냥 | Energy regen +4 and stronger wallet healing |
-| Sun Chime | 태양 용사냥 + 종소리 예언냥 | Cannon charge +12% |
+| Guard Wall | 방패냥 + 얼음방패냥 | Front-line HP +10% |
+| Arc Focus | 전기냥 + 프리즘냥 | Ranged damage +8% |
+| Rush Pack | 질주냥 + 혜성냥 | Rush speed/damage +7% |
+| Star Scope | 궤도냥 + 성운포냥 | Ranged range +6% |
+| Mint Supply | 지원냥 | Energy regen +4 and stronger wallet healing |
+| Sun Chime | 태양검냥 + 종냥 | Cannon charge +12% |
 
 ## Evolution
 
@@ -71,13 +71,13 @@ During combat, the enemy director watches lane state and base HP.
 
 | Boss | Signature Pattern |
 | --- | --- |
-| 양철 괴력병 | 압축 파동 circle warning |
-| 황산 망령 | 산성 장막 lane warning |
-| 이끼 포자병 | 포자 증식 reinforcement |
-| 녹슨 파쇄병 | 붉은 낙하 multi-meteor |
-| 폭풍 방패병 | 중력 소용돌이 |
-| 고리 창병 | 고리 창 소환 and line thrust |
-| 빙결 질주병 | 얼음 가름 line warning |
-| 파도 망령 | 심해 밀물 lane push |
-| 지진 황소병 | 공허 균열 |
-| 태양 관문 | 삼중 플레어 |
+| 철갑병 | 압축 파동 circle warning |
+| 산성사수 | 산성 장막 lane warning |
+| 포자병 | 포자 증식 reinforcement |
+| 녹슨망치 | 붉은 낙하 multi-meteor |
+| 중력방패 | 중력 소용돌이 |
+| 고리사수 | 고리탄 소환 and line thrust |
+| 얼음러너 | 얼음 가름 line warning |
+| 해류사수 | 심해 밀물 lane push |
+| 지진돌격 | 공허 균열 |
+| 태양문지기 | 삼중 플레어 |
