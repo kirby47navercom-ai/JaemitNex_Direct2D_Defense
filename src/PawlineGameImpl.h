@@ -790,6 +790,8 @@ private:
 
     D2D1_RECT_F CannonButtonRect() const;
 
+    D2D1_RECT_F MessageToastRect() const;
+
     D2D1_RECT_F PauseButtonRect() const;
 
     D2D1_RECT_F RestartButtonRect() const;
@@ -813,6 +815,10 @@ private:
     void FillRect(D2D1_RECT_F rect, D2D1_COLOR_F color);
 
     void StrokeRect(D2D1_RECT_F rect, D2D1_COLOR_F color, float width = 1.0f);
+
+    D2D1_RECT_F FullViewportRect() const;
+
+    void FillViewport(D2D1_COLOR_F color);
 
     void FillRoundRect(D2D1_RECT_F rect, float radius, D2D1_COLOR_F color);
 
@@ -922,6 +928,8 @@ private:
 
     void DrawUnitActionLines(const Unit& unit, Vec2 pos, D2D1_COLOR_F accent);
 
+    void DrawUnitIdentityMark(const Unit& unit, Vec2 pos, D2D1_COLOR_F accent);
+
     void DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitStats& stats, float windup, float strike, float recoil);
 
     void DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStats& stats, float windup, float strike, float recoil);
@@ -984,6 +992,8 @@ private:
 
     void DrawCommandBar();
 
+    void DrawFullscreenFrameExtensions();
+
     void DrawCombatHelpPanel();
 
     void DrawUnitCard(int index);
@@ -997,6 +1007,8 @@ private:
     void DrawMessage();
 
     void DrawOverlay();
+
+    void DrawSceneTransition();
 
     void DrawEscapeMenuClean();
 
@@ -1064,6 +1076,7 @@ private:
     // 현재 화면과 메뉴 선택 상태.
     Vec2 m_mouse = {};
     GameScreen m_screen = GameScreen::Title;
+    GameScreen m_observedScreen = GameScreen::Title;
     int m_selectedStage = 0;
     int m_selectedLoadoutSlot = 0;
     int m_shopSelectedUnit = 0;
@@ -1120,7 +1133,7 @@ private:
     float m_viewScale = 1.0f;
     float m_viewOffsetX = 0.0f;
     float m_viewOffsetY = 0.0f;
-    float m_userViewScale = 0.96f;
+    float m_userViewScale = 1.0f;
     float m_playerBaseShake = 0.0f;
     float m_enemyBaseShake = 0.0f;
     float m_resultTime = 0.0f;
@@ -1129,6 +1142,9 @@ private:
     float m_demoWalletTimer = 0.0f;
     float m_resetConfirmTimer = 0.0f;
     float m_autoSaveNoticeTimer = 0.0f;
+    // 화면이 바뀌면 자동으로 켜지는 짧은 페이드 연출 타이머다.
+    float m_sceneTransitionTimer = 0.0f;
+    float m_sceneTransitionMax = 0.46f;
 
     // 게임 전체 플래그. 일시정지, 결과, 접근성, 디버그 상태를 구분한다.
     Difficulty m_difficulty = Difficulty::Normal;

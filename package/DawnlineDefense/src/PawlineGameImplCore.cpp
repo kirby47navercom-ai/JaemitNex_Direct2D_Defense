@@ -964,9 +964,20 @@ void PawlineGameImpl::Update(float dt)
     // UI time always moves, but combat time below is multiplied by m_gameSpeed.
     // This keeps menus/VFX alive even when the battle itself is paused.
     m_uiTime += dt;
+    if (m_screen != m_observedScreen)
+    {
+        // 모든 씬 변경을 한곳에서 감지해 페이드 전환을 켠다.
+        m_observedScreen = m_screen;
+        m_sceneTransitionTimer = m_sceneTransitionMax;
+    }
+    if (m_sceneTransitionTimer > 0.0f)
+    {
+        m_sceneTransitionTimer = std::max(0.0f, m_sceneTransitionTimer - dt);
+    }
     if (m_messageTimer > 0.0f)
     {
-        m_messageTimer -= dt;
+        const float fadeSpeed = Contains(MessageToastRect(), m_mouse) ? 5.6f : 1.0f;
+        m_messageTimer = std::max(0.0f, m_messageTimer - dt * fadeSpeed);
     }
     if (m_autoSaveNoticeTimer > 0.0f)
     {

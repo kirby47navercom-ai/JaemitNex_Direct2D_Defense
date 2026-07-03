@@ -185,17 +185,17 @@ D2D1_RECT_F PawlineGameImpl::SpeedUpButtonRect() const
 
 D2D1_RECT_F PawlineGameImpl::ResultRetryButtonRect() const
 {
-    return D2D1::RectF(418.0f, 470.0f, 560.0f, 520.0f);
+    return D2D1::RectF(418.0f, 558.0f, 560.0f, 608.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::ResultNextButtonRect() const
 {
-    return D2D1::RectF(570.0f, 470.0f, 712.0f, 520.0f);
+    return D2D1::RectF(570.0f, 558.0f, 712.0f, 608.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::ResultMenuButtonRect() const
 {
-    return D2D1::RectF(722.0f, 470.0f, 864.0f, 520.0f);
+    return D2D1::RectF(722.0f, 558.0f, 864.0f, 608.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::WalletButtonRect() const
@@ -206,6 +206,13 @@ D2D1_RECT_F PawlineGameImpl::WalletButtonRect() const
 D2D1_RECT_F PawlineGameImpl::CannonButtonRect() const
 {
     return D2D1::RectF(664.0f, 708.0f, 808.0f, 774.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::MessageToastRect() const
+{
+    // 메시지는 전투 카드와 브리핑 본문을 가리지 않도록 화면 상단의 얇은 토스트로 고정한다.
+    const float y = (m_screen == GameScreen::Playing || m_screen == GameScreen::Result) ? 120.0f : 100.0f;
+    return D2D1::RectF(392.0f, y, 888.0f, y + 34.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::PauseButtonRect() const

@@ -4,7 +4,8 @@
 void PawlineGameImpl::SetMessage(const std::wstring& message)
 {
     m_message = message;
-    m_messageTimer = 3.6f;
+    // 화면을 오래 가리지 않도록 짧은 토스트로 보여준다. 마우스가 닿으면 Update에서 더 빠르게 사라진다.
+    m_messageTimer = 1.55f;
 }
 
 void PawlineGameImpl::OpenEscapeMenu()
@@ -243,7 +244,7 @@ void PawlineGameImpl::OnBriefingClick(Vec2 pos)
 
     for (int i = 0; i < kLoadoutSize; ++i)
     {
-        const D2D1_RECT_F rect = D2D1::RectF(604.0f + static_cast<float>(i) * 112.0f, 260.0f, 700.0f + static_cast<float>(i) * 112.0f, 390.0f);
+        const D2D1_RECT_F rect = D2D1::RectF(604.0f + static_cast<float>(i) * 112.0f, 236.0f, 700.0f + static_cast<float>(i) * 112.0f, 348.0f);
         if (Contains(rect, pos))
         {
             m_selectedLoadoutSlot = i;
@@ -328,7 +329,7 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
     }
     if (Contains(OptionsViewResetButtonRect(), pos))
     {
-        m_userViewScale = 0.96f;
+        m_userViewScale = 1.0f;
         UpdateViewMetrics();
         return;
     }
@@ -661,7 +662,7 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         }
         else if (key == 'A')
         {
-            m_userViewScale = 0.96f;
+            m_userViewScale = 1.0f;
             UpdateViewMetrics();
         }
         else if (key >= '1' && key <= '3')

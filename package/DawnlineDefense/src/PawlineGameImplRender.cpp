@@ -114,6 +114,7 @@ void PawlineGameImpl::Render()
     {
         DrawTitle();
         DrawUiPulses();
+        DrawSceneTransition();
         hr = m_renderTarget->EndDraw();
         if (hr == D2DERR_RECREATE_TARGET)
         {
@@ -127,6 +128,7 @@ void PawlineGameImpl::Render()
         DrawOptions();
         DrawUiPulses();
         DrawMessage();
+        DrawSceneTransition();
         if (m_escapeMenuOpen)
         {
             DrawEscapeMenuClean();
@@ -144,6 +146,7 @@ void PawlineGameImpl::Render()
         DrawMenu();
         DrawMessage();
         DrawUiPulses();
+        DrawSceneTransition();
         if (m_escapeMenuOpen)
         {
             DrawEscapeMenuClean();
@@ -161,6 +164,7 @@ void PawlineGameImpl::Render()
         DrawCodex();
         DrawMessage();
         DrawUiPulses();
+        DrawSceneTransition();
         if (m_escapeMenuOpen)
         {
             DrawEscapeMenuClean();
@@ -178,6 +182,7 @@ void PawlineGameImpl::Render()
         DrawBriefing();
         DrawMessage();
         DrawUiPulses();
+        DrawSceneTransition();
         if (m_escapeMenuOpen)
         {
             DrawEscapeMenuClean();
@@ -198,6 +203,7 @@ void PawlineGameImpl::Render()
         DrawFloatTexts();
         DrawMessage();
         DrawUiPulses();
+        DrawSceneTransition();
         if (m_escapeMenuOpen)
         {
             DrawEscapeMenuClean();
@@ -235,6 +241,7 @@ void PawlineGameImpl::Render()
     DrawShowcaseBadge();
     DrawDebugBadge();
     DrawCommandBar();
+    DrawFullscreenFrameExtensions();
     DrawUiPulses();
     DrawMessage();
     DrawOverlay();
@@ -243,6 +250,7 @@ void PawlineGameImpl::Render()
     {
         DrawResultScreen();
     }
+    DrawSceneTransition();
     if (m_escapeMenuOpen)
     {
         DrawEscapeMenuClean();
@@ -270,6 +278,29 @@ void PawlineGameImpl::StrokeRect(D2D1_RECT_F rect, D2D1_COLOR_F color, float wid
 {
     SetColor(color);
     m_renderTarget->DrawRectangle(rect, m_brush.Get(), width);
+}
+
+D2D1_RECT_F PawlineGameImpl::FullViewportRect() const
+{
+    if (!m_renderTarget)
+    {
+        return D2D1::RectF(0.0f, 0.0f, kWidth, kHeight);
+    }
+
+    const D2D1_SIZE_F size = m_renderTarget->GetSize();
+    return D2D1::RectF(0.0f, 0.0f, size.width, size.height);
+}
+
+void PawlineGameImpl::FillViewport(D2D1_COLOR_F color)
+{
+    if (!m_renderTarget)
+    {
+        return;
+    }
+
+    m_renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+    FillRect(FullViewportRect(), color);
+    SetViewTransform();
 }
 
 void PawlineGameImpl::FillRoundRect(D2D1_RECT_F rect, float radius, D2D1_COLOR_F color)
@@ -444,15 +475,19 @@ void PawlineGameImpl::DrawUnitSprite(const Unit& unit, Vec2 pos, float opacity)
     int frame = 0;
     if (unit.attackAnim > 0.0f)
     {
-        frame = std::min(3, static_cast<int>(AttackProgress(unit) * 4.0f));
+        frame = std::min(3, static_cast<int>(AttackProgress(unit) * 5.0f));
     }
     else if (unit.animState == UnitAnimState::Move)
     {
-        frame = static_cast<int>(std::floor(unit.walkCycle * 0.36f)) & 3;
+        frame = static_cast<int>(std::floor(unit.walkCycle * 1.15f)) & 3;
     }
     else if (unit.animState == UnitAnimState::Hit || unit.knockbackTimer > 0.0f)
     {
         frame = 3;
+    }
+    else
+    {
+        frame = static_cast<int>(std::floor((m_stageTime + static_cast<float>(unit.id) * 0.17f) * 2.2f)) & 3;
     }
 
     const int maxKind = unit.team == Team::Player ? kRosterCount - 1 : kEnemyCount - 1;
@@ -992,28 +1027,30 @@ void PawlineGameImpl::DrawBriefing()
     DrawString(StageEnemySummary(), D2D1::RectF(324.0f, 398.0f, 496.0f, 444.0f), m_bodyFormat, D2D1::ColorF(0xFFCAD1));
     DrawBalancePanel(D2D1::RectF(78.0f, 520.0f, 516.0f, 666.0f));
 
-    const D2D1_RECT_F plan = D2D1::RectF(560.0f, 136.0f, 1202.0f, 500.0f);
-    DrawCartoonPanel(plan, D2D1::ColorF(0x0D1821, 0.96f), D2D1::ColorF(0x65B8FF));
-    DrawPixelText(L"LOADOUT CHECK", {598.0f, 166.0f}, 3.4f, D2D1::ColorF(0xEAF7FF));
-    DrawPixelText(L"CLICK A SLOT TO EDIT", {598.0f, 210.0f}, 2.2f, D2D1::ColorF(0x9AB2BF));
+    const D2D1_RECT_F plan = D2D1::RectF(560.0f, 136.0f, 1202.0f, 474.0f);
+    DrawCartoonPanel(plan, D2D1::ColorF(0x07131C, 0.98f), D2D1::ColorF(0x65B8FF));
+    DrawPixelText(L"LOADOUT CHECK", {598.0f, 160.0f}, 3.15f, D2D1::ColorF(0xEAF7FF));
+    DrawPixelText(L"CLICK SLOT TO EDIT", {600.0f, 198.0f}, 1.9f, D2D1::ColorF(0xC8D8E2));
+    FillRoundRect(D2D1::RectF(plan.left + 34.0f, plan.top + 82.0f, plan.right - 34.0f, plan.top + 94.0f), 6.0f, D2D1::ColorF(0x0E2635, 0.92f));
     for (int i = 0; i < kLoadoutSize; ++i)
     {
         const D2D1_RECT_F src = MenuLoadoutSlotRect(i);
-        const D2D1_RECT_F rect = D2D1::RectF(604.0f + static_cast<float>(i) * 112.0f, 260.0f, 700.0f + static_cast<float>(i) * 112.0f, 390.0f);
+        const D2D1_RECT_F rect = D2D1::RectF(604.0f + static_cast<float>(i) * 112.0f, 236.0f, 700.0f + static_cast<float>(i) * 112.0f, 348.0f);
         const PlayerUnit unit = m_loadout[i];
         const UnitStats stats = PlayerStats(unit);
         const bool hover = Contains(src, m_mouse) || Contains(rect, m_mouse);
-        DrawCartoonPanel(rect, hover ? D2D1::ColorF(0x142633, 0.98f) : D2D1::ColorF(0x0F1A22, 0.98f), stats.accent, hover);
-        DrawPlayerIcon(unit, {rect.left + 48.0f, rect.top + 38.0f}, 0.78f, true);
-        DrawPixelTextCentered(stats.name, D2D1::RectF(rect.left + 6.0f, rect.top + 76.0f, rect.right - 6.0f, rect.top + 100.0f), 1.55f, D2D1::ColorF(0xF3FBFF), 1.0f);
-        DrawPixelTextCentered(L"KEY " + ToWideInt(i + 1), D2D1::RectF(rect.left + 8.0f, rect.bottom - 26.0f, rect.right - 8.0f, rect.bottom - 7.0f), 1.55f, D2D1::ColorF(0xCFE8F5), 1.0f);
+        DrawCartoonPanel(rect, hover ? D2D1::ColorF(0x123044, 0.99f) : D2D1::ColorF(0x06131C, 0.99f), stats.accent, hover);
+        DrawPlayerIcon(unit, {rect.left + 48.0f, rect.top + 34.0f}, 0.72f, true);
+        DrawPixelTextCentered(stats.name, D2D1::RectF(rect.left + 6.0f, rect.top + 68.0f, rect.right - 6.0f, rect.top + 91.0f), 1.45f, D2D1::ColorF(0xFFFFFF), 1.0f);
+        DrawPixelTextCentered(L"KEY " + ToWideInt(i + 1), D2D1::RectF(rect.left + 8.0f, rect.bottom - 22.0f, rect.right - 8.0f, rect.bottom - 6.0f), 1.35f, D2D1::ColorF(0xE5F6FF), 1.0f);
     }
-    DrawString(L"Enemy Base HP  " + ToWideInt(static_cast<int>(stage.enemyHp)), D2D1::RectF(604.0f, 420.0f, 820.0f, 448.0f), m_bodyFormat, D2D1::ColorF(0xFFB6C2));
-    DrawString(L"Start Energy  " + ToWideInt(static_cast<int>(stage.startEnergy)), D2D1::RectF(836.0f, 420.0f, 1060.0f, 448.0f), m_bodyFormat, D2D1::ColorF(0xB8FF89));
-    DrawString(L"Boss First  " + ToWideInt(static_cast<int>(stage.bossFirstTime)) + L"s", D2D1::RectF(604.0f, 454.0f, 820.0f, 482.0f), m_bodyFormat, D2D1::ColorF(0xFFB347));
-    DrawString(L"Event Every  " + ToWideInt(static_cast<int>(GimmickInterval())) + L"s", D2D1::RectF(836.0f, 454.0f, 1060.0f, 482.0f), m_bodyFormat, D2D1::ColorF(0xF6FF83));
+    FillRoundRect(D2D1::RectF(604.0f, 366.0f, 1160.0f, 424.0f), 6.0f, D2D1::ColorF(0x0B1D28, 0.90f));
+    DrawString(L"Enemy Base HP  " + ToWideInt(static_cast<int>(stage.enemyHp)), D2D1::RectF(622.0f, 374.0f, 836.0f, 398.0f), m_smallFormat, D2D1::ColorF(0xFFB6C2));
+    DrawString(L"Start Energy  " + ToWideInt(static_cast<int>(stage.startEnergy)), D2D1::RectF(862.0f, 374.0f, 1088.0f, 398.0f), m_smallFormat, D2D1::ColorF(0xB8FF89));
+    DrawString(L"Boss First  " + ToWideInt(static_cast<int>(stage.bossFirstTime)) + L"s", D2D1::RectF(622.0f, 400.0f, 836.0f, 424.0f), m_smallFormat, D2D1::ColorF(0xFFB347));
+    DrawString(L"Event Every  " + ToWideInt(static_cast<int>(GimmickInterval())) + L"s", D2D1::RectF(862.0f, 400.0f, 1088.0f, 424.0f), m_smallFormat, D2D1::ColorF(0xF6FF83));
 
-    DrawPixelText(L"DIFFICULTY", {604.0f, 500.0f}, 2.3f, D2D1::ColorF(0xEAF7FF));
+    DrawPixelText(L"DIFFICULTY", {604.0f, 490.0f}, 2.2f, D2D1::ColorF(0xEAF7FF));
     const std::array<std::wstring, 3> labels = {L"EASY", L"NORMAL", L"HARD"};
     for (int i = 0; i < 3; ++i)
     {
@@ -2164,6 +2201,137 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
     }
 }
 
+void PawlineGameImpl::DrawUnitIdentityMark(const Unit& unit, Vec2 pos, D2D1_COLOR_F accent)
+{
+    const float attack = AttackIntensity(unit);
+    const float pulse = 0.65f + std::sin(m_uiTime * 4.2f + static_cast<float>(unit.id) * 0.37f) * 0.18f;
+    const float dir = unit.team == Team::Player ? 1.0f : -1.0f;
+    const D2D1_COLOR_F soft = D2D1::ColorF(accent.r, accent.g, accent.b, 0.18f + attack * 0.16f);
+    const D2D1_COLOR_F bright = D2D1::ColorF(accent.r, accent.g, accent.b, 0.62f + attack * 0.24f);
+
+    if (unit.team == Team::Player)
+    {
+        switch (static_cast<PlayerUnit>(unit.kind))
+        {
+        case PlayerUnit::Paw:
+            FillEllipse({pos.x + dir * 26.0f, pos.y - 24.0f}, 5.0f + attack * 2.0f, 4.0f + attack * 2.0f, soft);
+            FillEllipse({pos.x + dir * 36.0f, pos.y - 15.0f}, 4.0f, 3.5f, bright);
+            FillEllipse({pos.x + dir * 21.0f, pos.y - 11.0f}, 3.6f, 3.0f, bright);
+            break;
+        case PlayerUnit::Box:
+            FillRoundRect(D2D1::RectF(pos.x + dir * 18.0f - 5.0f, pos.y - 28.0f, pos.x + dir * 48.0f + 5.0f, pos.y + 24.0f), 7.0f, D2D1::ColorF(0xFFF0B5, 0.13f + attack * 0.16f));
+            StrokeRoundRect(D2D1::RectF(pos.x + dir * 20.0f - 5.0f, pos.y - 25.0f, pos.x + dir * 45.0f + 5.0f, pos.y + 21.0f), 6.0f, bright, 2.3f);
+            break;
+        case PlayerUnit::Spark:
+            DrawLine({pos.x - 10.0f, pos.y - 42.0f}, {pos.x + 4.0f, pos.y - 56.0f}, bright, 2.4f);
+            DrawLine({pos.x + 4.0f, pos.y - 56.0f}, {pos.x - 2.0f, pos.y - 39.0f}, D2D1::ColorF(0xF6FF83, 0.78f), 2.2f);
+            StrokeEllipse({pos.x, pos.y - 42.0f}, 24.0f + attack * 12.0f, 11.0f + attack * 5.0f, D2D1::ColorF(0xF6FF83, 0.26f + attack * 0.18f), 1.8f);
+            break;
+        case PlayerUnit::Dash:
+            for (int i = 0; i < 3; ++i)
+            {
+                const float y = pos.y - 14.0f + static_cast<float>(i) * 12.0f;
+                DrawLine({pos.x - dir * (38.0f + static_cast<float>(i) * 8.0f), y},
+                         {pos.x - dir * (14.0f + attack * 16.0f), y - 2.0f},
+                         D2D1::ColorF(accent.r, accent.g, accent.b, 0.36f + attack * 0.26f), 2.2f);
+            }
+            break;
+        case PlayerUnit::Bell:
+            StrokeEllipse(pos, 36.0f + pulse * 4.0f + attack * 18.0f, 18.0f + pulse * 2.0f + attack * 9.0f, D2D1::ColorF(0xF6FF83, 0.24f + attack * 0.16f), 1.7f);
+            StrokeEllipse(pos, 50.0f + attack * 22.0f, 25.0f + attack * 10.0f, D2D1::ColorF(0xF6FF83, 0.14f + attack * 0.12f), 1.4f);
+            break;
+        case PlayerUnit::Titan:
+            DrawLine({pos.x - 35.0f, pos.y + 34.0f}, {pos.x - 8.0f, pos.y + 24.0f}, soft, 3.2f);
+            DrawLine({pos.x + 6.0f, pos.y + 26.0f}, {pos.x + 38.0f, pos.y + 35.0f}, soft, 3.2f);
+            FillEllipse({pos.x, pos.y + 36.0f}, 46.0f + attack * 16.0f, 6.0f + attack * 3.0f, D2D1::ColorF(0xFFF0B5, 0.10f + attack * 0.12f));
+            break;
+        case PlayerUnit::Frost:
+            DrawLine({pos.x, pos.y - 52.0f}, {pos.x, pos.y - 30.0f}, bright, 1.8f);
+            DrawLine({pos.x - 12.0f, pos.y - 47.0f}, {pos.x + 12.0f, pos.y - 35.0f}, bright, 1.6f);
+            DrawLine({pos.x + 12.0f, pos.y - 47.0f}, {pos.x - 12.0f, pos.y - 35.0f}, bright, 1.6f);
+            StrokeEllipse(pos, 40.0f + attack * 14.0f, 23.0f + attack * 6.0f, D2D1::ColorF(0xD9FFF8, 0.12f + attack * 0.16f), 1.5f);
+            break;
+        case PlayerUnit::Comet:
+            FillEllipse({pos.x - dir * 42.0f, pos.y + 11.0f}, 34.0f + attack * 16.0f, 7.0f + attack * 4.0f, D2D1::ColorF(0xFFB347, 0.16f + attack * 0.18f));
+            DrawLine({pos.x - dir * 55.0f, pos.y + 2.0f}, {pos.x - dir * 16.0f, pos.y - 4.0f}, D2D1::ColorF(0xFFCA7A, 0.34f + attack * 0.24f), 2.4f);
+            break;
+        case PlayerUnit::Orbit:
+        {
+            const float a = m_uiTime * 2.2f + static_cast<float>(unit.id);
+            StrokeEllipse(pos, unit.radius + 20.0f, unit.radius * 0.62f + 3.0f, bright, 1.8f);
+            FillEllipse({pos.x + std::cos(a) * 32.0f, pos.y + std::sin(a) * 13.0f - 4.0f}, 5.0f, 5.0f, D2D1::ColorF(0xDCE6FF, 0.82f));
+            break;
+        }
+        case PlayerUnit::Solar:
+            for (int i = 0; i < 8; ++i)
+            {
+                const float a = static_cast<float>(i) / 8.0f * kPi * 2.0f + m_uiTime * 0.8f;
+                DrawLine({pos.x + std::cos(a) * 31.0f, pos.y + std::sin(a) * 31.0f},
+                         {pos.x + std::cos(a) * (39.0f + attack * 12.0f), pos.y + std::sin(a) * (39.0f + attack * 12.0f)},
+                         D2D1::ColorF(0xFFB347, 0.28f + attack * 0.22f), 2.0f);
+            }
+            break;
+        case PlayerUnit::Mint:
+            StrokeEllipse(pos, 42.0f + attack * 18.0f, 42.0f + attack * 18.0f, D2D1::ColorF(0xD8FFF3, 0.13f + attack * 0.16f), 1.6f);
+            DrawLine({pos.x - 12.0f, pos.y - 45.0f}, {pos.x + 12.0f, pos.y - 45.0f}, bright, 2.4f);
+            DrawLine({pos.x, pos.y - 57.0f}, {pos.x, pos.y - 33.0f}, bright, 2.4f);
+            break;
+        case PlayerUnit::Drill:
+            StrokeEllipse({pos.x + dir * 35.0f, pos.y + 2.0f}, 20.0f + attack * 9.0f, 8.0f + attack * 3.0f, bright, 2.0f);
+            DrawLine({pos.x + dir * 21.0f, pos.y - 8.0f}, {pos.x + dir * 50.0f, pos.y + 12.0f}, D2D1::ColorF(0xFFF0C8, 0.68f), 1.6f);
+            break;
+        case PlayerUnit::Prism:
+            DrawLine({pos.x, pos.y - 55.0f}, {pos.x + 16.0f, pos.y - 38.0f}, bright, 2.0f);
+            DrawLine({pos.x + 16.0f, pos.y - 38.0f}, {pos.x, pos.y - 21.0f}, D2D1::ColorF(0x65D8FF, 0.64f), 2.0f);
+            DrawLine({pos.x, pos.y - 21.0f}, {pos.x - 16.0f, pos.y - 38.0f}, D2D1::ColorF(0xF7D6FF, 0.64f), 2.0f);
+            DrawLine({pos.x - 16.0f, pos.y - 38.0f}, {pos.x, pos.y - 55.0f}, bright, 2.0f);
+            break;
+        case PlayerUnit::Nebula:
+        {
+            const float a = m_uiTime * 1.7f + static_cast<float>(unit.id);
+            StrokeEllipse(pos, unit.radius + 23.0f, unit.radius + 9.0f, D2D1::ColorF(0xC8B7FF, 0.22f + attack * 0.14f), 1.8f);
+            FillEllipse({pos.x + std::cos(a) * 34.0f, pos.y + std::sin(a) * 21.0f}, 6.0f, 6.0f, D2D1::ColorF(0xE5D9FF, 0.78f));
+            FillEllipse({pos.x + std::cos(a + kPi) * 26.0f, pos.y + std::sin(a + kPi) * 16.0f}, 4.5f, 4.5f, D2D1::ColorF(0x9D83FF, 0.78f));
+            break;
+        }
+        }
+        return;
+    }
+
+    if (unit.boss)
+    {
+        StrokeEllipse(pos, unit.radius + 24.0f + attack * 20.0f, unit.radius + 18.0f + attack * 12.0f, D2D1::ColorF(0xFFB347, 0.30f + attack * 0.16f), 2.6f);
+        for (int i = 0; i < 6; ++i)
+        {
+            const float a = static_cast<float>(i) / 6.0f * kPi * 2.0f - m_uiTime * 0.9f;
+            DrawLine({pos.x + std::cos(a) * 38.0f, pos.y + std::sin(a) * 34.0f},
+                     {pos.x + std::cos(a) * (54.0f + attack * 18.0f), pos.y + std::sin(a) * (48.0f + attack * 14.0f)},
+                     D2D1::ColorF(0xFF9BA8, 0.28f + attack * 0.18f), 2.4f);
+        }
+        return;
+    }
+
+    if (unit.elite)
+    {
+        StrokeEllipse({pos.x, pos.y - unit.radius - 12.0f}, unit.radius * 0.92f, 5.0f, D2D1::ColorF(accent.r, accent.g, accent.b, 0.66f), 1.8f);
+    }
+
+    const EnemyUnit enemyType = static_cast<EnemyUnit>(unit.kind);
+    if (unit.ranged || enemyType == EnemyUnit::Ring || enemyType == EnemyUnit::Tide || enemyType == EnemyUnit::Mirror)
+    {
+        StrokeEllipse({pos.x + dir * 28.0f, pos.y - 12.0f}, 18.0f + attack * 9.0f, 10.0f + attack * 5.0f, bright, 1.8f);
+    }
+    else if (enemyType == EnemyUnit::Brute || enemyType == EnemyUnit::Rust || enemyType == EnemyUnit::Quake || enemyType == EnemyUnit::Storm)
+    {
+        FillEllipse({pos.x, pos.y + unit.radius + 16.0f}, unit.radius * 1.35f + attack * 18.0f, 5.0f + attack * 3.0f, soft);
+    }
+    else
+    {
+        DrawLine({pos.x - dir * 28.0f, pos.y - 20.0f}, {pos.x - dir * 6.0f, pos.y - 7.0f}, soft, 2.0f);
+        DrawLine({pos.x - dir * 30.0f, pos.y + 2.0f}, {pos.x - dir * 8.0f, pos.y + 6.0f}, soft, 1.8f);
+    }
+}
+
 void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
 {
     const PlayerUnit playerType = static_cast<PlayerUnit>(unit.kind);
@@ -2183,7 +2351,6 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
     const float bodyRx = unit.radius * (1.0f + strike * 0.22f - windup * 0.08f + recoil * 0.05f);
     const float bodyRy = unit.radius * (1.0f - strike * 0.14f + windup * 0.08f + recoil * 0.03f);
 
-    DrawUnitSprite(unit, pos, 0.58f);
     FillEllipse({pos.x, pos.y + unit.radius + 9.0f}, unit.radius * 1.25f, 7.0f, D2D1::ColorF(0x000000, 0.28f));
     FillEllipse({pos.x - unit.radius * 0.52f, pos.y - unit.radius * 0.72f}, unit.radius * 0.46f, unit.radius * 0.46f, ink);
     FillEllipse({pos.x + unit.radius * 0.52f, pos.y - unit.radius * 0.72f}, unit.radius * 0.46f, unit.radius * 0.46f, ink);
@@ -2193,6 +2360,8 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
     FillEllipse(pos, bodyRx, bodyRy, body);
     FillEllipse({pos.x - unit.radius * 0.24f, pos.y - unit.radius * 0.46f}, unit.radius * 0.30f, unit.radius * 0.18f, D2D1::ColorF(0xFFFFFF, 0.18f));
     StrokeEllipse(pos, bodyRx, bodyRy, stats.accent, 2.4f);
+    DrawUnitIdentityMark(unit, pos, stats.accent);
+    DrawUnitSprite(unit, pos, unit.hitFlash > 0.0f ? 0.92f : 0.82f);
     if (IsUnitEvolved(playerType))
     {
         // 진화한 유닛은 머리 위의 작은 빛 장식과 공격 잔광으로 일반 유닛과 구분한다.
@@ -2381,11 +2550,12 @@ void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
     FillEllipse({pos.x, pos.y + unit.radius + 9.0f}, unit.radius * 1.25f, 7.0f, D2D1::ColorF(0x000000, 0.30f));
     const float bodyRx = unit.radius * (1.08f + strike * 0.24f - windup * 0.07f + recoil * 0.04f);
     const float bodyRy = unit.radius * (1.0f - strike * 0.13f + windup * 0.07f);
-    DrawUnitSprite(unit, pos, unit.boss ? 0.62f : 0.56f);
     FillEllipse(pos, bodyRx + 3.2f, bodyRy + 3.2f, ink);
     FillEllipse(pos, bodyRx, bodyRy, body);
     FillEllipse({pos.x - unit.radius * 0.18f, pos.y - unit.radius * 0.42f}, unit.radius * 0.28f, unit.radius * 0.15f, D2D1::ColorF(0xFFFFFF, 0.12f));
     StrokeEllipse(pos, bodyRx, bodyRy, stats.accent, 2.2f);
+    DrawUnitIdentityMark(unit, pos, stats.accent);
+    DrawUnitSprite(unit, pos, unit.boss ? 0.84f : (unit.hitFlash > 0.0f ? 0.88f : 0.76f));
     DrawEnemyWeapon(unit, pos, stats, windup, strike, recoil);
     DrawUnitActionLines(unit, pos, stats.accent);
     FillEllipse({pos.x - unit.radius * 0.32f, pos.y - unit.radius * 0.12f}, 3.0f, 4.6f, stats.accent);
@@ -3137,42 +3307,44 @@ void PawlineGameImpl::DrawBossPresentation()
 
 void PawlineGameImpl::DrawTutorialTips()
 {
-    if (m_screen != GameScreen::Playing || m_stageTime > 18.0f || m_escapeMenuOpen)
+    if (m_screen != GameScreen::Playing || m_stageTime > 13.0f || m_escapeMenuOpen)
     {
         return;
     }
 
     const float fadeIn = Clamp01(m_stageTime / 0.8f);
-    const float fadeOut = Clamp01((18.0f - m_stageTime) / 1.4f);
+    const float fadeOut = Clamp01((13.0f - m_stageTime) / 1.1f);
     const float alpha = std::min(fadeIn, fadeOut);
     const StageDefinition stage = CurrentStage();
 
     auto tip = [&](D2D1_RECT_F rect, const std::wstring& key, const std::wstring& body, D2D1_COLOR_F accent) {
-        DrawCartoonPanel(rect, D2D1::ColorF(0x071017, 0.86f * alpha), accent, false);
-        DrawPixelText(key, {rect.left + 14.0f, rect.top + 12.0f}, 2.25f, D2D1::ColorF(0xF3FBFF, alpha), alpha);
-        DrawOutlinedString(body, D2D1::RectF(rect.left + 18.0f, rect.top + 40.0f, rect.right - 18.0f, rect.bottom - 8.0f), m_smallFormat, D2D1::ColorF(0xCFE8F5, alpha), 0.72f * alpha);
+        const float localAlpha = alpha * (Contains(rect, m_mouse) ? 0.18f : 1.0f);
+        DrawCartoonPanel(rect, D2D1::ColorF(0x071017, 0.86f * localAlpha), FadeColor(accent, localAlpha), false);
+        DrawPixelText(key, {rect.left + 14.0f, rect.top + 12.0f}, 2.25f, D2D1::ColorF(0xF3FBFF, localAlpha), localAlpha);
+        DrawOutlinedString(body, D2D1::RectF(rect.left + 18.0f, rect.top + 40.0f, rect.right - 18.0f, rect.bottom - 8.0f), m_smallFormat, D2D1::ColorF(0xDFF2FF, localAlpha), 0.72f * localAlpha);
+        return localAlpha;
     };
 
-    if (m_stageTime < 4.0f)
+    if (m_stageTime < 3.25f)
     {
-        tip(D2D1::RectF(58.0f, 512.0f, 390.0f, 590.0f), L"GUIDE 1", L"카드나 1~5 키로 유닛을 소환해.", D2D1::ColorF(0x65B8FF, alpha));
-        DrawLine({126.0f, 590.0f}, {92.0f, 628.0f}, D2D1::ColorF(0x65B8FF, 0.42f * alpha), 2.4f);
-        DrawLine({92.0f, 628.0f}, {106.0f, 616.0f}, D2D1::ColorF(0x65B8FF, 0.42f * alpha), 2.4f);
+        const float tipAlpha = tip(D2D1::RectF(58.0f, 512.0f, 390.0f, 590.0f), L"GUIDE 1", L"카드나 1~5 키로 유닛을 소환해.", D2D1::ColorF(0x65B8FF, alpha));
+        DrawLine({126.0f, 590.0f}, {92.0f, 628.0f}, D2D1::ColorF(0x65B8FF, 0.42f * tipAlpha), 2.4f);
+        DrawLine({92.0f, 628.0f}, {106.0f, 616.0f}, D2D1::ColorF(0x65B8FF, 0.42f * tipAlpha), 2.4f);
     }
-    else if (m_stageTime < 8.0f)
+    else if (m_stageTime < 6.5f)
     {
-        tip(D2D1::RectF(436.0f, 512.0f, 772.0f, 590.0f), L"GUIDE 2", L"W 월렛은 비용 감소, 회복, 보급 펄스를 만든다.", D2D1::ColorF(0xB8FF89, alpha));
-        DrawLine({650.0f, 590.0f}, {736.0f, 628.0f}, D2D1::ColorF(0xB8FF89, 0.42f * alpha), 2.4f);
+        const float tipAlpha = tip(D2D1::RectF(436.0f, 512.0f, 772.0f, 590.0f), L"GUIDE 2", L"W 월렛은 비용 감소, 회복, 보급 펄스를 만든다.", D2D1::ColorF(0xB8FF89, alpha));
+        DrawLine({650.0f, 590.0f}, {736.0f, 628.0f}, D2D1::ColorF(0xB8FF89, 0.42f * tipAlpha), 2.4f);
     }
-    else if (m_stageTime < 12.0f)
+    else if (m_stageTime < 9.75f)
     {
-        tip(D2D1::RectF(880.0f, 118.0f, 1198.0f, 196.0f), L"GUIDE 3", L"마우스를 가장자리로 가져가거나 드래그해서 전선을 봐.", stage.lineColor);
-        DrawLine({880.0f, 158.0f}, {804.0f, 104.0f}, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.42f * alpha), 2.4f);
+        const float tipAlpha = tip(D2D1::RectF(880.0f, 118.0f, 1198.0f, 196.0f), L"GUIDE 3", L"마우스를 가장자리로 가져가거나 드래그해서 전선을 봐.", stage.lineColor);
+        DrawLine({880.0f, 158.0f}, {804.0f, 104.0f}, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.42f * tipAlpha), 2.4f);
     }
     else
     {
-        tip(D2D1::RectF(870.0f, 512.0f, 1214.0f, 590.0f), L"GUIDE 4", L"SPACE 캐논은 100%일 때 전선을 한 번에 정리해.", D2D1::ColorF(0xF6FF83, alpha));
-        DrawLine({940.0f, 590.0f}, {736.0f, 708.0f}, D2D1::ColorF(0xF6FF83, 0.38f * alpha), 2.4f);
+        const float tipAlpha = tip(D2D1::RectF(870.0f, 512.0f, 1214.0f, 590.0f), L"GUIDE 4", L"SPACE 캐논은 100%일 때 전선을 한 번에 정리해.", D2D1::ColorF(0xF6FF83, alpha));
+        DrawLine({940.0f, 590.0f}, {736.0f, 708.0f}, D2D1::ColorF(0xF6FF83, 0.38f * tipAlpha), 2.4f);
     }
 }
 
@@ -3359,8 +3531,8 @@ void PawlineGameImpl::DrawCameraHud()
 void PawlineGameImpl::DrawTopStat(float x, const std::wstring& label, const std::wstring& value, D2D1_COLOR_F color)
 {
     D2D1_RECT_F rect = D2D1::RectF(x, 22.0f, x + 126.0f, 72.0f);
-    DrawCartoonPanel(rect, D2D1::ColorF(0x0E1D26, 0.96f), color, Contains(rect, m_mouse));
-    DrawPixelText(label, {rect.left + 10.0f, rect.top + 8.0f}, 2.0f, D2D1::ColorF(0xAFC9D5), 0.92f);
+    DrawCartoonPanel(rect, D2D1::ColorF(0x06131C, 0.99f), D2D1::ColorF(color.r, color.g, color.b, 0.96f), Contains(rect, m_mouse));
+    DrawPixelText(label, {rect.left + 10.0f, rect.top + 8.0f}, 2.0f, D2D1::ColorF(0xD7EAF4), 1.0f);
 
     // 에너지처럼 숫자가 길어지는 HUD 값은 카드 안쪽 폭에 맞춰 픽셀 폰트 크기를 줄인다.
     const float innerWidth = rect.right - rect.left - 20.0f;
@@ -3372,10 +3544,10 @@ void PawlineGameImpl::DrawTopStat(float x, const std::wstring& label, const std:
 void PawlineGameImpl::DrawCommandBar()
 {
     const StageDefinition stage = CurrentStage();
-    FillRect(D2D1::RectF(0.0f, 612.0f, kWidth, kHeight), D2D1::ColorF(0x061019));
-    FillRect(D2D1::RectF(0.0f, 612.0f, kWidth, 636.0f), D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.10f));
+    FillRect(D2D1::RectF(0.0f, 612.0f, kWidth, kHeight), D2D1::ColorF(0x031017, 0.99f));
+    FillRect(D2D1::RectF(0.0f, 612.0f, kWidth, 636.0f), D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.18f));
     StrokeRect(D2D1::RectF(0.0f, 614.0f, kWidth, kHeight), D2D1::ColorF(0x061019), 4.0f);
-    StrokeRect(D2D1::RectF(0.0f, 614.0f, kWidth, kHeight), D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.32f), 1.4f);
+    StrokeRect(D2D1::RectF(0.0f, 614.0f, kWidth, kHeight), D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.56f), 1.6f);
 
     for (int i = 0; i < kLoadoutSize; ++i)
     {
@@ -3395,11 +3567,65 @@ void PawlineGameImpl::DrawCommandBar()
     DrawButton(SpeedUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
 }
 
+void PawlineGameImpl::DrawFullscreenFrameExtensions()
+{
+    if (!m_renderTarget)
+    {
+        return;
+    }
+
+    const D2D1_SIZE_F size = m_renderTarget->GetSize();
+    const float left = std::max(0.0f, m_viewOffsetX);
+    const float top = std::max(0.0f, m_viewOffsetY);
+    const float right = std::min(size.width, m_viewOffsetX + kWidth * m_viewScale);
+    const float bottom = std::min(size.height, m_viewOffsetY + kHeight * m_viewScale);
+    if (left <= 0.5f && top <= 0.5f && right >= size.width - 0.5f && bottom >= size.height - 0.5f)
+    {
+        return;
+    }
+
+    const StageDefinition stage = CurrentStage();
+    m_renderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+
+    auto fillSideBands = [&](float bandLeft, float bandRight) {
+        if (bandRight <= bandLeft)
+        {
+            return;
+        }
+        FillRect(D2D1::RectF(bandLeft, 0.0f, bandRight, size.height), D2D1::ColorF(0x031017, 0.96f));
+        FillRect(D2D1::RectF(bandLeft, 0.0f, bandRight, top + 112.0f * m_viewScale), D2D1::ColorF(0x061019, 0.98f));
+        FillRect(D2D1::RectF(bandLeft, top + 612.0f * m_viewScale, bandRight, size.height), D2D1::ColorF(0x031017, 0.99f));
+        FillRect(D2D1::RectF(bandLeft, top + 612.0f * m_viewScale, bandRight, top + 636.0f * m_viewScale), D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.12f));
+    };
+
+    fillSideBands(0.0f, left);
+    fillSideBands(right, size.width);
+
+    if (top > 0.5f)
+    {
+        FillRect(D2D1::RectF(0.0f, 0.0f, size.width, top), D2D1::ColorF(0x031017, 0.98f));
+    }
+    if (bottom < size.height - 0.5f)
+    {
+        FillRect(D2D1::RectF(0.0f, bottom, size.width, size.height), D2D1::ColorF(0x031017, 0.98f));
+    }
+    if (left > 0.5f)
+    {
+        DrawLine({left, 0.0f}, {left, size.height}, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.28f), 1.0f);
+    }
+    if (right < size.width - 0.5f)
+    {
+        DrawLine({right, 0.0f}, {right, size.height}, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.28f), 1.0f);
+    }
+
+    SetViewTransform();
+}
+
 void PawlineGameImpl::DrawCombatHelpPanel()
 {
     const StageDefinition stage = CurrentStage();
     const D2D1_RECT_F panel = D2D1::RectF(824.0f, 628.0f, 992.0f, 774.0f);
-    DrawCartoonPanel(panel, D2D1::ColorF(0x101A23, 0.96f), stage.lineColor);
+    DrawCartoonPanel(panel, D2D1::ColorF(0x07131C, 0.99f), D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.96f));
     DrawPixelTextCentered(L"COMMAND", D2D1::RectF(panel.left + 12.0f, panel.top + 10.0f, panel.right - 12.0f, panel.top + 36.0f), 2.8f, D2D1::ColorF(0xF3FBFF), 1.0f);
 
     const std::array<std::wstring, 5> lines = {
@@ -3413,7 +3639,7 @@ void PawlineGameImpl::DrawCombatHelpPanel()
     {
         const float y = panel.top + 43.0f + static_cast<float>(i) * 20.0f;
         DrawPixelText(lines[i], {panel.left + 14.0f, y + 3.0f}, 1.95f,
-                      i == 4 ? D2D1::ColorF(0xBFD1DB) : D2D1::ColorF(0xF6FF83),
+                      i == 4 ? D2D1::ColorF(0xD8E8F0) : D2D1::ColorF(0xF6FF83),
                       0.96f);
     }
 }
@@ -3430,7 +3656,7 @@ void PawlineGameImpl::DrawUnitCard(int index)
     const bool hover = Contains(rect, m_mouse);
     const D2D1_COLOR_F border = ready && affordable ? stats.accent : D2D1::ColorF(0x394955);
 
-    DrawCartoonPanel(rect, hover ? D2D1::ColorF(0x142633, 0.98f) : D2D1::ColorF(0x0F1A22, 0.98f), border, hover);
+    DrawCartoonPanel(rect, hover ? D2D1::ColorF(0x123044, 0.99f) : D2D1::ColorF(0x06131C, 0.99f), D2D1::ColorF(border.r, border.g, border.b, 0.96f), hover);
     if (ready && affordable)
     {
         FillRoundRect(D2D1::RectF(rect.left + 7.0f, rect.top + 7.0f, rect.left + 35.0f, rect.top + 24.0f), 5.0f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.34f));
@@ -3438,10 +3664,10 @@ void PawlineGameImpl::DrawUnitCard(int index)
 
     DrawPlayerIcon(type, {rect.left + 59.0f, rect.top + 37.0f}, 0.82f, affordable);
 
-    DrawPixelTextCentered(stats.name, D2D1::RectF(rect.left + 6.0f, rect.top + 73.0f, rect.right - 6.0f, rect.top + 95.0f), 1.75f, affordable ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x9AA7B0), 1.0f);
-    DrawPixelTextCentered(L"LV." + ToWideInt(UnitLevel(type)) + L" COST " + ToWideInt(cost), D2D1::RectF(rect.left + 6.0f, rect.top + 101.0f, rect.right - 6.0f, rect.top + 122.0f), 1.65f, affordable ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xFF9BA8), 1.0f);
+    DrawPixelTextCentered(stats.name, D2D1::RectF(rect.left + 6.0f, rect.top + 73.0f, rect.right - 6.0f, rect.top + 95.0f), 1.75f, affordable ? D2D1::ColorF(0xFFFFFF) : D2D1::ColorF(0xB5C1C8), 1.0f);
+    DrawPixelTextCentered(L"LV." + ToWideInt(UnitLevel(type)) + L" COST " + ToWideInt(cost), D2D1::RectF(rect.left + 6.0f, rect.top + 101.0f, rect.right - 6.0f, rect.top + 122.0f), 1.55f, affordable ? D2D1::ColorF(0xC6FF9B) : D2D1::ColorF(0xFFB6C2), 1.0f);
     FillRoundRect(D2D1::RectF(rect.left + 15.0f, rect.bottom - 28.0f, rect.right - 15.0f, rect.bottom - 8.0f), 6.0f, D2D1::ColorF(0x061019, 0.58f));
-    DrawPixelTextCentered(L"KEY " + ToWideInt(index + 1), D2D1::RectF(rect.left + 12.0f, rect.bottom - 27.0f, rect.right - 12.0f, rect.bottom - 7.0f), 1.65f, D2D1::ColorF(0xCFE8F5), 1.0f);
+    DrawPixelTextCentered(L"KEY " + ToWideInt(index + 1), D2D1::RectF(rect.left + 12.0f, rect.bottom - 27.0f, rect.right - 12.0f, rect.bottom - 7.0f), 1.65f, D2D1::ColorF(0xE5F6FF), 1.0f);
 
     if (!ready)
     {
@@ -3456,22 +3682,34 @@ void PawlineGameImpl::DrawWalletButton()
 {
     const int cost = WalletUpgradeCost();
     const bool enabled = cost > 0 && m_energy >= static_cast<float>(cost);
-    std::wstring label = cost > 0 ? L"Wallet +" : L"Wallet Max";
-    DrawButton(WalletButtonRect(), label, cost > 0, D2D1::ColorF(0x283B27));
-    DrawPixelTextCentered(cost > 0 ? L"COST " + ToWideInt(cost) : L"LV.5 MAX",
-                          D2D1::RectF(WalletButtonRect().left, WalletButtonRect().top + 50.0f, WalletButtonRect().right, WalletButtonRect().top + 68.0f),
-                          1.75f,
-                          enabled ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0x9AA7B0),
-                          1.0f);
-    DrawPixelTextCentered(L"BOOST +" + ToWideInt(static_cast<int>(std::round((WalletUnitBoost() - 1.0f) * 100.0f))) + L"% PULSE " + ToWideInt(static_cast<int>(std::ceil(std::max(0.0f, m_walletPulseTimer)))) + L"S",
-                          D2D1::RectF(WalletButtonRect().left + 6.0f, WalletButtonRect().bottom - 24.0f, WalletButtonRect().right - 6.0f, WalletButtonRect().bottom - 6.0f),
-                          1.25f,
+    const D2D1_RECT_F rect = WalletButtonRect();
+    const bool hover = Contains(rect, m_mouse);
+    DrawCartoonPanel(rect, hover ? D2D1::ColorF(0x182E28, 0.98f) : D2D1::ColorF(0x10241E, 0.98f),
+                     enabled ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0x4E6253), hover && cost > 0);
+    DrawPixelTextCentered(cost > 0 ? L"WALLET +" : L"WALLET MAX",
+                          D2D1::RectF(rect.left + 8.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 28.0f),
+                          2.0f,
+                          cost > 0 ? D2D1::ColorF(0xEAF7FF) : D2D1::ColorF(0xF6FF83),
+                          cost > 0 ? 1.0f : 0.92f);
+    DrawPixelTextCentered(L"LV." + ToWideInt(m_walletLevel) + L"  +" + ToWideInt(static_cast<int>(std::round((WalletUnitBoost() - 1.0f) * 100.0f))) + L"%",
+                          D2D1::RectF(rect.left + 9.0f, rect.top + 29.0f, rect.right - 9.0f, rect.top + 48.0f),
+                          1.55f,
                           D2D1::ColorF(0xF6FF83),
                           1.0f);
-    const D2D1_RECT_F bar = D2D1::RectF(WalletButtonRect().left + 16.0f, WalletButtonRect().bottom - 34.0f, WalletButtonRect().right - 16.0f, WalletButtonRect().bottom - 28.0f);
+    const D2D1_RECT_F bar = D2D1::RectF(rect.left + 18.0f, rect.top + 49.0f, rect.right - 18.0f, rect.top + 55.0f);
     FillRoundRect(bar, 3.0f, D2D1::ColorF(0x071017, 0.86f));
     const float pulsePct = 1.0f - Clamp01(m_walletPulseTimer / WalletPulseInterval());
     FillRoundRect(D2D1::RectF(bar.left, bar.top, bar.left + (bar.right - bar.left) * pulsePct, bar.bottom), 3.0f, D2D1::ColorF(0xB8FF89));
+    DrawPixelTextCentered(cost > 0 ? L"COST " + ToWideInt(cost) : L"MAXED",
+                          D2D1::RectF(rect.left + 8.0f, rect.bottom - 24.0f, rect.right * 0.5f + rect.left * 0.5f - 3.0f, rect.bottom - 7.0f),
+                          1.35f,
+                          enabled ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0x9AA7B0),
+                          1.0f);
+    DrawPixelTextCentered(L"PULSE " + ToWideInt(static_cast<int>(std::ceil(std::max(0.0f, m_walletPulseTimer)))) + L"S",
+                          D2D1::RectF(rect.left * 0.5f + rect.right * 0.5f + 3.0f, rect.bottom - 24.0f, rect.right - 8.0f, rect.bottom - 7.0f),
+                          1.25f,
+                          D2D1::ColorF(0xF6FF83),
+                          1.0f);
 }
 
 void PawlineGameImpl::DrawCannonButton()
@@ -3516,10 +3754,16 @@ void PawlineGameImpl::DrawMessage()
         return;
     }
 
-    const float alpha = Clamp01(m_messageTimer / 0.45f);
-    D2D1_RECT_F rect = D2D1::RectF(394.0f, 566.0f, 886.0f, 600.0f);
+    float alpha = Clamp01(m_messageTimer / 0.45f);
+    const D2D1_RECT_F rect = MessageToastRect();
+    if (Contains(rect, m_mouse))
+    {
+        alpha *= 0.42f;
+    }
     DrawCartoonPanel(rect, D2D1::ColorF(0x071017, 0.82f * alpha), D2D1::ColorF(0x65B8FF, alpha));
-    DrawPixelTextCentered(m_message, D2D1::RectF(rect.left + 12.0f, rect.top + 7.0f, rect.right - 12.0f, rect.bottom - 5.0f), 2.0f, D2D1::ColorF(0xEAF7FF, alpha), alpha);
+    const float innerWidth = rect.right - rect.left - 28.0f;
+    const float safeCell = std::max(1.35f, std::min(2.0f, innerWidth / std::max(1.0f, PixelTextWidth(m_message, 1.0f))));
+    DrawPixelTextCentered(m_message, D2D1::RectF(rect.left + 12.0f, rect.top + 7.0f, rect.right - 12.0f, rect.bottom - 5.0f), safeCell, D2D1::ColorF(0xEAF7FF, alpha), alpha);
 }
 
 void PawlineGameImpl::DrawOverlay()
@@ -3529,7 +3773,7 @@ void PawlineGameImpl::DrawOverlay()
         return;
     }
 
-    FillRect(D2D1::RectF(24.0f, kBattleTop, 1256.0f, kBattleBottom), D2D1::ColorF(0x000000, 0.42f));
+    FillViewport(D2D1::ColorF(0x000000, 0.46f));
     std::wstring title = L"PAUSED";
     std::wstring body = L"Press P to resume.";
     D2D1_COLOR_F color = D2D1::ColorF(0xEAF7FF);
@@ -3538,9 +3782,40 @@ void PawlineGameImpl::DrawOverlay()
     DrawPixelTextCentered(body, D2D1::RectF(320.0f, 352.0f, 960.0f, 386.0f), 2.4f, D2D1::ColorF(0xF3FBFF), 1.0f);
 }
 
+void PawlineGameImpl::DrawSceneTransition()
+{
+    if (m_sceneTransitionTimer <= 0.0f || m_sceneTransitionMax <= 0.0f)
+    {
+        return;
+    }
+
+    const float t = Clamp01(m_sceneTransitionTimer / m_sceneTransitionMax);
+    const float alpha = t * t;
+    FillViewport(D2D1::ColorF(0x000000, 0.34f * alpha));
+
+    const D2D1_COLOR_F stageColor = CurrentStage().lineColor;
+    const float sweep = (1.0f - t) * (kWidth + 260.0f) - 130.0f;
+    for (int i = 0; i < 3; ++i)
+    {
+        const float y = 238.0f + static_cast<float>(i) * 128.0f;
+        DrawLine({sweep - 260.0f, y - 42.0f},
+                 {sweep + 250.0f, y + 18.0f},
+                 D2D1::ColorF(stageColor.r, stageColor.g, stageColor.b, 0.16f * alpha),
+                 22.0f - static_cast<float>(i) * 4.0f);
+        DrawLine({sweep - 220.0f, y - 36.0f},
+                 {sweep + 300.0f, y + 24.0f},
+                 D2D1::ColorF(0xEAF7FF, 0.12f * alpha),
+                 5.0f);
+    }
+
+    const float gate = 70.0f * alpha;
+    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, gate), D2D1::ColorF(0x061019, 0.72f * alpha));
+    FillRect(D2D1::RectF(0.0f, kHeight - gate, kWidth, kHeight), D2D1::ColorF(0x061019, 0.72f * alpha));
+}
+
 void PawlineGameImpl::DrawEscapeMenuClean()
 {
-    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0x000000, 0.58f));
+    FillViewport(D2D1::ColorF(0x000000, 0.68f));
     const D2D1_RECT_F panel = D2D1::RectF(412.0f, 156.0f, 868.0f, 684.0f);
     FillRoundRect(panel, 10.0f, D2D1::ColorF(0x0A121A, 0.97f));
     StrokeRoundRect(panel, 10.0f, D2D1::ColorF(0x65B8FF), 1.8f);
@@ -3563,7 +3838,7 @@ void PawlineGameImpl::DrawEscapeMenuClean()
 
 void PawlineGameImpl::DrawResultScreen()
 {
-    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0x000000, 0.54f));
+    FillViewport(D2D1::ColorF(0x000000, 0.62f));
     const D2D1_RECT_F panel = D2D1::RectF(340.0f, 210.0f, 940.0f, 650.0f);
     const bool finalClear = m_victory && m_selectedStage == kStageCount - 1;
     FillRoundRect(panel, 10.0f, D2D1::ColorF(0x0A121A, 0.96f));
@@ -3600,23 +3875,23 @@ void PawlineGameImpl::DrawResultScreen()
         ++medalCount;
     }
     const std::wstring rank = medalCount >= 3 ? L"RANK S" : (medalCount == 2 ? L"RANK A" : (medalCount == 1 ? L"RANK B" : L"RANK C"));
-    DrawPixelTextCentered(rank, D2D1::RectF(panel.left + 94.0f, panel.top + 314.0f, panel.left + 262.0f, panel.top + 352.0f), 3.2f, m_victory ? D2D1::ColorF(0xF6FF83) : D2D1::ColorF(0xFFB6C2), 1.0f);
+    DrawPixelTextCentered(rank, D2D1::RectF(panel.left + 94.0f, panel.top + 292.0f, panel.left + 262.0f, panel.top + 330.0f), 3.2f, m_victory ? D2D1::ColorF(0xF6FF83) : D2D1::ColorF(0xFFB6C2), 1.0f);
     for (int i = 0; i < 3; ++i)
     {
-        const Vec2 medal = {panel.left + 330.0f + static_cast<float>(i) * 62.0f, panel.top + 334.0f};
+        const Vec2 medal = {panel.left + 330.0f + static_cast<float>(i) * 62.0f, panel.top + 314.0f};
         const bool earned = i < medalCount;
         FillEllipse(medal, 20.0f, 20.0f, earned ? D2D1::ColorF(0xF6FF83, 0.24f) : D2D1::ColorF(0x0F1A22, 0.86f));
         StrokeEllipse(medal, 20.0f, 20.0f, earned ? D2D1::ColorF(0xF6FF83) : D2D1::ColorF(0x394955), 2.0f);
         DrawPixelTextCentered(earned ? L"OK" : L"--", D2D1::RectF(medal.x - 18.0f, medal.y - 10.0f, medal.x + 18.0f, medal.y + 12.0f), 1.8f, earned ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x65727C), 1.0f);
     }
-    DrawPixelTextCentered(m_victory ? L"CLEAR REWARD BANKED" : L"NO REWARD TRY AGAIN",
-                          D2D1::RectF(panel.left + 532.0f, panel.top + 316.0f, panel.right - 52.0f, panel.top + 352.0f),
+    DrawPixelTextCentered(m_victory ? L"REWARD SAVED" : L"TRY AGAIN",
+                          D2D1::RectF(panel.left + 532.0f, panel.top + 294.0f, panel.right - 52.0f, panel.top + 330.0f),
                           2.2f,
                           m_victory ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0x8EA9B8),
                           1.0f);
     DrawPixelTextCentered(finalClear ? L"태양 방어선 완주" : GrowthRecommendation(),
-                          D2D1::RectF(panel.left + 64.0f, panel.top + 374.0f, panel.right - 64.0f, panel.top + 408.0f),
-                          2.1f,
+                          D2D1::RectF(panel.left + 64.0f, panel.bottom - 36.0f, panel.right - 64.0f, panel.bottom - 10.0f),
+                          1.75f,
                           D2D1::ColorF(0xF6FF83),
                           1.0f);
 
