@@ -1,52 +1,43 @@
 ﻿#include "GameData.h"
 
 #include <algorithm>
+#include <array>
 
 StageDefinition GetStageDefinition(int index)
 {
-    switch (std::max(0, std::min(kStageCount - 1, index)))
-    {
-    case 0:
-        return {L"수성", L"가까운 첫 궤도", L"먼지형과 침형 적",
-                2200.0f, 2500.0f, 190.0f, 2.36f, 0.96f, 42.0f,
-                D2D1::ColorF(0x101B22), D2D1::ColorF(0x1C3037), D2D1::ColorF(0x13262D), D2D1::ColorF(0x8A9EA8)};
-    case 1:
-        return {L"금성", L"짙은 대기권", L"황산 안개 원거리 적",
-                2250.0f, 2850.0f, 205.0f, 2.18f, 1.05f, 39.0f,
-                D2D1::ColorF(0x191722), D2D1::ColorF(0x332936), D2D1::ColorF(0x241E2B), D2D1::ColorF(0xE0B16D)};
-    case 2:
-        return {L"지구", L"푸른 방어선", L"이끼형 균형 웨이브",
-                2350.0f, 3200.0f, 220.0f, 2.05f, 1.14f, 36.0f,
-                D2D1::ColorF(0x0E1D29), D2D1::ColorF(0x14303A), D2D1::ColorF(0x102731), D2D1::ColorF(0x56A7B7)};
-    case 3:
-        return {L"화성", L"붉은 모래 전선", L"녹슨 장갑형 압박",
-                2400.0f, 3550.0f, 230.0f, 1.98f, 1.24f, 33.0f,
-                D2D1::ColorF(0x1D1718), D2D1::ColorF(0x3A2528), D2D1::ColorF(0x291D20), D2D1::ColorF(0xDD7666)};
-    case 4:
-        return {L"목성", L"거대한 폭풍권", L"폭풍 방패형 중심",
-                2600.0f, 4200.0f, 250.0f, 1.90f, 1.36f, 30.0f,
-                D2D1::ColorF(0x1E1B16), D2D1::ColorF(0x3A3127), D2D1::ColorF(0x2B261F), D2D1::ColorF(0xD8A66A)};
-    case 5:
-        return {L"토성", L"고리 위 방어전", L"고리 창병 원거리전",
-                2650.0f, 4650.0f, 260.0f, 1.78f, 1.48f, 28.0f,
-                D2D1::ColorF(0x171B20), D2D1::ColorF(0x2D3037), D2D1::ColorF(0x222731), D2D1::ColorF(0xCDBB83)};
-    case 6:
-        return {L"천왕성", L"기울어진 얼음 궤도", L"빙결 질주형 압박",
-                2750.0f, 5200.0f, 275.0f, 1.68f, 1.62f, 25.0f,
-                D2D1::ColorF(0x101D22), D2D1::ColorF(0x19353A), D2D1::ColorF(0x122B31), D2D1::ColorF(0x80E5D4)};
-    case 7:
-        return {L"해왕성", L"먼 푸른 심해", L"파도 망령 원거리 러시",
-                2850.0f, 5850.0f, 290.0f, 1.56f, 1.78f, 23.0f,
-                D2D1::ColorF(0x101928), D2D1::ColorF(0x182C48), D2D1::ColorF(0x13243C), D2D1::ColorF(0x75A7FF)};
-    case 8:
-        return {L"명왕성", L"가장 먼 어둠", L"공허 중장갑과 빠른 보스",
-                3000.0f, 6600.0f, 310.0f, 1.50f, 1.96f, 18.0f,
-                D2D1::ColorF(0x15171F), D2D1::ColorF(0x292637), D2D1::ColorF(0x211F2E), D2D1::ColorF(0xC8B7FF)};
-    default:
-        return {L"태양", L"마지막 항성 전선", L"플레어 돌격과 최종 보스",
-                3300.0f, 7600.0f, 350.0f, 1.38f, 2.22f, 15.0f,
-                D2D1::ColorF(0x241613), D2D1::ColorF(0x4A2A1F), D2D1::ColorF(0x351F18), D2D1::ColorF(0xFFB347)};
-    }
+    static const std::array<StageDefinition, kStageCount> kStageTable = {{
+        {L"수성", L"가까운 첫 궤도", L"먼지형과 침형 적",
+         2200.0f, 2500.0f, 190.0f, 2.36f, 0.96f, 42.0f,
+         D2D1::ColorF(0x101B22), D2D1::ColorF(0x1C3037), D2D1::ColorF(0x13262D), D2D1::ColorF(0x8A9EA8)},
+        {L"금성", L"짙은 대기권", L"황산 안개 원거리 적",
+         2250.0f, 2850.0f, 205.0f, 2.18f, 1.05f, 39.0f,
+         D2D1::ColorF(0x191722), D2D1::ColorF(0x332936), D2D1::ColorF(0x241E2B), D2D1::ColorF(0xE0B16D)},
+        {L"지구", L"푸른 방어선", L"이끼형 균형 웨이브",
+         2350.0f, 3200.0f, 220.0f, 2.05f, 1.14f, 36.0f,
+         D2D1::ColorF(0x0E1D29), D2D1::ColorF(0x14303A), D2D1::ColorF(0x102731), D2D1::ColorF(0x56A7B7)},
+        {L"화성", L"붉은 모래 전선", L"녹슨 장갑형 압박",
+         2400.0f, 3550.0f, 230.0f, 1.98f, 1.24f, 33.0f,
+         D2D1::ColorF(0x1D1718), D2D1::ColorF(0x3A2528), D2D1::ColorF(0x291D20), D2D1::ColorF(0xDD7666)},
+        {L"목성", L"거대한 폭풍권", L"폭풍 방패형 중심",
+         2600.0f, 4200.0f, 250.0f, 1.90f, 1.36f, 30.0f,
+         D2D1::ColorF(0x1E1B16), D2D1::ColorF(0x3A3127), D2D1::ColorF(0x2B261F), D2D1::ColorF(0xD8A66A)},
+        {L"토성", L"고리 위 방어전", L"고리 창병 원거리전",
+         2650.0f, 4650.0f, 260.0f, 1.78f, 1.48f, 28.0f,
+         D2D1::ColorF(0x171B20), D2D1::ColorF(0x2D3037), D2D1::ColorF(0x222731), D2D1::ColorF(0xCDBB83)},
+        {L"천왕성", L"기울어진 얼음 궤도", L"빙결 질주형 압박",
+         2750.0f, 5200.0f, 275.0f, 1.68f, 1.62f, 25.0f,
+         D2D1::ColorF(0x101D22), D2D1::ColorF(0x19353A), D2D1::ColorF(0x122B31), D2D1::ColorF(0x80E5D4)},
+        {L"해왕성", L"먼 푸른 심해", L"파도 망령 원거리 러시",
+         2850.0f, 5850.0f, 290.0f, 1.56f, 1.78f, 23.0f,
+         D2D1::ColorF(0x101928), D2D1::ColorF(0x182C48), D2D1::ColorF(0x13243C), D2D1::ColorF(0x75A7FF)},
+        {L"명왕성", L"가장 먼 어둠", L"공허 중장갑과 빠른 보스",
+         3000.0f, 6600.0f, 310.0f, 1.50f, 1.96f, 18.0f,
+         D2D1::ColorF(0x15171F), D2D1::ColorF(0x292637), D2D1::ColorF(0x211F2E), D2D1::ColorF(0xC8B7FF)},
+        {L"태양", L"마지막 항성 전선", L"플레어 돌격과 최종 보스",
+         3300.0f, 7600.0f, 350.0f, 1.38f, 2.22f, 15.0f,
+         D2D1::ColorF(0x241613), D2D1::ColorF(0x4A2A1F), D2D1::ColorF(0x351F18), D2D1::ColorF(0xFFB347)}
+    }};
+    return kStageTable[std::max(0, std::min(kStageCount - 1, index))];
 }
 
 UnitStats GetPlayerStats(PlayerUnit unit)

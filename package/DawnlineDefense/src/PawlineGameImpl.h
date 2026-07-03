@@ -152,8 +152,32 @@ enum class GameScreen
     Options,
     Menu,
     Shop,
+    Briefing,
     Playing,
     Result
+};
+
+enum class UnitAnimState
+{
+    Idle,
+    Move,
+    Windup,
+    Attack,
+    Recover,
+    Hit,
+    Death
+};
+
+enum class ParticleKind
+{
+    Dot,
+    Glow,
+    Smoke,
+    Dust,
+    Shard,
+    Ember,
+    Snow,
+    Bubble
 };
 
 
@@ -179,10 +203,13 @@ struct Unit
     float attackAnim = 0.0f;
     float attackAnimMax = 0.0f;
     float attackDir = 1.0f;
+    float stateTime = 0.0f;
+    float walkCycle = 0.0f;
     int reward = 0;
     bool ranged = false;
     bool elite = false;
     bool alive = true;
+    UnitAnimState animState = UnitAnimState::Idle;
 };
 
 // Ranged attacks are separate from units so they can travel over time, keep a
@@ -209,7 +236,12 @@ struct Particle
     float radius = 3.0f;
     float life = 1.0f;
     float maxLife = 1.0f;
+    float spin = 0.0f;
+    float growth = 0.0f;
+    float gravity = 18.0f;
+    float drag = 0.82f;
     D2D1_COLOR_F color = D2D1::ColorF(0xFFFFFF);
+    ParticleKind kind = ParticleKind::Dot;
 };
 
 struct RingEffect
@@ -326,7 +358,7 @@ private:
 
     void UpdateViewMetrics();
 
-    void SetViewTransform(float worldCameraX = 0.0f);
+    void SetViewTransform(float worldCameraX = 0.0f, bool includeCameraShake = false);
 
     Vec2 ClientToVirtual(Vec2 pos) const;
 
@@ -337,6 +369,20 @@ private:
     EnemyUnit StageBossType() const;
 
     std::wstring StageEnemySummary() const;
+
+    float GimmickInterval() const;
+
+    float EffectiveUnitRange(const Unit& unit) const;
+
+    float StageMoveSpeedModifier(const Unit& unit) const;
+
+    void UpdateStageGimmicks(float dt);
+
+    void TriggerStageGimmick();
+
+    void ApplyAreaDamage(Vec2 center, float radius, float damage, D2D1_COLOR_F color);
+
+    void SpawnStageReinforcement(EnemyUnit type, float forwardOffset, bool elite = false);
 
     float ThreatLevel() const;
 
@@ -365,6 +411,10 @@ private:
     float RandomLaneY();
 
     void UpdateUnits(float dt);
+
+    void SetUnitAnimState(Unit& unit, UnitAnimState state);
+
+    UnitAnimState ResolveAttackAnimState(const Unit& unit) const;
 
     int FindTargetIndex(const Unit& unit) const;
 
@@ -396,6 +446,8 @@ private:
 
     void ShakeUnitById(int id, float duration);
 
+    void AddCameraTrauma(float amount);
+
     void UpdateParticles(float dt);
 
     void CleanupEntities();
@@ -412,6 +464,8 @@ private:
 
     void AddParticle(Vec2 pos, Vec2 vel, float radius, float life, D2D1_COLOR_F color);
 
+    void AddParticleEx(Vec2 pos, Vec2 vel, float radius, float life, D2D1_COLOR_F color, ParticleKind kind, float gravity, float drag, float growth);
+
     void AddRing(Vec2 pos, float maxRadius, float life, D2D1_COLOR_F color, float width);
 
     void AddBeam(Vec2 start, Vec2 end, float width, float life, D2D1_COLOR_F color);
@@ -419,6 +473,10 @@ private:
     void AddSparkLines(Vec2 pos, D2D1_COLOR_F color, int count);
 
     void AddBurst(Vec2 pos, D2D1_COLOR_F color, int count);
+
+    void AddDustPuff(Vec2 pos, D2D1_COLOR_F color, int count);
+
+    void AddDeathBurst(const Unit& unit);
 
     void AddHitEffects(Vec2 pos, D2D1_COLOR_F color);
 
@@ -439,6 +497,8 @@ private:
     void OnMenuClick(Vec2 pos);
 
     void OnShopClick(Vec2 pos);
+
+    void OnBriefingClick(Vec2 pos);
 
     void OnOptionsClick(Vec2 pos);
 
@@ -483,6 +543,12 @@ private:
     D2D1_RECT_F StartGameButtonRect() const;
 
     D2D1_RECT_F MenuShopButtonRect() const;
+
+    D2D1_RECT_F BriefingStartButtonRect() const;
+
+    D2D1_RECT_F BriefingBackButtonRect() const;
+
+    D2D1_RECT_F BriefingShopButtonRect() const;
 
     D2D1_RECT_F ShopBackButtonRect() const;
 
@@ -562,6 +628,8 @@ private:
 
     void DrawMenu();
 
+    void DrawBriefing();
+
     void DrawShop();
 
     void DrawShopUnitCard(int index);
@@ -637,6 +705,12 @@ private:
     void DrawFloatTexts();
 
     void DrawUiPulses();
+
+    void DrawStageGimmickOverlay();
+
+    void DrawBossPresentation();
+
+    void DrawTutorialTips();
 
     void DrawHeader();
 
@@ -730,6 +804,13 @@ private:
     float m_screenFlash = 0.0f;
     float m_uiTime = 0.0f;
     float m_walletPulseTimer = 0.0f;
+    float m_stageGimmickTimer = 0.0f;
+    float m_stageGimmickPulse = 0.0f;
+    float m_stageAmbientTimer = 0.0f;
+    float m_bossBannerTimer = 0.0f;
+    float m_bossWarningTimer = 0.0f;
+    float m_bossFocusX = 0.0f;
+    float m_cameraTrauma = 0.0f;
     float m_cameraX = 0.0f;
     float m_cameraTargetX = 0.0f;
     float m_viewScale = 1.0f;

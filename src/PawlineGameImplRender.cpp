@@ -194,7 +194,7 @@ void PawlineGameImpl::Render()
 
     // Draw order is back-to-front: arena, actors, transient VFX, UI, overlays.
     // That keeps combat effects vivid without covering readable controls.
-    SetViewTransform(m_cameraX);
+    SetViewTransform(m_cameraX, true);
     DrawArena();
     DrawBases();
     DrawUnitLighting();
@@ -553,9 +553,9 @@ void PawlineGameImpl::DrawMenu()
         DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.18f), 1.0f);
     }
 
-    DrawString(L"PAWLINE DEFENSE", D2D1::RectF(44.0f, 34.0f, 570.0f, 82.0f), m_titleFormat, D2D1::ColorF(0xF3FBFF));
-    DrawString(L"Choose a stage and deploy five units.", D2D1::RectF(58.0f, 86.0f, 520.0f, 112.0f), m_bodyFormat, D2D1::ColorF(0x9AB2BF));
-    DrawString(L"LUMEN " + ToWideInt(m_lumen), D2D1::RectF(1000.0f, 42.0f, 1228.0f, 74.0f), m_headerFormat, D2D1::ColorF(0xF6FF83));
+    DrawPixelText(L"PAWLINE DEFENSE", {48.0f, 42.0f}, 4.2f, D2D1::ColorF(0xF3FBFF));
+    DrawPixelText(L"CHOOSE A STAGE AND FIVE UNITS", {58.0f, 92.0f}, 2.1f, D2D1::ColorF(0x9AB2BF));
+    DrawPixelText(L"LUMEN " + ToWideInt(m_lumen), {1000.0f, 50.0f}, 3.0f, D2D1::ColorF(0xF6FF83));
 
     DrawString(L"Stage", D2D1::RectF(48.0f, 112.0f, 260.0f, 138.0f), m_headerFormat, D2D1::ColorF(0xEAF7FF));
     for (int i = 0; i < kStageCount; ++i)
@@ -673,9 +673,9 @@ void PawlineGameImpl::DrawShop()
         DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.13f), 1.0f);
     }
 
-    DrawString(L"UNIT SHOP", D2D1::RectF(44.0f, 34.0f, 520.0f, 82.0f), m_titleFormat, D2D1::ColorF(0xF3FBFF));
-    DrawString(L"Buy locked units or upgrade owned units with stage-clear LUMEN.", D2D1::RectF(58.0f, 86.0f, 760.0f, 112.0f), m_bodyFormat, D2D1::ColorF(0x9AB2BF));
-    DrawString(L"LUMEN " + ToWideInt(m_lumen), D2D1::RectF(990.0f, 42.0f, 1228.0f, 74.0f), m_headerFormat, D2D1::ColorF(0xF6FF83));
+    DrawPixelText(L"UNIT SHOP", {48.0f, 42.0f}, 4.4f, D2D1::ColorF(0xF3FBFF));
+    DrawPixelText(L"BUY LOCKED UNITS OR UPGRADE OWNED UNITS", {58.0f, 92.0f}, 2.1f, D2D1::ColorF(0x9AB2BF));
+    DrawPixelText(L"LUMEN " + ToWideInt(m_lumen), {990.0f, 50.0f}, 3.0f, D2D1::ColorF(0xF6FF83));
 
     for (int i = 0; i < kRosterCount; ++i)
     {
@@ -1946,7 +1946,7 @@ void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
     if (unit.elite || type == EnemyUnit::Boss)
     {
         StrokeEllipse(pos, unit.radius + 8.0f, unit.radius + 8.0f, D2D1::ColorF(0xFF9BA8, 0.62f), 3.0f);
-        DrawString(type == EnemyUnit::Boss ? L"BOSS" : L"ELITE", D2D1::RectF(pos.x - 38.0f, pos.y - 59.0f, pos.x + 38.0f, pos.y - 35.0f), m_centerFormat, D2D1::ColorF(0xFFE3E8));
+        DrawPixelTextCentered(type == EnemyUnit::Boss ? L"BOSS" : L"ELITE", D2D1::RectF(pos.x - 38.0f, pos.y - 59.0f, pos.x + 38.0f, pos.y - 35.0f), 1.8f, D2D1::ColorF(0xFFE3E8), 1.0f);
     }
 }
 
@@ -2607,8 +2607,8 @@ void PawlineGameImpl::DrawOverlay()
     std::wstring body = L"Press P to resume.";
     D2D1_COLOR_F color = D2D1::ColorF(0xEAF7FF);
 
-    DrawString(title, D2D1::RectF(320.0f, 296.0f, 960.0f, 348.0f), m_titleFormat, color);
-    DrawString(body, D2D1::RectF(320.0f, 352.0f, 960.0f, 386.0f), m_centerFormat, D2D1::ColorF(0xF3FBFF));
+    DrawPixelTextCentered(title, D2D1::RectF(320.0f, 296.0f, 960.0f, 348.0f), 5.0f, color, 1.0f);
+    DrawPixelTextCentered(body, D2D1::RectF(320.0f, 352.0f, 960.0f, 386.0f), 2.4f, D2D1::ColorF(0xF3FBFF), 1.0f);
 }
 
 void PawlineGameImpl::DrawEscapeMenuClean()
@@ -2644,8 +2644,8 @@ void PawlineGameImpl::DrawResultScreen()
     const StageDefinition stage = CurrentStage();
     const std::wstring title = m_victory ? L"STAGE CLEAR" : L"BASE BROKEN";
     const std::wstring subtitle = m_victory ? L"The lane is yours." : L"The enemy pushed through.";
-    DrawString(title, D2D1::RectF(panel.left + 34.0f, panel.top + 30.0f, panel.right - 34.0f, panel.top + 78.0f), m_titleFormat, m_victory ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xFFB6C2));
-    DrawString(subtitle, D2D1::RectF(panel.left + 34.0f, panel.top + 84.0f, panel.right - 34.0f, panel.top + 112.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
+    DrawPixelTextCentered(title, D2D1::RectF(panel.left + 34.0f, panel.top + 30.0f, panel.right - 34.0f, panel.top + 78.0f), 4.2f, m_victory ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xFFB6C2), 1.0f);
+    DrawPixelTextCentered(subtitle, D2D1::RectF(panel.left + 34.0f, panel.top + 84.0f, panel.right - 34.0f, panel.top + 112.0f), 2.2f, D2D1::ColorF(0xEAF7FF), 1.0f);
 
     DrawString(stage.name, D2D1::RectF(panel.left + 64.0f, panel.top + 142.0f, panel.right - 64.0f, panel.top + 170.0f), m_headerFormat, D2D1::ColorF(0xF3FBFF));
     DrawString(L"Time  " + ToWideTime(m_resultTime), D2D1::RectF(panel.left + 94.0f, panel.top + 190.0f, panel.left + 280.0f, panel.top + 218.0f), m_bodyFormat, D2D1::ColorF(0xC7D8FF));

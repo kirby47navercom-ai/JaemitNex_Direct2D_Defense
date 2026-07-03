@@ -20,6 +20,7 @@ void PawlineGameImpl::UpdateEnemyDirector(float dt)
         }
         m_bossBannerTimer = 3.15f;
         m_bossWarningTimer = 1.20f;
+        AddCameraTrauma(0.62f);
         m_nextBossTime += 44.0f / stage.threatScale;
         m_enemyTimer = std::min(m_enemyTimer, 1.1f);
         SetMessage(GetEnemyStats(bossType, threat).name + L" incoming.");
@@ -298,6 +299,7 @@ void PawlineGameImpl::TriggerStageGimmick()
         SetMessage(L"Mercury heat wave.");
         AddBeam({kPlayerBaseX + 40.0f, kLaneY - 86.0f}, {kEnemyBaseX - 30.0f, kLaneY + 68.0f}, 10.0f, 0.30f, D2D1::ColorF(0xCFA27B, 0.52f));
         ApplyAreaDamage({(kPlayerBaseX + kEnemyBaseX) * 0.5f, kLaneY}, kWorldWidth, 12.0f + ThreatLevel() * 1.6f, D2D1::ColorF(0xCFA27B));
+        AddCameraTrauma(0.20f);
         break;
     case 1:
         SetMessage(L"Venus acid fog: ranged units lose range.");
@@ -331,6 +333,7 @@ void PawlineGameImpl::TriggerStageGimmick()
         AddBeam({impact.x + 260.0f, kBattleTop + 8.0f}, impact, 11.0f, 0.22f, D2D1::ColorF(0xFF8B60, 0.72f));
         ApplyAreaDamage(impact, 154.0f, 64.0f + ThreatLevel() * 4.0f, D2D1::ColorF(0xFF8B60));
         AddDustPuff({impact.x, impact.y + 18.0f}, D2D1::ColorF(0xDD7666, 0.42f), 22);
+        AddCameraTrauma(0.48f);
         break;
     }
     case 4:
@@ -345,6 +348,7 @@ void PawlineGameImpl::TriggerStageGimmick()
             }
         }
         AddRing({m_cameraX + 640.0f, kLaneY}, 340.0f, 0.64f, D2D1::ColorF(0xD8A66A, 0.42f), 4.0f);
+        AddCameraTrauma(0.30f);
         break;
     case 5:
         SetMessage(L"Saturn ring reinforcement.");
@@ -366,6 +370,7 @@ void PawlineGameImpl::TriggerStageGimmick()
             }
         }
         AddBeam({m_cameraX + 58.0f, kLaneY - 92.0f}, {m_cameraX + 1210.0f, kLaneY + 76.0f}, 12.0f, 0.28f, D2D1::ColorF(0xD9FFF8, 0.46f));
+        AddCameraTrauma(0.22f);
         break;
     case 7:
         SetMessage(L"Neptune tide surge.");
@@ -389,6 +394,7 @@ void PawlineGameImpl::TriggerStageGimmick()
         AddBeam({m_cameraX + 20.0f, kBattleTop + 44.0f}, {m_cameraX + kWidth - 20.0f, kBattleBottom - 58.0f}, 15.0f, 0.28f, D2D1::ColorF(0xFFB347, 0.62f));
         ApplyAreaDamage({m_cameraX + 640.0f, kLaneY}, 330.0f, 52.0f + ThreatLevel() * 3.0f, D2D1::ColorF(0xFFB347));
         SpawnStageReinforcement(EnemyUnit::Flare, 250.0f);
+        AddCameraTrauma(0.44f);
         break;
     }
 }
@@ -1109,6 +1115,7 @@ void PawlineGameImpl::DamageBase(Team baseTeam, float damage, Vec2 source)
         {
             m_enemyBaseShake = 0.20f;
         }
+        AddCameraTrauma(0.28f);
         AddFloatText({kEnemyBaseX - 46.0f, kLaneY - 92.0f}, ToWideInt(static_cast<int>(std::round(damage))), D2D1::ColorF(0xBBD7FF), 0.65f);
         AddHitEffects({kEnemyBaseX - 44.0f, source.y}, D2D1::ColorF(0x65B8FF));
     }
@@ -1119,6 +1126,7 @@ void PawlineGameImpl::DamageBase(Team baseTeam, float damage, Vec2 source)
         {
             m_playerBaseShake = 0.20f;
         }
+        AddCameraTrauma(0.28f);
         AddFloatText({kPlayerBaseX + 46.0f, kLaneY - 92.0f}, ToWideInt(static_cast<int>(std::round(damage))), D2D1::ColorF(0xFFB6C2), 0.65f);
         AddHitEffects({kPlayerBaseX + 44.0f, source.y}, D2D1::ColorF(0xFF9BA8));
     }
@@ -1141,6 +1149,16 @@ void PawlineGameImpl::ShakeUnitById(int id, float duration)
     {
         ShakeUnit(*unit, duration);
     }
+}
+
+void PawlineGameImpl::AddCameraTrauma(float amount)
+{
+    if (!m_hitShakeEnabled)
+    {
+        return;
+    }
+
+    m_cameraTrauma = std::min(1.0f, std::max(m_cameraTrauma, amount));
 }
 
 void PawlineGameImpl::UpdateParticles(float dt)
@@ -1310,6 +1328,7 @@ void PawlineGameImpl::TryFireCannon()
     m_cannonCharge = 0.0f;
     m_cannonFlash = 0.42f;
     m_screenFlash = 0.12f;
+    AddCameraTrauma(0.55f);
     const float damage = 210.0f + static_cast<float>(m_walletLevel) * 48.0f;
     AddBeam({116.0f, kLaneY}, {kEnemyBaseX - 2.0f, kLaneY}, 20.0f, 0.34f, D2D1::ColorF(0xF6FF83, 0.92f));
     AddBeam({136.0f, kLaneY - 34.0f}, {kEnemyBaseX - 40.0f, kLaneY + 30.0f}, 8.0f, 0.28f, D2D1::ColorF(0xFFF4B8, 0.68f));

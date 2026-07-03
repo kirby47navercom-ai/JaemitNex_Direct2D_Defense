@@ -13,9 +13,18 @@ void PawlineGameImpl::UpdateEnemyDirector(float dt)
     {
         const EnemyUnit bossType = StageBossType();
         SpawnEnemy(bossType, true);
+        if (!m_units.empty())
+        {
+            const Unit& boss = m_units.back();
+            m_bossFocusX = std::max(0.0f, std::min(kCameraMaxX, boss.pos.x - 760.0f));
+        }
+        m_bossBannerTimer = 3.15f;
+        m_bossWarningTimer = 1.20f;
+        AddCameraTrauma(0.62f);
         m_nextBossTime += 44.0f / stage.threatScale;
         m_enemyTimer = std::min(m_enemyTimer, 1.1f);
         SetMessage(GetEnemyStats(bossType, threat).name + L" incoming.");
+        AddRing({kEnemyBaseX - 80.0f, kLaneY}, 220.0f, 0.70f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.46f), 5.0f);
     }
 
     if (m_enemyTimer > 0.0f)
@@ -178,6 +187,246 @@ std::wstring PawlineGameImpl::StageEnemySummary() const
     }
 }
 
+float PawlineGameImpl::GimmickInterval() const
+{
+    switch (m_selectedStage)
+    {
+    case 0: return 12.0f;
+    case 1: return 11.0f;
+    case 2: return 14.0f;
+    case 3: return 10.8f;
+    case 4: return 13.0f;
+    case 5: return 15.0f;
+    case 6: return 11.5f;
+    case 7: return 12.6f;
+    case 8: return 10.4f;
+    default: return 9.2f;
+    }
+}
+
+float PawlineGameImpl::EffectiveUnitRange(const Unit& unit) const
+{
+    float range = unit.range;
+    if (m_selectedStage == 1 && unit.ranged)
+    {
+        range *= unit.team == Team::Player ? 0.74f : 0.88f;
+    }
+    if (m_selectedStage == 8 && unit.team == Team::Enemy)
+    {
+        range *= 1.08f;
+    }
+    if (m_selectedStage == 9 && unit.team == Team::Enemy)
+    {
+        range *= 1.10f;
+    }
+    return range;
+}
+
+float PawlineGameImpl::StageMoveSpeedModifier(const Unit& unit) const
+{
+    float modifier = 1.0f;
+    if (m_selectedStage == 4)
+    {
+        const float gravityWave = std::sin(m_stageTime * 0.92f + unit.pos.y * 0.018f);
+        modifier *= 0.92f + gravityWave * 0.16f;
+    }
+    else if (m_selectedStage == 6)
+    {
+        modifier *= static_cast<EnemyUnit>(unit.kind) == EnemyUnit::Frost && unit.team == Team::Enemy ? 1.08f : 0.88f;
+    }
+    else if (m_selectedStage == 7)
+    {
+        modifier *= 0.96f + std::sin(m_stageTime * 1.15f + unit.pos.x * 0.006f) * 0.10f;
+    }
+    else if (m_selectedStage == 9 && unit.team == Team::Enemy)
+    {
+        modifier *= 1.08f;
+    }
+    return std::max(0.55f, modifier);
+}
+
+void PawlineGameImpl::UpdateStageGimmicks(float dt)
+{
+    m_stageGimmickTimer -= dt;
+    m_stageAmbientTimer -= dt;
+    if (m_stageAmbientTimer <= 0.0f)
+    {
+        m_stageAmbientTimer = m_selectedStage >= 8 ? 0.07f : 0.12f;
+        std::uniform_real_distribution<float> xDist(m_cameraX + 70.0f, m_cameraX + kWidth - 70.0f);
+        std::uniform_real_distribution<float> yDist(kBattleTop + 40.0f, kBattleBottom - 40.0f);
+        const Vec2 pos = {std::max(40.0f, std::min(kWorldWidth - 40.0f, xDist(m_rng))), yDist(m_rng)};
+        switch (m_selectedStage)
+        {
+        case 0:
+            AddParticleEx(pos, {-28.0f, 6.0f}, 2.4f, 0.44f, D2D1::ColorF(0xC7A282, 0.34f), ParticleKind::Dust, -2.0f, 0.92f, 5.0f);
+            break;
+        case 3:
+            AddParticleEx(pos, {-46.0f, 18.0f}, 2.8f, 0.46f, D2D1::ColorF(0xFF8B60, 0.48f), ParticleKind::Ember, 6.0f, 0.92f, -1.2f);
+            break;
+        case 6:
+            AddParticleEx(pos, {-24.0f, 18.0f}, 3.0f, 0.68f, D2D1::ColorF(0xD9FFF8, 0.50f), ParticleKind::Snow, 0.0f, 0.96f, -0.8f);
+            break;
+        case 7:
+            AddParticleEx(pos, {-18.0f, -16.0f}, 4.0f, 0.72f, D2D1::ColorF(0xBFD9FF, 0.38f), ParticleKind::Bubble, -12.0f, 0.94f, 3.0f);
+            break;
+        case 9:
+            AddParticleEx(pos, {-78.0f, 24.0f}, 3.4f, 0.50f, D2D1::ColorF(0xFFB347, 0.56f), ParticleKind::Ember, -4.0f, 0.91f, -1.0f);
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (m_stageGimmickTimer > 0.0f)
+    {
+        return;
+    }
+
+    TriggerStageGimmick();
+    m_stageGimmickTimer += GimmickInterval();
+}
+
+void PawlineGameImpl::TriggerStageGimmick()
+{
+    const StageDefinition stage = CurrentStage();
+    m_stageGimmickPulse = 1.35f;
+    std::uniform_real_distribution<float> xDist(kPlayerBaseX + 260.0f, kEnemyBaseX - 260.0f);
+    std::uniform_real_distribution<float> yDist(kLaneY - 70.0f, kLaneY + 70.0f);
+
+    switch (m_selectedStage)
+    {
+    case 0:
+        SetMessage(L"Mercury heat wave.");
+        AddBeam({kPlayerBaseX + 40.0f, kLaneY - 86.0f}, {kEnemyBaseX - 30.0f, kLaneY + 68.0f}, 10.0f, 0.30f, D2D1::ColorF(0xCFA27B, 0.52f));
+        ApplyAreaDamage({(kPlayerBaseX + kEnemyBaseX) * 0.5f, kLaneY}, kWorldWidth, 12.0f + ThreatLevel() * 1.6f, D2D1::ColorF(0xCFA27B));
+        AddCameraTrauma(0.20f);
+        break;
+    case 1:
+        SetMessage(L"Venus acid fog: ranged units lose range.");
+        for (Unit& unit : m_units)
+        {
+            if (unit.alive && unit.ranged)
+            {
+                DamageUnit(unit, 8.0f + ThreatLevel(), unit.team == Team::Player ? Team::Enemy : Team::Player);
+            }
+        }
+        AddRing({m_cameraX + 640.0f, kLaneY}, 280.0f, 0.60f, D2D1::ColorF(0xE0B16D, 0.38f), 3.2f);
+        break;
+    case 2:
+        SetMessage(L"Earth supply bloom.");
+        m_energy = std::min(MaxEnergy(), m_energy + 76.0f);
+        m_playerBaseHp = std::min(m_playerBaseMaxHp, m_playerBaseHp + 42.0f);
+        for (Unit& unit : m_units)
+        {
+            if (unit.alive && unit.team == Team::Player)
+            {
+                unit.hp = std::min(unit.maxHp, unit.hp + 26.0f);
+                AddParticleEx(unit.pos, {0.0f, -22.0f}, 7.0f, 0.42f, D2D1::ColorF(0xB8FF89, 0.46f), ParticleKind::Glow, 0.0f, 0.92f, 18.0f);
+            }
+        }
+        AddRing({kPlayerBaseX + 72.0f, kLaneY}, 150.0f, 0.48f, D2D1::ColorF(0xB8FF89, 0.44f), 3.0f);
+        break;
+    case 3:
+    {
+        SetMessage(L"Mars meteor impact.");
+        const Vec2 impact = {xDist(m_rng), yDist(m_rng)};
+        AddBeam({impact.x + 260.0f, kBattleTop + 8.0f}, impact, 11.0f, 0.22f, D2D1::ColorF(0xFF8B60, 0.72f));
+        ApplyAreaDamage(impact, 154.0f, 64.0f + ThreatLevel() * 4.0f, D2D1::ColorF(0xFF8B60));
+        AddDustPuff({impact.x, impact.y + 18.0f}, D2D1::ColorF(0xDD7666, 0.42f), 22);
+        AddCameraTrauma(0.48f);
+        break;
+    }
+    case 4:
+        SetMessage(L"Jupiter gravity surge.");
+        for (Unit& unit : m_units)
+        {
+            if (unit.alive)
+            {
+                const float pull = unit.pos.y < kLaneY ? 22.0f : -22.0f;
+                unit.pos.y = std::max(kLaneY - 82.0f, std::min(kLaneY + 82.0f, unit.pos.y + pull));
+                ShakeUnit(unit, 0.14f);
+            }
+        }
+        AddRing({m_cameraX + 640.0f, kLaneY}, 340.0f, 0.64f, D2D1::ColorF(0xD8A66A, 0.42f), 4.0f);
+        AddCameraTrauma(0.30f);
+        break;
+    case 5:
+        SetMessage(L"Saturn ring reinforcement.");
+        SpawnStageReinforcement(EnemyUnit::Ring, 330.0f);
+        if (ThreatLevel() > 2.0f)
+        {
+            SpawnStageReinforcement(EnemyUnit::Skitter, 410.0f);
+        }
+        AddRing({kEnemyBaseX - 330.0f, kLaneY}, 124.0f, 0.52f, D2D1::ColorF(0xE6D392, 0.48f), 3.0f);
+        break;
+    case 6:
+        SetMessage(L"Uranus ice gust.");
+        for (Unit& unit : m_units)
+        {
+            if (unit.alive)
+            {
+                unit.pos.x += unit.team == Team::Player ? -24.0f : 24.0f;
+                unit.hitFlash = std::max(unit.hitFlash, 0.10f);
+            }
+        }
+        AddBeam({m_cameraX + 58.0f, kLaneY - 92.0f}, {m_cameraX + 1210.0f, kLaneY + 76.0f}, 12.0f, 0.28f, D2D1::ColorF(0xD9FFF8, 0.46f));
+        AddCameraTrauma(0.22f);
+        break;
+    case 7:
+        SetMessage(L"Neptune tide surge.");
+        for (Unit& unit : m_units)
+        {
+            if (unit.alive)
+            {
+                unit.pos.x += unit.team == Team::Player ? 18.0f : -18.0f;
+            }
+        }
+        AddRing({m_cameraX + 640.0f, kLaneY + 32.0f}, 320.0f, 0.66f, D2D1::ColorF(0x75A7FF, 0.40f), 4.0f);
+        break;
+    case 8:
+        SetMessage(L"Pluto void eclipse.");
+        m_energy = std::max(0.0f, m_energy - 38.0f);
+        ApplyAreaDamage({m_cameraX + 640.0f, kLaneY}, 230.0f, 34.0f + ThreatLevel() * 2.2f, D2D1::ColorF(0xC8B7FF));
+        AddRing({m_cameraX + 640.0f, kLaneY}, 230.0f, 0.58f, D2D1::ColorF(0xC8B7FF, 0.42f), 3.4f);
+        break;
+    default:
+        SetMessage(L"Solar flare.");
+        AddBeam({m_cameraX + 20.0f, kBattleTop + 44.0f}, {m_cameraX + kWidth - 20.0f, kBattleBottom - 58.0f}, 15.0f, 0.28f, D2D1::ColorF(0xFFB347, 0.62f));
+        ApplyAreaDamage({m_cameraX + 640.0f, kLaneY}, 330.0f, 52.0f + ThreatLevel() * 3.0f, D2D1::ColorF(0xFFB347));
+        SpawnStageReinforcement(EnemyUnit::Flare, 250.0f);
+        AddCameraTrauma(0.44f);
+        break;
+    }
+}
+
+void PawlineGameImpl::ApplyAreaDamage(Vec2 center, float radius, float damage, D2D1_COLOR_F color)
+{
+    for (Unit& unit : m_units)
+    {
+        if (!unit.alive || Distance(unit.pos, center) > radius)
+        {
+            continue;
+        }
+        DamageUnit(unit, damage, unit.team == Team::Player ? Team::Enemy : Team::Player);
+        AddParticleEx(unit.pos, {0.0f, -24.0f}, 7.0f, 0.32f, D2D1::ColorF(color.r, color.g, color.b, 0.36f), ParticleKind::Glow, 0.0f, 0.90f, 20.0f);
+    }
+    AddRing(center, std::min(radius, 360.0f), 0.45f, D2D1::ColorF(color.r, color.g, color.b, 0.34f), 3.0f);
+}
+
+void PawlineGameImpl::SpawnStageReinforcement(EnemyUnit type, float forwardOffset, bool elite)
+{
+    SpawnEnemy(type, elite);
+    if (m_units.empty())
+    {
+        return;
+    }
+
+    Unit& unit = m_units.back();
+    unit.pos.x = std::max(kPlayerBaseX + 360.0f, kEnemyBaseX - forwardOffset);
+    unit.pos.y = RandomLaneY();
+    AddRing(unit.pos, elite ? 108.0f : 78.0f, 0.42f, D2D1::ColorF(GetEnemyStats(type, ThreatLevel()).accent.r, GetEnemyStats(type, ThreatLevel()).accent.g, GetEnemyStats(type, ThreatLevel()).accent.b, 0.44f), elite ? 3.6f : 2.6f);
+}
+
 float PawlineGameImpl::ThreatLevel() const
 {
     return (1.0f + m_stageTime / 34.0f) * CurrentStage().threatScale;
@@ -283,6 +532,7 @@ void PawlineGameImpl::SpawnPlayer(PlayerUnit type)
     unit.shakePhase = static_cast<float>(unit.id) * 0.37f;
     unit.ranged = stats.ranged;
     unit.reward = 0;
+    unit.animState = UnitAnimState::Move;
     m_units.push_back(unit);
     AddBurst(unit.pos, stats.accent, 10);
     AddRing(unit.pos, 42.0f, 0.28f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.38f), 2.0f);
@@ -313,6 +563,7 @@ void PawlineGameImpl::SpawnEnemy(EnemyUnit type, bool elite)
     unit.ranged = stats.ranged;
     unit.reward = elite ? stats.reward * 2 : stats.reward;
     unit.elite = elite;
+    unit.animState = elite ? UnitAnimState::Windup : UnitAnimState::Move;
     m_units.push_back(unit);
     AddBurst(unit.pos, stats.accent, elite || type == EnemyUnit::Boss ? 20 : 8);
     AddRing(unit.pos, elite ? 86.0f : 38.0f, elite ? 0.46f : 0.25f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, elite ? 0.48f : 0.28f), elite ? 3.2f : 1.8f);
@@ -326,14 +577,15 @@ float PawlineGameImpl::RandomLaneY()
 
 void PawlineGameImpl::UpdateUnits(float dt)
 {
-    // Units are intentionally simple: tick timers, attack the nearest valid
-    // forward target, otherwise advance along the lane.
+    // Unit animation is state-driven. Combat still owns the decisions, but
+    // rendering can now read a clear Idle/Move/Windup/Attack/Recover/Hit state.
     for (Unit& unit : m_units)
     {
         unit.attackTimer = std::max(0.0f, unit.attackTimer - dt);
         unit.hitFlash = std::max(0.0f, unit.hitFlash - dt);
         unit.shakeTimer = std::max(0.0f, unit.shakeTimer - dt);
         unit.attackAnim = std::max(0.0f, unit.attackAnim - dt);
+        unit.stateTime += dt;
     }
 
     for (int i = 0; i < static_cast<int>(m_units.size()); ++i)
@@ -344,6 +596,7 @@ void PawlineGameImpl::UpdateUnits(float dt)
             continue;
         }
 
+        const Vec2 before = unit.pos;
         const int targetIndex = FindTargetIndex(unit);
         const bool baseInRange = IsEnemyBaseInRange(unit);
         const bool hasTarget = targetIndex >= 0 || baseInRange;
@@ -364,9 +617,53 @@ void PawlineGameImpl::UpdateUnits(float dt)
         if (!hasTarget && !IsBlocked(unit))
         {
             const float dir = unit.team == Team::Player ? 1.0f : -1.0f;
-            unit.pos.x += dir * unit.speed * dt;
+            unit.pos.x += dir * unit.speed * StageMoveSpeedModifier(unit) * dt;
+        }
+
+        const bool moved = Distance(before, unit.pos) > 0.01f;
+        if (moved)
+        {
+            unit.walkCycle += dt * (4.4f + unit.speed * 0.045f);
+        }
+
+        if (unit.hitFlash > 0.0f)
+        {
+            SetUnitAnimState(unit, UnitAnimState::Hit);
+        }
+        else if (unit.attackAnim > 0.0f)
+        {
+            SetUnitAnimState(unit, ResolveAttackAnimState(unit));
+        }
+        else
+        {
+            SetUnitAnimState(unit, moved ? UnitAnimState::Move : UnitAnimState::Idle);
         }
     }
+}
+
+void PawlineGameImpl::SetUnitAnimState(Unit& unit, UnitAnimState state)
+{
+    if (unit.animState == state)
+    {
+        return;
+    }
+
+    unit.animState = state;
+    unit.stateTime = 0.0f;
+}
+
+UnitAnimState PawlineGameImpl::ResolveAttackAnimState(const Unit& unit) const
+{
+    const float progress = AttackProgress(unit);
+    if (progress < 0.40f)
+    {
+        return UnitAnimState::Windup;
+    }
+    if (progress < 0.64f)
+    {
+        return UnitAnimState::Attack;
+    }
+    return UnitAnimState::Recover;
 }
 
 int PawlineGameImpl::FindTargetIndex(const Unit& unit) const
@@ -385,7 +682,7 @@ int PawlineGameImpl::FindTargetIndex(const Unit& unit) const
 
         const float forward = (other.pos.x - unit.pos.x) * dir;
         const float laneDelta = std::abs(other.pos.y - unit.pos.y);
-        if (forward < -8.0f || forward > unit.range + other.radius || laneDelta > kLaneHalfHeight)
+        if (forward < -8.0f || forward > EffectiveUnitRange(unit) + other.radius || laneDelta > kLaneHalfHeight)
         {
             continue;
         }
@@ -424,9 +721,9 @@ bool PawlineGameImpl::IsEnemyBaseInRange(const Unit& unit) const
 {
     if (unit.team == Team::Player)
     {
-        return kEnemyBaseX - unit.pos.x <= unit.range + 52.0f;
+        return kEnemyBaseX - unit.pos.x <= EffectiveUnitRange(unit) + 52.0f;
     }
-    return unit.pos.x - kPlayerBaseX <= unit.range + 52.0f;
+    return unit.pos.x - kPlayerBaseX <= EffectiveUnitRange(unit) + 52.0f;
 }
 
 void PawlineGameImpl::BeginAttack(Unit& attacker, Vec2 targetPos)
@@ -475,6 +772,7 @@ void PawlineGameImpl::BeginAttack(Unit& attacker, Vec2 targetPos)
 
     attacker.attackAnimMax = duration;
     attacker.attackAnim = attacker.attackAnimMax;
+    SetUnitAnimState(attacker, UnitAnimState::Windup);
 }
 
 void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_COLOR_F color)
@@ -796,6 +1094,7 @@ void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
 
     if (target.hp <= 0.0f)
     {
+        SetUnitAnimState(target, UnitAnimState::Death);
         target.alive = false;
         if (target.team == Team::Enemy)
         {
@@ -803,7 +1102,7 @@ void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
             m_score += target.reward * 10;
             AddFloatText(target.pos, L"+" + ToWideInt(target.reward), D2D1::ColorF(0xB8FF89), 0.9f);
         }
-        AddBurst(target.pos, target.team == Team::Enemy ? D2D1::ColorF(0xFF9BA8) : D2D1::ColorF(0xBBD7FF), 16);
+        AddDeathBurst(target);
     }
 }
 
@@ -816,6 +1115,7 @@ void PawlineGameImpl::DamageBase(Team baseTeam, float damage, Vec2 source)
         {
             m_enemyBaseShake = 0.20f;
         }
+        AddCameraTrauma(0.28f);
         AddFloatText({kEnemyBaseX - 46.0f, kLaneY - 92.0f}, ToWideInt(static_cast<int>(std::round(damage))), D2D1::ColorF(0xBBD7FF), 0.65f);
         AddHitEffects({kEnemyBaseX - 44.0f, source.y}, D2D1::ColorF(0x65B8FF));
     }
@@ -826,6 +1126,7 @@ void PawlineGameImpl::DamageBase(Team baseTeam, float damage, Vec2 source)
         {
             m_playerBaseShake = 0.20f;
         }
+        AddCameraTrauma(0.28f);
         AddFloatText({kPlayerBaseX + 46.0f, kLaneY - 92.0f}, ToWideInt(static_cast<int>(std::round(damage))), D2D1::ColorF(0xFFB6C2), 0.65f);
         AddHitEffects({kPlayerBaseX + 44.0f, source.y}, D2D1::ColorF(0xFF9BA8));
     }
@@ -850,6 +1151,16 @@ void PawlineGameImpl::ShakeUnitById(int id, float duration)
     }
 }
 
+void PawlineGameImpl::AddCameraTrauma(float amount)
+{
+    if (!m_hitShakeEnabled)
+    {
+        return;
+    }
+
+    m_cameraTrauma = std::min(1.0f, std::max(m_cameraTrauma, amount));
+}
+
 void PawlineGameImpl::UpdateParticles(float dt)
 {
     // Gameplay and visual effects share delta-time cleanup, so speed changes and
@@ -858,8 +1169,10 @@ void PawlineGameImpl::UpdateParticles(float dt)
     {
         particle.life -= dt;
         particle.pos = particle.pos + particle.vel * dt;
-        particle.vel = particle.vel * 0.82f;
-        particle.vel.y += 18.0f * dt;
+        particle.vel = particle.vel * std::pow(std::max(0.0f, particle.drag), dt * 60.0f);
+        particle.vel.y += particle.gravity * dt;
+        particle.radius = std::max(0.5f, particle.radius + particle.growth * dt);
+        particle.spin += dt * (2.5f + std::abs(particle.vel.x) * 0.015f);
     }
 
     for (RingEffect& ring : m_rings)
@@ -1015,6 +1328,7 @@ void PawlineGameImpl::TryFireCannon()
     m_cannonCharge = 0.0f;
     m_cannonFlash = 0.42f;
     m_screenFlash = 0.12f;
+    AddCameraTrauma(0.55f);
     const float damage = 210.0f + static_cast<float>(m_walletLevel) * 48.0f;
     AddBeam({116.0f, kLaneY}, {kEnemyBaseX - 2.0f, kLaneY}, 20.0f, 0.34f, D2D1::ColorF(0xF6FF83, 0.92f));
     AddBeam({136.0f, kLaneY - 34.0f}, {kEnemyBaseX - 40.0f, kLaneY + 30.0f}, 8.0f, 0.28f, D2D1::ColorF(0xFFF4B8, 0.68f));
@@ -1046,6 +1360,11 @@ void PawlineGameImpl::IncreaseGameSpeed()
 
 void PawlineGameImpl::AddParticle(Vec2 pos, Vec2 vel, float radius, float life, D2D1_COLOR_F color)
 {
+    AddParticleEx(pos, vel, radius, life, color, ParticleKind::Dot, 18.0f, 0.82f, 0.0f);
+}
+
+void PawlineGameImpl::AddParticleEx(Vec2 pos, Vec2 vel, float radius, float life, D2D1_COLOR_F color, ParticleKind kind, float gravity, float drag, float growth)
+{
     Particle particle;
     particle.pos = pos;
     particle.vel = vel;
@@ -1053,6 +1372,11 @@ void PawlineGameImpl::AddParticle(Vec2 pos, Vec2 vel, float radius, float life, 
     particle.life = life;
     particle.maxLife = life;
     particle.color = color;
+    particle.kind = kind;
+    particle.gravity = gravity;
+    particle.drag = drag;
+    particle.growth = growth;
+    particle.spin = Hash01(pos.x, pos.y, m_uiTime) * kPi * 2.0f;
     m_particles.push_back(particle);
 }
 
@@ -1116,11 +1440,47 @@ void PawlineGameImpl::AddBurst(Vec2 pos, D2D1_COLOR_F color, int count)
     }
 }
 
+void PawlineGameImpl::AddDustPuff(Vec2 pos, D2D1_COLOR_F color, int count)
+{
+    std::uniform_real_distribution<float> angleDist(-kPi, 0.0f);
+    std::uniform_real_distribution<float> speedDist(18.0f, 92.0f);
+    std::uniform_real_distribution<float> radiusDist(5.0f, 14.0f);
+    std::uniform_real_distribution<float> lifeDist(0.36f, 0.82f);
+    for (int i = 0; i < count; ++i)
+    {
+        const float angle = angleDist(m_rng);
+        const float speed = speedDist(m_rng);
+        const Vec2 vel = {std::cos(angle) * speed, std::sin(angle) * speed * 0.38f};
+        AddParticleEx(pos, vel, radiusDist(m_rng), lifeDist(m_rng), color, ParticleKind::Dust, -4.0f, 0.88f, 11.0f);
+    }
+}
+
+void PawlineGameImpl::AddDeathBurst(const Unit& unit)
+{
+    const D2D1_COLOR_F color = unit.team == Team::Enemy ? D2D1::ColorF(0xFF9BA8) : D2D1::ColorF(0xBBD7FF);
+    const D2D1_COLOR_F smoke = unit.team == Team::Enemy ? D2D1::ColorF(0x7D5260, 0.46f) : D2D1::ColorF(0x8FB7D8, 0.42f);
+    std::uniform_real_distribution<float> angleDist(0.0f, kPi * 2.0f);
+    std::uniform_real_distribution<float> speedDist(48.0f, 210.0f);
+    std::uniform_real_distribution<float> shardDist(2.4f, 6.8f);
+
+    const int shardCount = unit.elite ? 26 : 15;
+    for (int i = 0; i < shardCount; ++i)
+    {
+        const float angle = angleDist(m_rng);
+        const float speed = speedDist(m_rng);
+        AddParticleEx(unit.pos, {std::cos(angle) * speed, std::sin(angle) * speed * 0.78f}, shardDist(m_rng), 0.52f, color, ParticleKind::Shard, 42.0f, 0.86f, -1.2f);
+    }
+    AddDustPuff({unit.pos.x, unit.pos.y + unit.radius * 0.78f}, smoke, unit.elite ? 18 : 10);
+    AddRing(unit.pos, unit.elite ? 92.0f : 56.0f, 0.30f, D2D1::ColorF(color.r, color.g, color.b, 0.44f), unit.elite ? 3.8f : 2.5f);
+    AddParticleEx(unit.pos, {0.0f, -18.0f}, unit.radius * 1.1f, 0.40f, D2D1::ColorF(color.r, color.g, color.b, 0.40f), ParticleKind::Glow, 0.0f, 0.92f, 42.0f);
+}
+
 void PawlineGameImpl::AddHitEffects(Vec2 pos, D2D1_COLOR_F color)
 {
     AddBurst(pos, color, 14);
     AddSparkLines(pos, FadeColor(color, 0.9f), 8);
     AddRing(pos, 54.0f, 0.28f, D2D1::ColorF(color.r, color.g, color.b, 0.48f), 2.6f);
+    AddDustPuff({pos.x, pos.y + 12.0f}, D2D1::ColorF(color.r, color.g, color.b, 0.28f), 4);
 }
 
 void PawlineGameImpl::AddFloatText(Vec2 pos, const std::wstring& text, D2D1_COLOR_F color, float life)

@@ -91,6 +91,21 @@ D2D1_RECT_F PawlineGameImpl::MenuShopButtonRect() const
     return D2D1::RectF(650.0f, 720.0f, 928.0f, 774.0f);
 }
 
+D2D1_RECT_F PawlineGameImpl::BriefingStartButtonRect() const
+{
+    return D2D1::RectF(840.0f, 690.0f, 1196.0f, 754.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::BriefingBackButtonRect() const
+{
+    return D2D1::RectF(84.0f, 690.0f, 302.0f, 754.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::BriefingShopButtonRect() const
+{
+    return D2D1::RectF(316.0f, 690.0f, 534.0f, 754.0f);
+}
+
 D2D1_RECT_F PawlineGameImpl::ShopBackButtonRect() const
 {
     return D2D1::RectF(58.0f, 716.0f, 244.0f, 768.0f);

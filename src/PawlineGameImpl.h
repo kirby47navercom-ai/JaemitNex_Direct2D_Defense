@@ -358,7 +358,7 @@ private:
 
     void UpdateViewMetrics();
 
-    void SetViewTransform(float worldCameraX = 0.0f);
+    void SetViewTransform(float worldCameraX = 0.0f, bool includeCameraShake = false);
 
     Vec2 ClientToVirtual(Vec2 pos) const;
 
@@ -445,6 +445,8 @@ private:
     void ShakeUnit(Unit& unit, float duration);
 
     void ShakeUnitById(int id, float duration);
+
+    void AddCameraTrauma(float amount);
 
     void UpdateParticles(float dt);
 
@@ -808,6 +810,7 @@ private:
     float m_bossBannerTimer = 0.0f;
     float m_bossWarningTimer = 0.0f;
     float m_bossFocusX = 0.0f;
+    float m_cameraTrauma = 0.0f;
     float m_cameraX = 0.0f;
     float m_cameraTargetX = 0.0f;
     float m_viewScale = 1.0f;

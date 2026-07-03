@@ -513,6 +513,7 @@ void PawlineGameImpl::ResetGame()
     m_bossBannerTimer = 0.0f;
     m_bossWarningTimer = 0.0f;
     m_bossFocusX = 0.0f;
+    m_cameraTrauma = 0.0f;
     m_cameraX = 0.0f;
     m_cameraTargetX = 0.0f;
     m_playerBaseShake = 0.0f;
@@ -564,6 +565,10 @@ void PawlineGameImpl::Update(float dt)
     if (m_bossWarningTimer > 0.0f)
     {
         m_bossWarningTimer -= dt;
+    }
+    if (m_cameraTrauma > 0.0f)
+    {
+        m_cameraTrauma = std::max(0.0f, m_cameraTrauma - dt * 1.35f);
     }
 
     if (m_screen == GameScreen::Title || m_screen == GameScreen::Options || m_screen == GameScreen::Menu || m_screen == GameScreen::Shop || m_screen == GameScreen::Briefing || m_screen == GameScreen::Result)
@@ -642,10 +647,18 @@ void PawlineGameImpl::UpdateViewMetrics()
     m_viewOffsetY = (size.height - kHeight * m_viewScale) * 0.5f;
 }
 
-void PawlineGameImpl::SetViewTransform(float worldCameraX)
+void PawlineGameImpl::SetViewTransform(float worldCameraX, bool includeCameraShake)
 {
+    Vec2 shake = {};
+    if (includeCameraShake && m_cameraTrauma > 0.0f)
+    {
+        const float power = m_cameraTrauma * m_cameraTrauma;
+        shake.x = std::sin((m_uiTime + m_stageTime) * 74.0f) * power * 9.0f;
+        shake.y = std::cos((m_uiTime + m_stageTime) * 91.0f) * power * 5.0f;
+    }
+
     const D2D1_MATRIX_3X2_F matrix =
-        D2D1::Matrix3x2F::Translation(-worldCameraX, 0.0f) *
+        D2D1::Matrix3x2F::Translation(-worldCameraX + shake.x, shake.y) *
         D2D1::Matrix3x2F::Scale(m_viewScale, m_viewScale) *
         D2D1::Matrix3x2F::Translation(m_viewOffsetX, m_viewOffsetY);
     m_renderTarget->SetTransform(matrix);

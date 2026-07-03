@@ -82,6 +82,11 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
         OnMenuClick(pos);
         return;
     }
+    if (m_screen == GameScreen::Briefing)
+    {
+        OnBriefingClick(pos);
+        return;
+    }
     if (m_screen == GameScreen::Shop)
     {
         OnShopClick(pos);
@@ -166,11 +171,43 @@ void PawlineGameImpl::OnMenuClick(Vec2 pos)
 
     if (Contains(StartGameButtonRect(), pos))
     {
-        ResetGame();
+        m_screen = GameScreen::Briefing;
+        SetMessage(L"Check your deck before launch.");
     }
     if (Contains(MenuShopButtonRect(), pos))
     {
         m_screen = GameScreen::Shop;
+    }
+}
+
+void PawlineGameImpl::OnBriefingClick(Vec2 pos)
+{
+    if (Contains(BriefingStartButtonRect(), pos))
+    {
+        ResetGame();
+        return;
+    }
+    if (Contains(BriefingBackButtonRect(), pos))
+    {
+        ResetToMenu();
+        return;
+    }
+    if (Contains(BriefingShopButtonRect(), pos))
+    {
+        m_screen = GameScreen::Shop;
+        return;
+    }
+
+    for (int i = 0; i < kLoadoutSize; ++i)
+    {
+        const D2D1_RECT_F rect = D2D1::RectF(604.0f + static_cast<float>(i) * 112.0f, 260.0f, 700.0f + static_cast<float>(i) * 112.0f, 390.0f);
+        if (Contains(rect, pos))
+        {
+            m_selectedLoadoutSlot = i;
+            m_screen = GameScreen::Menu;
+            SetMessage(L"Pick a replacement unit.");
+            return;
+        }
     }
 }
 
@@ -401,6 +438,23 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         return;
     }
 
+    if (m_screen == GameScreen::Briefing)
+    {
+        if (key == VK_RETURN || key == VK_SPACE)
+        {
+            ResetGame();
+        }
+        else if (key == VK_ESCAPE || key == VK_BACK || key == 'M')
+        {
+            ResetToMenu();
+        }
+        else if (key == 'S' || key == 'B')
+        {
+            m_screen = GameScreen::Shop;
+        }
+        return;
+    }
+
     if (key == VK_ESCAPE && m_screen != GameScreen::Title && m_screen != GameScreen::Options)
     {
         OpenEscapeMenu();
@@ -480,7 +534,8 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         }
         else if (key == VK_RETURN || key == VK_SPACE)
         {
-            ResetGame();
+            m_screen = GameScreen::Briefing;
+            SetMessage(L"Check your deck before launch.");
         }
         else if (key == 'S' || key == 'B')
         {
