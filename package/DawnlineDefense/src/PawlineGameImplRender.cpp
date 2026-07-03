@@ -538,6 +538,69 @@ void PawlineGameImpl::DrawImageVfxFrame(ImageVfxKind kind, int frame, Vec2 cente
         frameWidth = 128.0f;
         frameHeight = 128.0f;
         break;
+    case ImageVfxKind::Fire:
+        sheet = m_fireEffectSheet.Get();
+        columns = 4;
+        rows = 4;
+        frameWidth = 64.0f;
+        frameHeight = 64.0f;
+        break;
+    case ImageVfxKind::Ice:
+        sheet = m_iceEffectSheet.Get();
+        columns = 5;
+        rows = 4;
+        frameWidth = 192.0f;
+        frameHeight = 192.0f;
+        break;
+    case ImageVfxKind::Thunder:
+        sheet = m_thunderEffectSheet.Get();
+        columns = 13;
+        rows = 1;
+        frameWidth = 64.0f;
+        frameHeight = 64.0f;
+        break;
+    case ImageVfxKind::Water:
+        sheet = m_waterEffectSheet.Get();
+        columns = 4;
+        rows = 4;
+        frameWidth = 64.0f;
+        frameHeight = 64.0f;
+        break;
+    case ImageVfxKind::Dark:
+        sheet = m_darkEffectSheet.Get();
+        columns = 16;
+        rows = 1;
+        frameWidth = 48.0f;
+        frameHeight = 64.0f;
+        break;
+    case ImageVfxKind::Acid:
+        sheet = m_acidEffectSheet.Get();
+        columns = 16;
+        rows = 1;
+        frameWidth = 32.0f;
+        frameHeight = 32.0f;
+        break;
+    case ImageVfxKind::Earth:
+        sheet = m_earthEffectSheet.Get();
+        columns = 7;
+        rows = 1;
+        frameWidth = 48.0f;
+        frameHeight = 48.0f;
+        break;
+    case ImageVfxKind::Smoke:
+        sheet = m_smokeEffectSheet.Get();
+        columns = 13;
+        rows = 1;
+        frameWidth = 64.0f;
+        frameHeight = 64.0f;
+        break;
+    case ImageVfxKind::Holy:
+        sheet = m_holyEffectSheet.Get();
+        columns = 16;
+        rows = 1;
+        frameWidth = 48.0f;
+        frameHeight = 48.0f;
+        break;
     }
 
     if (!sheet)
@@ -564,11 +627,36 @@ void PawlineGameImpl::DrawImageVfxSprites()
         const float alpha = Clamp01(effect.life / effect.maxLife);
         const float progress = 1.0f - alpha;
         const bool heal = effect.kind == ImageVfxKind::Heal || effect.kind == ImageVfxKind::HealSoft;
-        const int frameCount = heal ? 16 : 8;
+        int frameCount = heal ? 16 : 8;
+        switch (effect.kind)
+        {
+        case ImageVfxKind::Thunder:
+            frameCount = 13;
+            break;
+        case ImageVfxKind::Ice:
+            frameCount = 20;
+            break;
+        case ImageVfxKind::Fire:
+        case ImageVfxKind::Water:
+        case ImageVfxKind::Dark:
+        case ImageVfxKind::Acid:
+        case ImageVfxKind::Holy:
+            frameCount = 16;
+            break;
+        case ImageVfxKind::Earth:
+            frameCount = 7;
+            break;
+        case ImageVfxKind::Smoke:
+            frameCount = 13;
+            break;
+        default:
+            break;
+        }
         const int frame = std::clamp(static_cast<int>((progress + effect.frameOffset) * static_cast<float>(frameCount)), 0, frameCount - 1);
         const float pop = 1.0f + std::sin(progress * kPi) * (heal ? 0.10f : 0.18f);
+        const float glow = effect.kind == ImageVfxKind::Smoke ? 0.07f : (heal ? 0.12f : 0.16f);
         FillEllipse(effect.pos, effect.size * (heal ? 0.44f : 0.50f) * pop, effect.size * (heal ? 0.32f : 0.28f) * pop,
-                    D2D1::ColorF(effect.color.r, effect.color.g, effect.color.b, effect.color.a * alpha * (heal ? 0.12f : 0.16f)));
+                    D2D1::ColorF(effect.color.r, effect.color.g, effect.color.b, effect.color.a * alpha * glow));
         DrawImageVfxFrame(effect.kind, frame, effect.pos, effect.size * pop, effect.color.a * alpha);
     }
 }

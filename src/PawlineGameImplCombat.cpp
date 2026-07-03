@@ -1,5 +1,96 @@
 #include "PawlineGameImpl.h"
 
+namespace
+{
+ImageVfxKind UnitImageVfxKind(const Unit& unit)
+{
+    if (unit.team == Team::Player)
+    {
+        switch (static_cast<PlayerUnit>(unit.kind))
+        {
+        case PlayerUnit::Spark:
+            return ImageVfxKind::Thunder;
+        case PlayerUnit::Frost:
+            return ImageVfxKind::Ice;
+        case PlayerUnit::Comet:
+        case PlayerUnit::Solar:
+            return ImageVfxKind::Fire;
+        case PlayerUnit::Bell:
+        case PlayerUnit::Orbit:
+        case PlayerUnit::Prism:
+            return ImageVfxKind::Holy;
+        case PlayerUnit::Nebula:
+            return ImageVfxKind::Dark;
+        case PlayerUnit::Mint:
+            return ImageVfxKind::Heal;
+        case PlayerUnit::Box:
+        case PlayerUnit::Titan:
+        case PlayerUnit::Drill:
+            return ImageVfxKind::Earth;
+        default:
+            return ImageVfxKind::Slash;
+        }
+    }
+
+    switch (static_cast<EnemyUnit>(unit.kind))
+    {
+    case EnemyUnit::Sulfur:
+    case EnemyUnit::Moss:
+    case EnemyUnit::Spore:
+        return ImageVfxKind::Acid;
+    case EnemyUnit::Frost:
+        return ImageVfxKind::Ice;
+    case EnemyUnit::Tide:
+        return ImageVfxKind::Water;
+    case EnemyUnit::Void:
+    case EnemyUnit::Boss:
+        return ImageVfxKind::Dark;
+    case EnemyUnit::Flare:
+    case EnemyUnit::Comet:
+        return ImageVfxKind::Fire;
+    case EnemyUnit::Ring:
+    case EnemyUnit::Mirror:
+        return ImageVfxKind::Holy;
+    case EnemyUnit::Brute:
+    case EnemyUnit::Rust:
+    case EnemyUnit::Storm:
+    case EnemyUnit::Quake:
+        return ImageVfxKind::Earth;
+    default:
+        return ImageVfxKind::EnemySlash;
+    }
+}
+
+ImageVfxKind ProjectileImageVfxKind(ProjectileVisual visual, Team team)
+{
+    switch (visual)
+    {
+    case ProjectileVisual::Bolt:
+        return ImageVfxKind::Thunder;
+    case ProjectileVisual::BellWave:
+    case ProjectileVisual::OrbitStar:
+    case ProjectileVisual::PrismShard:
+    case ProjectileVisual::MirrorShard:
+    case ProjectileVisual::SolarSpark:
+        return ImageVfxKind::Holy;
+    case ProjectileVisual::NebulaOrb:
+    case ProjectileVisual::VoidOrb:
+        return ImageVfxKind::Dark;
+    case ProjectileVisual::MintPulse:
+        return ImageVfxKind::Heal;
+    case ProjectileVisual::FrostShard:
+        return ImageVfxKind::Ice;
+    case ProjectileVisual::AcidGlob:
+    case ProjectileVisual::SporeSeed:
+        return ImageVfxKind::Acid;
+    case ProjectileVisual::TideWave:
+        return ImageVfxKind::Water;
+    default:
+        return team == Team::Player ? ImageVfxKind::Slash : ImageVfxKind::EnemySlash;
+    }
+}
+}
+
 // Gameplay simulation, combat resolution, and short-lived VFX spawning.
 void PawlineGameImpl::UpdateEnemyDirector(float dt)
 {
@@ -1453,6 +1544,10 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
 {
     const Vec2 dir = Normalize(targetPos - attacker.pos);
     const Vec2 muzzle = attacker.pos + dir * (attacker.radius + 10.0f);
+    const ImageVfxKind imageKind = UnitImageVfxKind(attacker);
+    const Vec2 imagePos = attacker.ranged ? muzzle : targetPos;
+    AddImageVfx(imageKind, imagePos, attacker.ranged ? 72.0f : 82.0f + attacker.radius * 0.65f,
+                attacker.ranged ? 0.26f : 0.22f, FadeColor(color, 0.82f), attacker.attackDir);
 
     if (attacker.team == Team::Player)
     {
@@ -1901,10 +1996,11 @@ void PawlineGameImpl::AddProjectileImpact(const Projectile& projectile)
 {
     const Vec2 pos = projectile.pos;
     AddBeam(projectile.lastPos, pos, projectile.radius * 1.6f, 0.13f, FadeColor(projectile.color, 0.88f));
-    const bool healingVisual = projectile.visual == ProjectileVisual::MintPulse;
-    AddImageVfx(healingVisual ? ImageVfxKind::Heal : (projectile.team == Team::Player ? ImageVfxKind::Slash : ImageVfxKind::EnemySlash),
-                pos, healingVisual ? 92.0f : (66.0f + projectile.radius * 3.0f),
-                healingVisual ? 0.38f : 0.22f, projectile.color, projectile.team == Team::Player ? 1.0f : -1.0f);
+    const ImageVfxKind imageKind = ProjectileImageVfxKind(projectile.visual, projectile.team);
+    const bool healingVisual = imageKind == ImageVfxKind::Heal || imageKind == ImageVfxKind::HealSoft;
+    const bool largeVisual = imageKind == ImageVfxKind::Water || imageKind == ImageVfxKind::Fire || imageKind == ImageVfxKind::Dark;
+    AddImageVfx(imageKind, pos, healingVisual ? 92.0f : (largeVisual ? 92.0f : 66.0f + projectile.radius * 3.0f),
+                healingVisual ? 0.38f : 0.24f, projectile.color, projectile.team == Team::Player ? 1.0f : -1.0f);
 
     switch (projectile.visual)
     {
@@ -1973,7 +2069,7 @@ void PawlineGameImpl::AddMeleeClashVfx(const Unit& attacker, Vec2 targetPos, D2D
     const float heavy = attacker.radius >= 23.0f ? 1.0f : 0.0f;
 
     AddRing(clash, 42.0f + attacker.radius * 1.2f + heavy * 22.0f, 0.24f + heavy * 0.08f, FadeColor(color, 0.46f), 2.4f + heavy * 1.4f);
-    AddImageVfx(attacker.team == Team::Player ? ImageVfxKind::Slash : ImageVfxKind::EnemySlash,
+    AddImageVfx(UnitImageVfxKind(attacker),
                 clash, 82.0f + attacker.radius * 0.9f + heavy * 22.0f, 0.22f + heavy * 0.05f, FadeColor(color, 0.90f), attacker.attackDir);
     AddParticleEx(clash, normal * 22.0f + Vec2{0.0f, -18.0f}, 6.0f + heavy * 2.0f, 0.26f, FadeColor(color, 0.70f), ParticleKind::Glow, -2.0f, 0.90f, 18.0f + heavy * 8.0f);
     AddDustPuff({clash.x, clash.y + 18.0f}, D2D1::ColorF(color.r, color.g, color.b, 0.24f), attacker.radius >= 23.0f ? 8 : 4);
@@ -2566,6 +2662,9 @@ void PawlineGameImpl::AddDeathBurst(const Unit& unit)
     }
     AddDustPuff({unit.pos.x, unit.pos.y + unit.radius * 0.78f}, smoke, unit.elite ? 18 : 10);
     AddRing(unit.pos, unit.elite ? 92.0f : 56.0f, 0.30f, D2D1::ColorF(color.r, color.g, color.b, 0.44f), unit.elite ? 3.8f : 2.5f);
+    AddImageVfx(ImageVfxKind::Smoke, {unit.pos.x, unit.pos.y + unit.radius * 0.35f}, unit.elite ? 116.0f : 82.0f,
+                unit.elite ? 0.46f : 0.34f, FadeColor(smoke, 0.84f), unit.attackDir);
+    AddImageVfx(UnitImageVfxKind(unit), unit.pos, unit.elite ? 96.0f : 68.0f, 0.24f, FadeColor(color, 0.76f), unit.attackDir);
     AddParticleEx(unit.pos, {0.0f, -18.0f}, unit.radius * 1.1f, 0.40f, D2D1::ColorF(color.r, color.g, color.b, 0.40f), ParticleKind::Glow, 0.0f, 0.92f, 42.0f);
 }
 

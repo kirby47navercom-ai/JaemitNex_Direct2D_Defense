@@ -405,6 +405,15 @@ void PawlineGameImpl::LoadBitmapAssets()
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\slash_gameboy_effect_sheet.png"), m_enemySlashEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\heal_effect_sheet.png"), m_healEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\heal_gameboy_effect_sheet.png"), m_healSoftEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\fire_explosion_sheet.png"), m_fireEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\ice_burst_sheet.png"), m_iceEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\thunder_strike_sheet.png"), m_thunderEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\water_impact_sheet.png"), m_waterEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\dark_impact_sheet.png"), m_darkEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\acid_impact_sheet.png"), m_acidEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\earth_impact_sheet.png"), m_earthEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\smoke_puff_sheet.png"), m_smokeEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\holy_flash_sheet.png"), m_holyEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\ui\\pawline_ui_atlas.png"), m_uiAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\cutins\\solar_gatekeeper_cutin.png"), m_bossCutin.ReleaseAndGetAddressOf());
 
@@ -425,6 +434,15 @@ void PawlineGameImpl::DiscardBitmapAssets()
     m_enemySlashEffectSheet.Reset();
     m_healEffectSheet.Reset();
     m_healSoftEffectSheet.Reset();
+    m_fireEffectSheet.Reset();
+    m_iceEffectSheet.Reset();
+    m_thunderEffectSheet.Reset();
+    m_waterEffectSheet.Reset();
+    m_darkEffectSheet.Reset();
+    m_acidEffectSheet.Reset();
+    m_earthEffectSheet.Reset();
+    m_smokeEffectSheet.Reset();
+    m_holyEffectSheet.Reset();
     m_uiAtlas.Reset();
     m_bossCutin.Reset();
     for (auto& bitmap : m_backgroundBitmaps)

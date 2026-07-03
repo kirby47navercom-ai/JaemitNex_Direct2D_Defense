@@ -181,7 +181,16 @@ enum class ImageVfxKind
     Slash,
     EnemySlash,
     Heal,
-    HealSoft
+    HealSoft,
+    Fire,
+    Ice,
+    Thunder,
+    Water,
+    Dark,
+    Acid,
+    Earth,
+    Smoke,
+    Holy
 };
 
 enum class Difficulty
@@ -1064,6 +1073,15 @@ private:
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_enemySlashEffectSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_healEffectSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_healSoftEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_fireEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_iceEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_thunderEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_waterEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_darkEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_acidEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_earthEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_smokeEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_holyEffectSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_uiAtlas;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_bossCutin;
     bool m_comInitialized = false;

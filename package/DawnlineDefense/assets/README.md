@@ -7,6 +7,8 @@
 - `vfx/combat_vfx_atlas.png`: 글로우, 슬래시, 충격파, 먼지 VFX 아틀라스
 - `vfx/slash_effect_sheet.png`, `vfx/slash_gameboy_effect_sheet.png`: 외부 VFX 이미지를 적용한 타격 슬래시 이펙트
 - `vfx/heal_effect_sheet.png`, `vfx/heal_gameboy_effect_sheet.png`: 외부 VFX 이미지를 적용한 월렛/회복 반짝임 이펙트
+- `vfx/fire_explosion_sheet.png`, `ice_burst_sheet.png`, `thunder_strike_sheet.png`, `water_impact_sheet.png`: 압축 에셋에서 선별한 속성별 전투 이펙트
+- `vfx/dark_impact_sheet.png`, `acid_impact_sheet.png`, `earth_impact_sheet.png`, `smoke_puff_sheet.png`, `holy_flash_sheet.png`: 적/보스/죽음/충돌 연출용 외부 이펙트
 - `ui/pawline_ui_atlas.png`: 버튼/패널 질감 UI 아틀라스
 - `cutins/solar_gatekeeper_cutin.png`: 보스 등장 컷인 배너
 
