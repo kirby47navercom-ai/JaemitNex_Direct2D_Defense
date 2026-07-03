@@ -763,10 +763,10 @@ void PawlineGameImpl::DrawMenu()
     DrawString(L"Start energy " + ToWideInt(static_cast<int>(menuStage.startEnergy)), D2D1::RectF(82.0f, 676.0f, 540.0f, 700.0f), m_bodyFormat, D2D1::ColorF(0xB8FF89));
 
     const bool selectedUnlocked = IsStageUnlocked(m_selectedStage);
-    DrawButton(MenuCodexButtonRect(), L"Codex", true, D2D1::ColorF(0x22323F));
+    DrawButton(MenuCodexButtonRect(), L"Data", true, D2D1::ColorF(0x22323F));
     DrawButton(MenuShopButtonRect(), L"Shop", true, D2D1::ColorF(0x4B4321));
     DrawButton(StartGameButtonRect(), selectedUnlocked ? L"Start Stage" : L"Locked", selectedUnlocked, D2D1::ColorF(0x173C4B));
-    DrawString(L"C", D2D1::RectF(MenuCodexButtonRect().left, MenuCodexButtonRect().bottom + 4.0f, MenuCodexButtonRect().right, MenuCodexButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+    DrawString(L"D / C", D2D1::RectF(MenuCodexButtonRect().left, MenuCodexButtonRect().bottom + 4.0f, MenuCodexButtonRect().right, MenuCodexButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
     DrawString(L"S / B", D2D1::RectF(MenuShopButtonRect().left, MenuShopButtonRect().bottom + 4.0f, MenuShopButtonRect().right, MenuShopButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
     DrawString(selectedUnlocked ? L"Enter / Space" : L"Clear previous", D2D1::RectF(StartGameButtonRect().left, StartGameButtonRect().bottom + 4.0f, StartGameButtonRect().right, StartGameButtonRect().bottom + 24.0f), m_centerFormat, selectedUnlocked ? D2D1::ColorF(0x8EA9B8) : D2D1::ColorF(0xFFB6C2));
 }
@@ -783,7 +783,7 @@ void PawlineGameImpl::DrawCodex()
         DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.12f), 1.0f);
     }
 
-    DrawPixelText(L"FIELD CODEX", {52.0f, 42.0f}, 4.2f, D2D1::ColorF(0xF3FBFF));
+    DrawPixelText(L"FIELD DATA", {52.0f, 42.0f}, 4.2f, D2D1::ColorF(0xF3FBFF));
     DrawString(L"유닛, 적, 행성 정보를 한곳에서 확인합니다.", D2D1::RectF(58.0f, 92.0f, 520.0f, 120.0f), m_bodyFormat, D2D1::ColorF(0xBFD1DB));
 
     const std::array<std::wstring, 3> tabs = {L"유닛", L"적", L"스테이지"};
@@ -3269,7 +3269,12 @@ void PawlineGameImpl::DrawTopStat(float x, const std::wstring& label, const std:
     D2D1_RECT_F rect = D2D1::RectF(x, 22.0f, x + 126.0f, 72.0f);
     DrawCartoonPanel(rect, D2D1::ColorF(0x0E1D26, 0.96f), color, Contains(rect, m_mouse));
     DrawPixelText(label, {rect.left + 10.0f, rect.top + 8.0f}, 2.0f, D2D1::ColorF(0xAFC9D5), 0.92f);
-    DrawPixelText(value, {rect.left + 10.0f, rect.top + 27.0f}, 2.55f, color, 1.0f);
+
+    // 에너지처럼 숫자가 길어지는 HUD 값은 카드 안쪽 폭에 맞춰 픽셀 폰트 크기를 줄인다.
+    const float innerWidth = rect.right - rect.left - 20.0f;
+    const float estimatedWidth = std::max(1.0f, static_cast<float>(value.size()) * 6.0f);
+    const float valueCell = std::max(1.65f, std::min(2.55f, innerWidth / estimatedWidth));
+    DrawPixelTextCentered(value, D2D1::RectF(rect.left + 8.0f, rect.top + 25.0f, rect.right - 8.0f, rect.bottom - 4.0f), valueCell, color, 1.0f);
 }
 
 void PawlineGameImpl::DrawCommandBar()

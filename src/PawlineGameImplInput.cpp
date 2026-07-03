@@ -690,7 +690,7 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         {
             m_screen = GameScreen::Shop;
         }
-        else if (key == 'C')
+        else if (key == 'D' || key == 'C')
         {
             m_screen = GameScreen::Codex;
         }
