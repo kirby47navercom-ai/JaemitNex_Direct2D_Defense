@@ -324,6 +324,19 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
         UpdateViewMetrics();
         return;
     }
+    if (Contains(OptionsSaveProgressButtonRect(), pos))
+    {
+        SaveProgress();
+        SetMessage(L"진행 데이터와 옵션을 저장했어.");
+        return;
+    }
+    if (Contains(OptionsLoadProgressButtonRect(), pos))
+    {
+        LoadProgress();
+        UpdateViewMetrics();
+        SetMessage(L"저장된 진행 데이터와 옵션을 불러왔어.");
+        return;
+    }
     if (Contains(OptionsResetProgressButtonRect(), pos))
     {
         if (m_resetConfirmTimer > 0.0f)
@@ -642,6 +655,17 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         {
             m_userViewScale = 0.96f;
             UpdateViewMetrics();
+        }
+        else if (key == 'S')
+        {
+            SaveProgress();
+            SetMessage(L"진행 데이터와 옵션을 저장했어.");
+        }
+        else if (key == 'L')
+        {
+            LoadProgress();
+            UpdateViewMetrics();
+            SetMessage(L"저장된 진행 데이터와 옵션을 불러왔어.");
         }
         else if (key == 'X')
         {

@@ -262,49 +262,54 @@ void PawlineGameImpl::SetColor(D2D1_COLOR_F color)
 void PawlineGameImpl::FillRect(D2D1_RECT_F rect, D2D1_COLOR_F color)
 {
     SetColor(color);
-    m_renderTarget->FillRectangle(rect, m_brush);
+    m_renderTarget->FillRectangle(rect, m_brush.Get());
 }
 
 void PawlineGameImpl::StrokeRect(D2D1_RECT_F rect, D2D1_COLOR_F color, float width)
 {
     SetColor(color);
-    m_renderTarget->DrawRectangle(rect, m_brush, width);
+    m_renderTarget->DrawRectangle(rect, m_brush.Get(), width);
 }
 
 void PawlineGameImpl::FillRoundRect(D2D1_RECT_F rect, float radius, D2D1_COLOR_F color)
 {
     SetColor(color);
-    m_renderTarget->FillRoundedRectangle(D2D1::RoundedRect(rect, radius, radius), m_brush);
+    m_renderTarget->FillRoundedRectangle(D2D1::RoundedRect(rect, radius, radius), m_brush.Get());
 }
 
 void PawlineGameImpl::StrokeRoundRect(D2D1_RECT_F rect, float radius, D2D1_COLOR_F color, float width)
 {
     SetColor(color);
-    m_renderTarget->DrawRoundedRectangle(D2D1::RoundedRect(rect, radius, radius), m_brush, width);
+    m_renderTarget->DrawRoundedRectangle(D2D1::RoundedRect(rect, radius, radius), m_brush.Get(), width);
 }
 
 void PawlineGameImpl::FillEllipse(Vec2 pos, float rx, float ry, D2D1_COLOR_F color)
 {
     SetColor(color);
-    m_renderTarget->FillEllipse(Ellipse(pos, rx, ry), m_brush);
+    m_renderTarget->FillEllipse(Ellipse(pos, rx, ry), m_brush.Get());
 }
 
 void PawlineGameImpl::StrokeEllipse(Vec2 pos, float rx, float ry, D2D1_COLOR_F color, float width)
 {
     SetColor(color);
-    m_renderTarget->DrawEllipse(Ellipse(pos, rx, ry), m_brush, width);
+    m_renderTarget->DrawEllipse(Ellipse(pos, rx, ry), m_brush.Get(), width);
 }
 
 void PawlineGameImpl::DrawLine(Vec2 a, Vec2 b, D2D1_COLOR_F color, float width)
 {
     SetColor(color);
-    m_renderTarget->DrawLine(Point(a), Point(b), m_brush, width, m_roundStroke);
+    m_renderTarget->DrawLine(Point(a), Point(b), m_brush.Get(), width, m_roundStroke.Get());
 }
 
 void PawlineGameImpl::DrawString(const std::wstring& text, D2D1_RECT_F rect, IDWriteTextFormat* format, D2D1_COLOR_F color)
 {
     SetColor(color);
-    m_renderTarget->DrawTextW(text.c_str(), static_cast<UINT32>(text.size()), format, rect, m_brush);
+    m_renderTarget->DrawTextW(text.c_str(), static_cast<UINT32>(text.size()), format, rect, m_brush.Get());
+}
+
+void PawlineGameImpl::DrawString(const std::wstring& text, D2D1_RECT_F rect, const Microsoft::WRL::ComPtr<IDWriteTextFormat>& format, D2D1_COLOR_F color)
+{
+    DrawString(text, rect, format.Get(), color);
 }
 
 void PawlineGameImpl::DrawOutlinedString(const std::wstring& text, D2D1_RECT_F rect, IDWriteTextFormat* format, D2D1_COLOR_F color, float outlineAlpha)
@@ -316,6 +321,11 @@ void PawlineGameImpl::DrawOutlinedString(const std::wstring& text, D2D1_RECT_F r
     DrawString(text, OffsetRectF(rect, 0.0f, -1.0f), format, ink);
     DrawString(text, OffsetRectF(rect, 0.0f, 1.0f), format, ink);
     DrawString(text, rect, format, color);
+}
+
+void PawlineGameImpl::DrawOutlinedString(const std::wstring& text, D2D1_RECT_F rect, const Microsoft::WRL::ComPtr<IDWriteTextFormat>& format, D2D1_COLOR_F color, float outlineAlpha)
+{
+    DrawOutlinedString(text, rect, format.Get(), color, outlineAlpha);
 }
 
 void PawlineGameImpl::DrawCartoonPanel(D2D1_RECT_F rect, D2D1_COLOR_F fill, D2D1_COLOR_F accent, bool hover)
@@ -692,12 +702,14 @@ void PawlineGameImpl::DrawOptions()
     DrawString(ToWideInt(static_cast<int>(std::round(m_userViewScale * 100.0f))) + L"%", D2D1::RectF(552.0f, 552.0f, 728.0f, 582.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
     DrawButton(OptionsViewUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
     DrawButton(OptionsViewResetButtonRect(), L"자동 맞춤", true, D2D1::ColorF(0x2D3722));
-    DrawString(L"화면이 잘리면 값을 낮춰줘.", D2D1::RectF(442.0f, 642.0f, 838.0f, 662.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+    DrawString(L"화면이 잘리면 값을 낮춰줘.", D2D1::RectF(442.0f, 630.0f, 838.0f, 650.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+    DrawButton(OptionsSaveProgressButtonRect(), L"저장 S", true, D2D1::ColorF(0x283B27));
+    DrawButton(OptionsLoadProgressButtonRect(), L"불러오기 L", true, D2D1::ColorF(0x22323F));
     DrawButton(OptionsResetProgressButtonRect(), m_resetConfirmTimer > 0.0f ? L"정말 초기화하기" : L"진행 데이터 초기화", true, m_resetConfirmTimer > 0.0f ? D2D1::ColorF(0x4B232D) : D2D1::ColorF(0x302735));
-    DrawString(L"X", D2D1::RectF(OptionsResetProgressButtonRect().right + 16.0f, OptionsResetProgressButtonRect().top + 10.0f, OptionsResetProgressButtonRect().right + 56.0f, OptionsResetProgressButtonRect().bottom), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+    DrawString(L"X", D2D1::RectF(OptionsResetProgressButtonRect().right + 16.0f, OptionsResetProgressButtonRect().top + 7.0f, OptionsResetProgressButtonRect().right + 56.0f, OptionsResetProgressButtonRect().bottom), m_centerFormat, D2D1::ColorF(0x8EA9B8));
 
     DrawButton(OptionsBackButtonRect(), L"뒤로", true, D2D1::ColorF(0x173C4B));
-    DrawString(L"Esc / Backspace", D2D1::RectF(OptionsBackButtonRect().left, OptionsBackButtonRect().bottom + 4.0f, OptionsBackButtonRect().right, OptionsBackButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+    DrawString(L"Esc / Backspace", D2D1::RectF(OptionsBackButtonRect().right + 12.0f, OptionsBackButtonRect().top + 7.0f, OptionsBackButtonRect().right + 150.0f, OptionsBackButtonRect().bottom), m_smallFormat, D2D1::ColorF(0x8EA9B8));
 }
 
 void PawlineGameImpl::DrawMenu()
@@ -2980,17 +2992,7 @@ void PawlineGameImpl::DrawBossPresentation()
     }
 
     const StageDefinition stage = CurrentStage();
-    const Unit* boss = nullptr;
-    for (const Unit& unit : m_units)
-    {
-        if (unit.team == Team::Enemy && unit.alive && unit.boss)
-        {
-            if (!boss || unit.maxHp > boss->maxHp)
-            {
-                boss = &unit;
-            }
-        }
-    }
+    const auto bossRef = FindBossUnit();
 
     if (m_bossBannerTimer > 0.0f)
     {
@@ -3021,13 +3023,14 @@ void PawlineGameImpl::DrawBossPresentation()
         DrawLine({panel.left + 18.0f, panel.bottom - 9.0f}, {panel.right - 18.0f, panel.bottom - 9.0f}, D2D1::ColorF(0xFFFFFF, 0.22f * alpha), 2.0f);
     }
 
-    if (!boss)
+    if (!bossRef)
     {
         return;
     }
 
-    const float pct = Clamp01(boss->hp / boss->maxHp);
-    const UnitStats stats = GetEnemyStats(static_cast<EnemyUnit>(boss->kind), ThreatLevel());
+    const Unit& boss = bossRef->get();
+    const float pct = Clamp01(boss.hp / boss.maxHp);
+    const UnitStats stats = GetEnemyStats(static_cast<EnemyUnit>(boss.kind), ThreatLevel());
     const D2D1_RECT_F panel = D2D1::RectF(378.0f, 104.0f, 902.0f, 142.0f);
     DrawCartoonPanel(panel, D2D1::ColorF(0x0D1118, 0.94f), D2D1::ColorF(0xFF9BA8));
     DrawPixelText(L"BOSS", {panel.left + 18.0f, panel.top + 10.0f}, 2.4f, D2D1::ColorF(0xFFB347), 1.0f);

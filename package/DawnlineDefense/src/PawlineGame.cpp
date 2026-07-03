@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <memory>
 #include "PawlineGame.h"
 #include "PawlineGameImpl.h"
 
@@ -7,15 +8,11 @@
 #pragma comment(lib, "winmm.lib")
 
 PawlineGame::PawlineGame()
-    : m_impl(new PawlineGameImpl())
+    : m_impl(std::make_unique<PawlineGameImpl>())
 {
 }
 
-PawlineGame::~PawlineGame()
-{
-    delete m_impl;
-    m_impl = nullptr;
-}
+PawlineGame::~PawlineGame() = default;
 
 HRESULT PawlineGame::Initialize()
 {

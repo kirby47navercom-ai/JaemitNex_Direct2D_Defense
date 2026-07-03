@@ -4,20 +4,11 @@
 PawlineGameImpl::~PawlineGameImpl()
 {
     DiscardDeviceResources();
-    SafeRelease(&m_roundStroke);
-    SafeRelease(&m_centerFormat);
-    SafeRelease(&m_buttonFormat);
-    SafeRelease(&m_smallFormat);
-    SafeRelease(&m_bodyFormat);
-    SafeRelease(&m_headerFormat);
-    SafeRelease(&m_titleFormat);
-    SafeRelease(&m_writeFactory);
-    SafeRelease(&m_factory);
 }
 
 HRESULT PawlineGameImpl::Initialize()
 {
-    HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &m_factory);
+    HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, m_factory.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -26,7 +17,7 @@ HRESULT PawlineGameImpl::Initialize()
     hr = DWriteCreateFactory(
         DWRITE_FACTORY_TYPE_SHARED,
         __uuidof(IDWriteFactory),
-        reinterpret_cast<IUnknown**>(&m_writeFactory));
+        reinterpret_cast<IUnknown**>(m_writeFactory.GetAddressOf()));
     if (FAILED(hr))
     {
         return hr;
@@ -43,7 +34,7 @@ HRESULT PawlineGameImpl::Initialize()
         D2D1_CAP_STYLE_ROUND,
         D2D1_CAP_STYLE_ROUND,
         D2D1_LINE_JOIN_ROUND);
-    hr = m_factory->CreateStrokeStyle(strokeProps, nullptr, 0, &m_roundStroke);
+    hr = m_factory->CreateStrokeStyle(strokeProps, nullptr, 0, m_roundStroke.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -197,7 +188,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
 {
     HRESULT hr = m_writeFactory->CreateTextFormat(
         L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 32.0f, L"en-us", &m_titleFormat);
+        DWRITE_FONT_STRETCH_NORMAL, 32.0f, L"en-us", m_titleFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -205,7 +196,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
 
     hr = m_writeFactory->CreateTextFormat(
         L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 18.0f, L"en-us", &m_headerFormat);
+        DWRITE_FONT_STRETCH_NORMAL, 18.0f, L"en-us", m_headerFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -213,7 +204,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
 
     hr = m_writeFactory->CreateTextFormat(
         L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 15.0f, L"en-us", &m_bodyFormat);
+        DWRITE_FONT_STRETCH_NORMAL, 15.0f, L"en-us", m_bodyFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -221,7 +212,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
 
     hr = m_writeFactory->CreateTextFormat(
         L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 12.5f, L"en-us", &m_smallFormat);
+        DWRITE_FONT_STRETCH_NORMAL, 12.5f, L"en-us", m_smallFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -229,7 +220,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
 
     hr = m_writeFactory->CreateTextFormat(
         L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 15.0f, L"en-us", &m_buttonFormat);
+        DWRITE_FONT_STRETCH_NORMAL, 15.0f, L"en-us", m_buttonFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -237,7 +228,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
 
     hr = m_writeFactory->CreateTextFormat(
         L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 18.0f, L"en-us", &m_centerFormat);
+        DWRITE_FONT_STRETCH_NORMAL, 18.0f, L"en-us", m_centerFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -265,19 +256,19 @@ HRESULT PawlineGameImpl::CreateDeviceResources()
         D2D1::HwndRenderTargetProperties(
             m_hwnd,
             D2D1::SizeU(static_cast<UINT32>(rc.right - rc.left), static_cast<UINT32>(rc.bottom - rc.top))),
-        &m_renderTarget);
+        m_renderTarget.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
     }
 
-    return m_renderTarget->CreateSolidColorBrush(D2D1::ColorF(0xFFFFFF), &m_brush);
+    return m_renderTarget->CreateSolidColorBrush(D2D1::ColorF(0xFFFFFF), m_brush.GetAddressOf());
 }
 
 void PawlineGameImpl::DiscardDeviceResources()
 {
-    SafeRelease(&m_brush);
-    SafeRelease(&m_renderTarget);
+    m_brush.Reset();
+    m_renderTarget.Reset();
 }
 
 const StageDefinition PawlineGameImpl::CurrentStage() const
@@ -457,6 +448,7 @@ void PawlineGameImpl::GrantStageReward()
 
 std::wstring PawlineGameImpl::ProgressPath() const
 {
+    // 실행 파일과 같은 폴더에 저장해서 ZIP 제출본을 다른 PC로 옮겨도 진행 파일 위치를 찾기 쉽다.
     wchar_t path[MAX_PATH] = {};
     GetModuleFileNameW(nullptr, path, MAX_PATH);
     std::wstring fullPath = path;
@@ -470,38 +462,80 @@ std::wstring PawlineGameImpl::ProgressPath() const
 
 void PawlineGameImpl::LoadProgress()
 {
+    // 진행 데이터, 편성, 옵션을 불러온다. 파일이 없으면 기본값 그대로 시작한다.
     std::wifstream file(ProgressPath());
     if (!file)
     {
         return;
     }
 
-    file >> m_lumen;
-    for (int i = 0; i < kRosterCount; ++i)
+    // 저장 파일은 v2부터 태그를 가진다. 태그가 없으면 예전 숫자 시작 형식으로 읽는다.
+    std::wstring header;
+    file >> header;
+    const bool version2 = header == L"PAWLINE_PROGRESS_V2";
+    if (version2)
+    {
+        file >> m_lumen;
+    }
+    else
+    {
+        std::wistringstream legacy(header);
+        legacy >> m_lumen;
+    }
+
+    for (bool& unlockedState : m_unitUnlocked)
     {
         int unlocked = 0;
         file >> unlocked;
         if (file)
         {
-            m_unitUnlocked[i] = unlocked != 0;
+            unlockedState = unlocked != 0;
         }
     }
-    for (int i = 0; i < kRosterCount; ++i)
+    for (int& levelState : m_unitLevels)
     {
         int level = 1;
         file >> level;
         if (file)
         {
-            m_unitLevels[i] = std::max(1, std::min(kMaxUnitLevel, level));
+            levelState = std::clamp(level, 1, kMaxUnitLevel);
         }
     }
-    for (int i = 0; i < kStageCount; ++i)
+    for (bool& clearedState : m_stageCleared)
     {
         int cleared = 0;
         file >> cleared;
         if (file)
         {
-            m_stageCleared[i] = cleared != 0;
+            clearedState = cleared != 0;
+        }
+    }
+
+    if (version2)
+    {
+        for (PlayerUnit& unit : m_loadout)
+        {
+            int unitIndex = 0;
+            file >> unitIndex;
+            if (file)
+            {
+                unit = static_cast<PlayerUnit>(std::clamp(unitIndex, 0, kRosterCount - 1));
+            }
+        }
+
+        file >> m_selectedStage >> m_selectedLoadoutSlot;
+        m_selectedStage = std::clamp(m_selectedStage, 0, kStageCount - 1);
+        m_selectedLoadoutSlot = std::clamp(m_selectedLoadoutSlot, 0, kLoadoutSize - 1);
+
+        int shake = 1;
+        int reduceFlash = 0;
+        file >> m_defaultGameSpeed >> m_userViewScale >> shake >> reduceFlash;
+        if (file)
+        {
+            m_defaultGameSpeed = std::clamp(m_defaultGameSpeed, 0.5f, 3.0f);
+            m_userViewScale = std::clamp(m_userViewScale, 0.82f, 1.0f);
+            m_hitShakeEnabled = shake != 0;
+            m_reduceFlashes = reduceFlash != 0;
         }
     }
 
@@ -509,16 +543,22 @@ void PawlineGameImpl::LoadProgress()
     {
         m_unitUnlocked[i] = true;
     }
+    if (!IsStageUnlocked(m_selectedStage))
+    {
+        m_selectedStage = HighestUnlockedStage();
+    }
 }
 
 void PawlineGameImpl::SaveProgress() const
 {
+    // v2 저장 파일은 성장 상태뿐 아니라 편성/옵션까지 같이 기록한다.
     std::wofstream file(ProgressPath());
     if (!file)
     {
         return;
     }
 
+    file << L"PAWLINE_PROGRESS_V2\n";
     file << m_lumen << L"\n";
     for (bool unlocked : m_unitUnlocked)
     {
@@ -535,6 +575,14 @@ void PawlineGameImpl::SaveProgress() const
         file << (cleared ? 1 : 0) << L" ";
     }
     file << L"\n";
+    for (PlayerUnit unit : m_loadout)
+    {
+        file << static_cast<int>(unit) << L" ";
+    }
+    file << L"\n";
+    file << m_selectedStage << L" " << m_selectedLoadoutSlot << L"\n";
+    file << m_defaultGameSpeed << L" " << m_userViewScale << L" "
+         << (m_hitShakeEnabled ? 1 : 0) << L" " << (m_reduceFlashes ? 1 : 0) << L"\n";
 }
 
 void PawlineGameImpl::ResetProgressData()
@@ -948,11 +996,11 @@ void PawlineGameImpl::UpdateCamera(float dt)
         {
             const float wave = (std::sin(m_showcaseTimer * 0.34f) + 1.0f) * 0.5f;
             m_cameraTargetX = Lerp(0.0f, kCameraMaxX, wave);
-            if (const Unit* boss = FindBossUnit())
+            if (auto boss = FindBossUnit())
             {
                 if (std::fmod(m_showcaseTimer, 18.0f) > 12.0f)
                 {
-                    m_cameraTargetX = std::max(0.0f, std::min(kCameraMaxX, boss->pos.x - kWidth * 0.58f));
+                    m_cameraTargetX = std::max(0.0f, std::min(kCameraMaxX, boss->get().pos.x - kWidth * 0.58f));
                 }
             }
         }

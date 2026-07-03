@@ -8,12 +8,15 @@
 #include <d2d1.h>
 #include <dwrite.h>
 #include <mmsystem.h>
+#include <wrl/client.h>
 
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <functional>
 #include <fstream>
 #include <iomanip>
+#include <optional>
 #include <random>
 #include <sstream>
 #include <string>
@@ -34,16 +37,6 @@ constexpr float kEnemyBaseX = kWorldWidth - 112.0f;
 constexpr float kCameraMaxX = kWorldWidth - kWidth;
 constexpr float kPi = 3.14159265358979323846f;
 constexpr int kMaxUnitLevel = 5;
-
-template <typename T>
-inline void SafeRelease(T** value)
-{
-    if (*value)
-    {
-        (*value)->Release();
-        *value = nullptr;
-    }
-}
 
 struct Vec2
 {
@@ -214,14 +207,17 @@ enum class TelegraphShape
 };
 
 
-// A live lane actor. Player and enemy units share one structure so combat code
-// can resolve target search, movement, attack timing, and hit feedback uniformly.
+// 전장 위에서 움직이는 하나의 유닛.
+// 아군/적이 같은 구조체를 쓰기 때문에 이동, 타겟 탐색, 공격, 피격 연출을 같은 코드로 처리한다.
 struct Unit
 {
+    // 식별/소속/위치.
     int id = 0;
     Team team = Team::Player;
     int kind = 0;
     Vec2 pos;
+
+    // 전투 능력치.
     float hp = 1.0f;
     float maxHp = 1.0f;
     float damage = 1.0f;
@@ -230,6 +226,8 @@ struct Unit
     float attackTimer = 0.0f;
     float speed = 40.0f;
     float radius = 16.0f;
+
+    // 렌더링과 애니메이션 피드백.
     float hitFlash = 0.0f;
     float shakeTimer = 0.0f;
     float shakePhase = 0.0f;
@@ -238,10 +236,14 @@ struct Unit
     float attackDir = 1.0f;
     float stateTime = 0.0f;
     float walkCycle = 0.0f;
+
+    // 스턴/넉백 상태. 체력 문턱을 넘으면 이 값들이 켜져 잠깐 뒤로 밀린다.
     float stunTimer = 0.0f;
     float knockbackTimer = 0.0f;
     float knockbackVelocity = 0.0f;
     float nextKnockbackPct = 0.50f;
+
+    // 보상과 역할 플래그.
     int reward = 0;
     bool ranged = false;
     bool elite = false;
@@ -492,9 +494,9 @@ private:
 
     float GimmickInterval() const;
 
-    Unit* FindBossUnit();
+    std::optional<std::reference_wrapper<Unit>> FindBossUnit();
 
-    const Unit* FindBossUnit() const;
+    std::optional<std::reference_wrapper<const Unit>> FindBossUnit() const;
 
     void UpdateBossPatterns(float dt);
 
@@ -606,7 +608,7 @@ private:
 
     void UpdateProjectiles(float dt);
 
-    Unit* FindUnitById(int id);
+    std::optional<std::reference_wrapper<Unit>> FindUnitById(int id);
 
     void DamageUnit(Unit& target, float damage, Team sourceTeam);
 
@@ -706,6 +708,10 @@ private:
 
     D2D1_RECT_F OptionsViewResetButtonRect() const;
 
+    D2D1_RECT_F OptionsSaveProgressButtonRect() const;
+
+    D2D1_RECT_F OptionsLoadProgressButtonRect() const;
+
     D2D1_RECT_F OptionsResetProgressButtonRect() const;
 
     D2D1_RECT_F OptionsBackButtonRect() const;
@@ -788,7 +794,11 @@ private:
 
     void DrawString(const std::wstring& text, D2D1_RECT_F rect, IDWriteTextFormat* format, D2D1_COLOR_F color);
 
+    void DrawString(const std::wstring& text, D2D1_RECT_F rect, const Microsoft::WRL::ComPtr<IDWriteTextFormat>& format, D2D1_COLOR_F color);
+
     void DrawOutlinedString(const std::wstring& text, D2D1_RECT_F rect, IDWriteTextFormat* format, D2D1_COLOR_F color, float outlineAlpha = 0.82f);
+
+    void DrawOutlinedString(const std::wstring& text, D2D1_RECT_F rect, const Microsoft::WRL::ComPtr<IDWriteTextFormat>& format, D2D1_COLOR_F color, float outlineAlpha = 0.82f);
 
     void DrawCartoonPanel(D2D1_RECT_F rect, D2D1_COLOR_F fill, D2D1_COLOR_F accent, bool hover = false);
 
@@ -955,22 +965,26 @@ private:
     void DrawFinalClearScene(D2D1_RECT_F panel);
 
 private:
+    // Win32 창 핸들은 운영체제가 소유하고, 게임은 값을 보관해서 메시지 처리에 사용한다.
     HWND m_hwnd = nullptr;
-    ID2D1Factory* m_factory = nullptr;
-    ID2D1HwndRenderTarget* m_renderTarget = nullptr;
-    ID2D1SolidColorBrush* m_brush = nullptr;
-    ID2D1StrokeStyle* m_roundStroke = nullptr;
-    IDWriteFactory* m_writeFactory = nullptr;
-    IDWriteTextFormat* m_titleFormat = nullptr;
-    IDWriteTextFormat* m_headerFormat = nullptr;
-    IDWriteTextFormat* m_bodyFormat = nullptr;
-    IDWriteTextFormat* m_smallFormat = nullptr;
-    IDWriteTextFormat* m_buttonFormat = nullptr;
-    IDWriteTextFormat* m_centerFormat = nullptr;
+    // Direct2D/DirectWrite COM 객체는 ComPtr이 참조 카운트를 자동으로 관리한다.
+    Microsoft::WRL::ComPtr<ID2D1Factory> m_factory;
+    Microsoft::WRL::ComPtr<ID2D1HwndRenderTarget> m_renderTarget;
+    Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> m_brush;
+    Microsoft::WRL::ComPtr<ID2D1StrokeStyle> m_roundStroke;
+    Microsoft::WRL::ComPtr<IDWriteFactory> m_writeFactory;
+    Microsoft::WRL::ComPtr<IDWriteTextFormat> m_titleFormat;
+    Microsoft::WRL::ComPtr<IDWriteTextFormat> m_headerFormat;
+    Microsoft::WRL::ComPtr<IDWriteTextFormat> m_bodyFormat;
+    Microsoft::WRL::ComPtr<IDWriteTextFormat> m_smallFormat;
+    Microsoft::WRL::ComPtr<IDWriteTextFormat> m_buttonFormat;
+    Microsoft::WRL::ComPtr<IDWriteTextFormat> m_centerFormat;
 
+    // 프레임 시간과 랜덤 연출 생성기.
     DeltaTimer m_timer;
     std::mt19937 m_rng{std::random_device{}()};
 
+    // 전투 중 살아 움직이는 객체와 짧게 사라지는 VFX 컨테이너.
     std::vector<Unit> m_units;
     std::vector<Projectile> m_projectiles;
     std::vector<Particle> m_particles;
@@ -980,6 +994,8 @@ private:
     std::vector<FloatText> m_floatTexts;
     std::vector<UiPulse> m_uiPulses;
     std::vector<Telegraph> m_telegraphs;
+
+    // 플레이어 성장/편성 저장 대상. SaveProgress/LoadProgress가 이 값을 파일에 기록한다.
     std::array<float, kLoadoutSize> m_cardCooldowns = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     std::array<PlayerUnit, kLoadoutSize> m_loadout = {PlayerUnit::Paw, PlayerUnit::Box, PlayerUnit::Spark, PlayerUnit::Dash, PlayerUnit::Bell};
     std::array<bool, kRosterCount> m_unitUnlocked = {
@@ -994,6 +1010,7 @@ private:
         false, false, false, false, false,
         false, false, false, false, false};
 
+    // 현재 화면과 메뉴 선택 상태.
     Vec2 m_mouse = {};
     GameScreen m_screen = GameScreen::Title;
     int m_selectedStage = 0;
@@ -1006,6 +1023,8 @@ private:
     int m_resultScore = 0;
     int m_lumen = 0;
     int m_lastReward = 0;
+
+    // 전투 자원, 기지 체력, 시간 배율 상태.
     float m_energy = 0.0f;
     float m_playerBaseHp = 1.0f;
     float m_enemyBaseHp = 1.0f;
@@ -1017,6 +1036,8 @@ private:
     float m_enemyTimer = 0.0f;
     float m_directorPressure = 0.0f;
     float m_nextBossTime = 38.0f;
+
+    // 캐논/화면 플래시/히트스톱처럼 전투 손맛을 만드는 연출 타이머.
     float m_cannonCharge = 0.0f;
     float m_cannonFlash = 0.0f;
     float m_screenFlash = 0.0f;
@@ -1026,6 +1047,8 @@ private:
     float m_slowMoMax = 0.0f;
     float m_slowMoScale = 1.0f;
     float m_postFxPulse = 0.0f;
+
+    // UI, 스테이지 기믹, 보스 페이즈 타이머.
     float m_uiTime = 0.0f;
     float m_walletPulseTimer = 0.0f;
     float m_stageGimmickTimer = 0.0f;
@@ -1037,6 +1060,8 @@ private:
     float m_bossPhaseBannerTimer = 0.0f;
     float m_bossPhaseBannerMax = 0.0f;
     float m_bossFocusX = 0.0f;
+
+    // 카메라와 화면 안전 여백. 사용자가 화면 잘림을 보정할 때 m_userViewScale을 조절한다.
     float m_cameraTrauma = 0.0f;
     float m_cameraX = 0.0f;
     float m_cameraTargetX = 0.0f;
@@ -1051,6 +1076,8 @@ private:
     float m_demoSpawnTimer = 0.0f;
     float m_demoWalletTimer = 0.0f;
     float m_resetConfirmTimer = 0.0f;
+
+    // 게임 전체 플래그. 일시정지, 결과, 접근성, 디버그 상태를 구분한다.
     Difficulty m_difficulty = Difficulty::Normal;
     bool m_paused = false;
     bool m_gameOver = false;

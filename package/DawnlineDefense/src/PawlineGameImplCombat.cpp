@@ -331,32 +331,32 @@ float PawlineGameImpl::GimmickInterval() const
     }
 }
 
-Unit* PawlineGameImpl::FindBossUnit()
+std::optional<std::reference_wrapper<Unit>> PawlineGameImpl::FindBossUnit()
 {
-    Unit* boss = nullptr;
+    std::optional<std::reference_wrapper<Unit>> boss;
     for (Unit& unit : m_units)
     {
         if (unit.team == Team::Enemy && unit.alive && unit.boss)
         {
-            if (!boss || unit.maxHp > boss->maxHp)
+            if (!boss || unit.maxHp > boss->get().maxHp)
             {
-                boss = &unit;
+                boss = unit;
             }
         }
     }
     return boss;
 }
 
-const Unit* PawlineGameImpl::FindBossUnit() const
+std::optional<std::reference_wrapper<const Unit>> PawlineGameImpl::FindBossUnit() const
 {
-    const Unit* boss = nullptr;
+    std::optional<std::reference_wrapper<const Unit>> boss;
     for (const Unit& unit : m_units)
     {
         if (unit.team == Team::Enemy && unit.alive && unit.boss)
         {
-            if (!boss || unit.maxHp > boss->maxHp)
+            if (!boss || unit.maxHp > boss->get().maxHp)
             {
-                boss = &unit;
+                boss = unit;
             }
         }
     }
@@ -365,8 +365,8 @@ const Unit* PawlineGameImpl::FindBossUnit() const
 
 void PawlineGameImpl::UpdateBossPatterns(float dt)
 {
-    Unit* boss = FindBossUnit();
-    if (!boss)
+    auto bossRef = FindBossUnit();
+    if (!bossRef)
     {
         m_bossPatternTimer = std::max(4.5f, 8.0f - static_cast<float>(m_selectedStage) * 0.25f);
         m_bossPhaseTwoTriggered = false;
@@ -374,16 +374,17 @@ void PawlineGameImpl::UpdateBossPatterns(float dt)
         return;
     }
 
-    const float hpPct = boss->maxHp > 0.0f ? Clamp01(boss->hp / boss->maxHp) : 0.0f;
+    Unit& boss = bossRef->get();
+    const float hpPct = boss.maxHp > 0.0f ? Clamp01(boss.hp / boss.maxHp) : 0.0f;
     if (!m_bossPhaseTwoTriggered && hpPct <= 0.50f)
     {
         m_bossPhaseTwoTriggered = true;
-        TriggerBossPhaseChange(*boss, 2);
+        TriggerBossPhaseChange(boss, 2);
     }
     if (!m_bossPhaseThreeTriggered && hpPct <= 0.25f)
     {
         m_bossPhaseThreeTriggered = true;
-        TriggerBossPhaseChange(*boss, 3);
+        TriggerBossPhaseChange(boss, 3);
     }
 
     m_bossPatternTimer -= dt;
@@ -392,7 +393,7 @@ void PawlineGameImpl::UpdateBossPatterns(float dt)
         return;
     }
 
-    TriggerBossPattern(*boss);
+    TriggerBossPattern(boss);
     const float baseDelay = m_bossPhaseThreeTriggered ? 4.4f : (m_bossPhaseTwoTriggered ? 5.8f : 7.4f);
     m_bossPatternTimer = std::max(3.6f, baseDelay - ThreatLevel() * 0.22f);
 }
@@ -1947,7 +1948,7 @@ void PawlineGameImpl::UpdateProjectiles(float dt)
 
         projectile.lastPos = projectile.pos;
         Vec2 targetPos = {};
-        Unit* target = nullptr;
+        std::optional<std::reference_wrapper<Unit>> target;
         if (projectile.targetBase)
         {
             targetPos = projectile.team == Team::Player ? Vec2{kEnemyBaseX - 40.0f, kLaneY} : Vec2{kPlayerBaseX + 40.0f, kLaneY};
@@ -1955,12 +1956,12 @@ void PawlineGameImpl::UpdateProjectiles(float dt)
         else
         {
             target = FindUnitById(projectile.targetId);
-            if (!target || !target->alive)
+            if (!target || !target->get().alive)
             {
                 projectile.life = 0.0f;
                 continue;
             }
-            targetPos = target->pos;
+            targetPos = target->get().pos;
         }
 
         const Vec2 toTarget = targetPos - projectile.pos;
@@ -1979,7 +1980,7 @@ void PawlineGameImpl::UpdateProjectiles(float dt)
             {
                 ShakeUnitById(projectile.sourceId, 0.15f);
                 AddProjectileImpact(projectile);
-                DamageUnit(*target, projectile.damage, projectile.team);
+                DamageUnit(target->get(), projectile.damage, projectile.team);
                 AddHitEffects(projectile.pos, projectile.color);
             }
             projectile.life = 0.0f;
@@ -1991,16 +1992,16 @@ void PawlineGameImpl::UpdateProjectiles(float dt)
     }
 }
 
-Unit* PawlineGameImpl::FindUnitById(int id)
+std::optional<std::reference_wrapper<Unit>> PawlineGameImpl::FindUnitById(int id)
 {
     for (Unit& unit : m_units)
     {
         if (unit.id == id)
         {
-            return &unit;
+            return unit;
         }
     }
-    return nullptr;
+    return std::nullopt;
 }
 
 void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
@@ -2078,10 +2079,10 @@ void PawlineGameImpl::ShakeUnit(Unit& unit, float duration)
 
 void PawlineGameImpl::ShakeUnitById(int id, float duration)
 {
-    Unit* unit = FindUnitById(id);
+    auto unit = FindUnitById(id);
     if (unit)
     {
-        ShakeUnit(*unit, duration);
+        ShakeUnit(unit->get(), duration);
     }
 }
 
