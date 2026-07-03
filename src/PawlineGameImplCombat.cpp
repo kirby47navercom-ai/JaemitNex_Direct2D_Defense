@@ -283,6 +283,7 @@ void PawlineGameImpl::SpawnPlayer(PlayerUnit type)
     unit.shakePhase = static_cast<float>(unit.id) * 0.37f;
     unit.ranged = stats.ranged;
     unit.reward = 0;
+    unit.animState = UnitAnimState::Move;
     m_units.push_back(unit);
     AddBurst(unit.pos, stats.accent, 10);
     AddRing(unit.pos, 42.0f, 0.28f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.38f), 2.0f);
@@ -313,6 +314,7 @@ void PawlineGameImpl::SpawnEnemy(EnemyUnit type, bool elite)
     unit.ranged = stats.ranged;
     unit.reward = elite ? stats.reward * 2 : stats.reward;
     unit.elite = elite;
+    unit.animState = elite ? UnitAnimState::Windup : UnitAnimState::Move;
     m_units.push_back(unit);
     AddBurst(unit.pos, stats.accent, elite || type == EnemyUnit::Boss ? 20 : 8);
     AddRing(unit.pos, elite ? 86.0f : 38.0f, elite ? 0.46f : 0.25f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, elite ? 0.48f : 0.28f), elite ? 3.2f : 1.8f);
@@ -326,14 +328,15 @@ float PawlineGameImpl::RandomLaneY()
 
 void PawlineGameImpl::UpdateUnits(float dt)
 {
-    // Units are intentionally simple: tick timers, attack the nearest valid
-    // forward target, otherwise advance along the lane.
+    // Unit animation is state-driven. Combat still owns the decisions, but
+    // rendering can now read a clear Idle/Move/Windup/Attack/Recover/Hit state.
     for (Unit& unit : m_units)
     {
         unit.attackTimer = std::max(0.0f, unit.attackTimer - dt);
         unit.hitFlash = std::max(0.0f, unit.hitFlash - dt);
         unit.shakeTimer = std::max(0.0f, unit.shakeTimer - dt);
         unit.attackAnim = std::max(0.0f, unit.attackAnim - dt);
+        unit.stateTime += dt;
     }
 
     for (int i = 0; i < static_cast<int>(m_units.size()); ++i)
@@ -344,6 +347,7 @@ void PawlineGameImpl::UpdateUnits(float dt)
             continue;
         }
 
+        const Vec2 before = unit.pos;
         const int targetIndex = FindTargetIndex(unit);
         const bool baseInRange = IsEnemyBaseInRange(unit);
         const bool hasTarget = targetIndex >= 0 || baseInRange;
@@ -366,7 +370,51 @@ void PawlineGameImpl::UpdateUnits(float dt)
             const float dir = unit.team == Team::Player ? 1.0f : -1.0f;
             unit.pos.x += dir * unit.speed * dt;
         }
+
+        const bool moved = Distance(before, unit.pos) > 0.01f;
+        if (moved)
+        {
+            unit.walkCycle += dt * (4.4f + unit.speed * 0.045f);
+        }
+
+        if (unit.hitFlash > 0.0f)
+        {
+            SetUnitAnimState(unit, UnitAnimState::Hit);
+        }
+        else if (unit.attackAnim > 0.0f)
+        {
+            SetUnitAnimState(unit, ResolveAttackAnimState(unit));
+        }
+        else
+        {
+            SetUnitAnimState(unit, moved ? UnitAnimState::Move : UnitAnimState::Idle);
+        }
     }
+}
+
+void PawlineGameImpl::SetUnitAnimState(Unit& unit, UnitAnimState state)
+{
+    if (unit.animState == state)
+    {
+        return;
+    }
+
+    unit.animState = state;
+    unit.stateTime = 0.0f;
+}
+
+UnitAnimState PawlineGameImpl::ResolveAttackAnimState(const Unit& unit) const
+{
+    const float progress = AttackProgress(unit);
+    if (progress < 0.40f)
+    {
+        return UnitAnimState::Windup;
+    }
+    if (progress < 0.64f)
+    {
+        return UnitAnimState::Attack;
+    }
+    return UnitAnimState::Recover;
 }
 
 int PawlineGameImpl::FindTargetIndex(const Unit& unit) const
@@ -475,6 +523,7 @@ void PawlineGameImpl::BeginAttack(Unit& attacker, Vec2 targetPos)
 
     attacker.attackAnimMax = duration;
     attacker.attackAnim = attacker.attackAnimMax;
+    SetUnitAnimState(attacker, UnitAnimState::Windup);
 }
 
 void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_COLOR_F color)
@@ -796,6 +845,7 @@ void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
 
     if (target.hp <= 0.0f)
     {
+        SetUnitAnimState(target, UnitAnimState::Death);
         target.alive = false;
         if (target.team == Team::Enemy)
         {
@@ -803,7 +853,7 @@ void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
             m_score += target.reward * 10;
             AddFloatText(target.pos, L"+" + ToWideInt(target.reward), D2D1::ColorF(0xB8FF89), 0.9f);
         }
-        AddBurst(target.pos, target.team == Team::Enemy ? D2D1::ColorF(0xFF9BA8) : D2D1::ColorF(0xBBD7FF), 16);
+        AddDeathBurst(target);
     }
 }
 
@@ -858,8 +908,10 @@ void PawlineGameImpl::UpdateParticles(float dt)
     {
         particle.life -= dt;
         particle.pos = particle.pos + particle.vel * dt;
-        particle.vel = particle.vel * 0.82f;
-        particle.vel.y += 18.0f * dt;
+        particle.vel = particle.vel * std::pow(std::max(0.0f, particle.drag), dt * 60.0f);
+        particle.vel.y += particle.gravity * dt;
+        particle.radius = std::max(0.5f, particle.radius + particle.growth * dt);
+        particle.spin += dt * (2.5f + std::abs(particle.vel.x) * 0.015f);
     }
 
     for (RingEffect& ring : m_rings)
@@ -1046,6 +1098,11 @@ void PawlineGameImpl::IncreaseGameSpeed()
 
 void PawlineGameImpl::AddParticle(Vec2 pos, Vec2 vel, float radius, float life, D2D1_COLOR_F color)
 {
+    AddParticleEx(pos, vel, radius, life, color, ParticleKind::Dot, 18.0f, 0.82f, 0.0f);
+}
+
+void PawlineGameImpl::AddParticleEx(Vec2 pos, Vec2 vel, float radius, float life, D2D1_COLOR_F color, ParticleKind kind, float gravity, float drag, float growth)
+{
     Particle particle;
     particle.pos = pos;
     particle.vel = vel;
@@ -1053,6 +1110,11 @@ void PawlineGameImpl::AddParticle(Vec2 pos, Vec2 vel, float radius, float life, 
     particle.life = life;
     particle.maxLife = life;
     particle.color = color;
+    particle.kind = kind;
+    particle.gravity = gravity;
+    particle.drag = drag;
+    particle.growth = growth;
+    particle.spin = Hash01(pos.x, pos.y, m_uiTime) * kPi * 2.0f;
     m_particles.push_back(particle);
 }
 
@@ -1116,11 +1178,47 @@ void PawlineGameImpl::AddBurst(Vec2 pos, D2D1_COLOR_F color, int count)
     }
 }
 
+void PawlineGameImpl::AddDustPuff(Vec2 pos, D2D1_COLOR_F color, int count)
+{
+    std::uniform_real_distribution<float> angleDist(-kPi, 0.0f);
+    std::uniform_real_distribution<float> speedDist(18.0f, 92.0f);
+    std::uniform_real_distribution<float> radiusDist(5.0f, 14.0f);
+    std::uniform_real_distribution<float> lifeDist(0.36f, 0.82f);
+    for (int i = 0; i < count; ++i)
+    {
+        const float angle = angleDist(m_rng);
+        const float speed = speedDist(m_rng);
+        const Vec2 vel = {std::cos(angle) * speed, std::sin(angle) * speed * 0.38f};
+        AddParticleEx(pos, vel, radiusDist(m_rng), lifeDist(m_rng), color, ParticleKind::Dust, -4.0f, 0.88f, 11.0f);
+    }
+}
+
+void PawlineGameImpl::AddDeathBurst(const Unit& unit)
+{
+    const D2D1_COLOR_F color = unit.team == Team::Enemy ? D2D1::ColorF(0xFF9BA8) : D2D1::ColorF(0xBBD7FF);
+    const D2D1_COLOR_F smoke = unit.team == Team::Enemy ? D2D1::ColorF(0x7D5260, 0.46f) : D2D1::ColorF(0x8FB7D8, 0.42f);
+    std::uniform_real_distribution<float> angleDist(0.0f, kPi * 2.0f);
+    std::uniform_real_distribution<float> speedDist(48.0f, 210.0f);
+    std::uniform_real_distribution<float> shardDist(2.4f, 6.8f);
+
+    const int shardCount = unit.elite ? 26 : 15;
+    for (int i = 0; i < shardCount; ++i)
+    {
+        const float angle = angleDist(m_rng);
+        const float speed = speedDist(m_rng);
+        AddParticleEx(unit.pos, {std::cos(angle) * speed, std::sin(angle) * speed * 0.78f}, shardDist(m_rng), 0.52f, color, ParticleKind::Shard, 42.0f, 0.86f, -1.2f);
+    }
+    AddDustPuff({unit.pos.x, unit.pos.y + unit.radius * 0.78f}, smoke, unit.elite ? 18 : 10);
+    AddRing(unit.pos, unit.elite ? 92.0f : 56.0f, 0.30f, D2D1::ColorF(color.r, color.g, color.b, 0.44f), unit.elite ? 3.8f : 2.5f);
+    AddParticleEx(unit.pos, {0.0f, -18.0f}, unit.radius * 1.1f, 0.40f, D2D1::ColorF(color.r, color.g, color.b, 0.40f), ParticleKind::Glow, 0.0f, 0.92f, 42.0f);
+}
+
 void PawlineGameImpl::AddHitEffects(Vec2 pos, D2D1_COLOR_F color)
 {
     AddBurst(pos, color, 14);
     AddSparkLines(pos, FadeColor(color, 0.9f), 8);
     AddRing(pos, 54.0f, 0.28f, D2D1::ColorF(color.r, color.g, color.b, 0.48f), 2.6f);
+    AddDustPuff({pos.x, pos.y + 12.0f}, D2D1::ColorF(color.r, color.g, color.b, 0.28f), 4);
 }
 
 void PawlineGameImpl::AddFloatText(Vec2 pos, const std::wstring& text, D2D1_COLOR_F color, float life)

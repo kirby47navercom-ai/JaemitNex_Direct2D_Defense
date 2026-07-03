@@ -156,6 +156,29 @@ enum class GameScreen
     Result
 };
 
+enum class UnitAnimState
+{
+    Idle,
+    Move,
+    Windup,
+    Attack,
+    Recover,
+    Hit,
+    Death
+};
+
+enum class ParticleKind
+{
+    Dot,
+    Glow,
+    Smoke,
+    Dust,
+    Shard,
+    Ember,
+    Snow,
+    Bubble
+};
+
 
 // A live lane actor. Player and enemy units share one structure so combat code
 // can resolve target search, movement, attack timing, and hit feedback uniformly.
@@ -179,10 +202,13 @@ struct Unit
     float attackAnim = 0.0f;
     float attackAnimMax = 0.0f;
     float attackDir = 1.0f;
+    float stateTime = 0.0f;
+    float walkCycle = 0.0f;
     int reward = 0;
     bool ranged = false;
     bool elite = false;
     bool alive = true;
+    UnitAnimState animState = UnitAnimState::Idle;
 };
 
 // Ranged attacks are separate from units so they can travel over time, keep a
@@ -209,7 +235,12 @@ struct Particle
     float radius = 3.0f;
     float life = 1.0f;
     float maxLife = 1.0f;
+    float spin = 0.0f;
+    float growth = 0.0f;
+    float gravity = 18.0f;
+    float drag = 0.82f;
     D2D1_COLOR_F color = D2D1::ColorF(0xFFFFFF);
+    ParticleKind kind = ParticleKind::Dot;
 };
 
 struct RingEffect
@@ -366,6 +397,10 @@ private:
 
     void UpdateUnits(float dt);
 
+    void SetUnitAnimState(Unit& unit, UnitAnimState state);
+
+    UnitAnimState ResolveAttackAnimState(const Unit& unit) const;
+
     int FindTargetIndex(const Unit& unit) const;
 
     bool IsBlocked(const Unit& unit) const;
@@ -412,6 +447,8 @@ private:
 
     void AddParticle(Vec2 pos, Vec2 vel, float radius, float life, D2D1_COLOR_F color);
 
+    void AddParticleEx(Vec2 pos, Vec2 vel, float radius, float life, D2D1_COLOR_F color, ParticleKind kind, float gravity, float drag, float growth);
+
     void AddRing(Vec2 pos, float maxRadius, float life, D2D1_COLOR_F color, float width);
 
     void AddBeam(Vec2 start, Vec2 end, float width, float life, D2D1_COLOR_F color);
@@ -419,6 +456,10 @@ private:
     void AddSparkLines(Vec2 pos, D2D1_COLOR_F color, int count);
 
     void AddBurst(Vec2 pos, D2D1_COLOR_F color, int count);
+
+    void AddDustPuff(Vec2 pos, D2D1_COLOR_F color, int count);
+
+    void AddDeathBurst(const Unit& unit);
 
     void AddHitEffects(Vec2 pos, D2D1_COLOR_F color);
 

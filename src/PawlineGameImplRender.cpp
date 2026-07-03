@@ -1185,6 +1185,23 @@ float PawlineGameImpl::AttackLungeDistance(const Unit& unit) const
 Vec2 PawlineGameImpl::UnitRenderPos(const Unit& unit) const
 {
     Vec2 pos = unit.pos;
+    if (unit.animState == UnitAnimState::Move)
+    {
+        const float step = std::sin(unit.walkCycle);
+        pos.y += step * 1.8f;
+        pos.x -= unit.attackDir * std::abs(step) * 1.2f;
+    }
+    else if (unit.animState == UnitAnimState::Idle)
+    {
+        pos.y += std::sin(unit.stateTime * 2.6f + unit.shakePhase) * 0.9f;
+    }
+    else if (unit.animState == UnitAnimState::Hit)
+    {
+        const float hit = Clamp01(unit.hitFlash / 0.12f);
+        pos.x -= unit.attackDir * 4.5f * hit;
+        pos.y += 1.8f * hit;
+    }
+
     if (unit.shakeTimer > 0.0f)
     {
         const float amp = 7.0f * Clamp01(unit.shakeTimer / 0.18f);
@@ -1910,8 +1927,45 @@ void PawlineGameImpl::DrawParticles()
         const float alpha = Clamp01(particle.life / particle.maxLife);
         D2D1_COLOR_F color = particle.color;
         color.a *= alpha;
-        FillEllipse(particle.pos, particle.radius * (1.4f + alpha), particle.radius * (1.4f + alpha), D2D1::ColorF(color.r, color.g, color.b, color.a * 0.18f));
-        FillEllipse(particle.pos, particle.radius * (0.6f + alpha), particle.radius * (0.6f + alpha), color);
+        switch (particle.kind)
+        {
+        case ParticleKind::Glow:
+            FillEllipse(particle.pos, particle.radius * (1.8f + alpha), particle.radius * (1.8f + alpha), D2D1::ColorF(color.r, color.g, color.b, color.a * 0.16f));
+            FillEllipse(particle.pos, particle.radius * (0.55f + alpha * 0.35f), particle.radius * (0.55f + alpha * 0.35f), D2D1::ColorF(color.r, color.g, color.b, color.a * 0.40f));
+            break;
+        case ParticleKind::Smoke:
+        case ParticleKind::Dust:
+            FillEllipse(particle.pos, particle.radius * (1.25f + (1.0f - alpha) * 0.75f), particle.radius * (0.62f + (1.0f - alpha) * 0.34f), D2D1::ColorF(color.r, color.g, color.b, color.a * (particle.kind == ParticleKind::Dust ? 0.34f : 0.24f)));
+            break;
+        case ParticleKind::Shard:
+        {
+            const Vec2 dir = Normalize(particle.vel);
+            const Vec2 a = particle.pos - dir * (particle.radius * 1.8f);
+            const Vec2 b = particle.pos + dir * (particle.radius * 1.9f);
+            DrawLine(a, b, D2D1::ColorF(0x061019, 0.55f * alpha), particle.radius + 1.8f);
+            DrawLine(a, b, color, std::max(1.0f, particle.radius * 0.55f));
+            FillEllipse(particle.pos, particle.radius * 0.42f, particle.radius * 0.42f, D2D1::ColorF(0xFFFFFF, 0.28f * alpha));
+            break;
+        }
+        case ParticleKind::Ember:
+            DrawLine(particle.pos - Normalize(particle.vel) * (particle.radius * 3.0f), particle.pos, D2D1::ColorF(color.r, color.g, color.b, color.a * 0.34f), particle.radius * 1.3f);
+            FillEllipse(particle.pos, particle.radius * (0.8f + alpha), particle.radius * (0.8f + alpha), D2D1::ColorF(color.r, color.g, color.b, color.a * 0.18f));
+            FillEllipse(particle.pos, particle.radius * 0.72f, particle.radius * 0.72f, color);
+            break;
+        case ParticleKind::Snow:
+            DrawLine({particle.pos.x - particle.radius, particle.pos.y}, {particle.pos.x + particle.radius, particle.pos.y}, color, 1.2f);
+            DrawLine({particle.pos.x, particle.pos.y - particle.radius}, {particle.pos.x, particle.pos.y + particle.radius}, color, 1.2f);
+            break;
+        case ParticleKind::Bubble:
+            FillEllipse(particle.pos, particle.radius * 1.4f, particle.radius * 1.0f, D2D1::ColorF(color.r, color.g, color.b, color.a * 0.08f));
+            StrokeEllipse(particle.pos, particle.radius * 1.1f, particle.radius * 0.86f, color, 1.4f);
+            break;
+        case ParticleKind::Dot:
+        default:
+            FillEllipse(particle.pos, particle.radius * (1.4f + alpha), particle.radius * (1.4f + alpha), D2D1::ColorF(color.r, color.g, color.b, color.a * 0.18f));
+            FillEllipse(particle.pos, particle.radius * (0.6f + alpha), particle.radius * (0.6f + alpha), color);
+            break;
+        }
     }
 }
 
