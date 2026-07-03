@@ -2,6 +2,8 @@
 
 namespace
 {
+// 전투 시스템은 유닛 종류만 알고, 렌더러는 ImageVfxKind를 받아 실제 PNG 시트를 고른다.
+// 이렇게 분리하면 새 이펙트를 추가해도 공격 판정 코드를 거의 건드리지 않아도 된다.
 ImageVfxKind UnitImageVfxKind(const Unit& unit)
 {
     if (unit.team == Team::Player)
@@ -23,10 +25,15 @@ ImageVfxKind UnitImageVfxKind(const Unit& unit)
             return ImageVfxKind::Dark;
         case PlayerUnit::Mint:
             return ImageVfxKind::Heal;
+        case PlayerUnit::Dash:
+            return ImageVfxKind::Wind;
+        case PlayerUnit::Drill:
+            return ImageVfxKind::Thrust;
         case PlayerUnit::Box:
         case PlayerUnit::Titan:
-        case PlayerUnit::Drill:
             return ImageVfxKind::Earth;
+        case PlayerUnit::Paw:
+            return ImageVfxKind::HitFlash;
         default:
             return ImageVfxKind::Slash;
         }
@@ -35,9 +42,10 @@ ImageVfxKind UnitImageVfxKind(const Unit& unit)
     switch (static_cast<EnemyUnit>(unit.kind))
     {
     case EnemyUnit::Sulfur:
-    case EnemyUnit::Moss:
     case EnemyUnit::Spore:
         return ImageVfxKind::Acid;
+    case EnemyUnit::Moss:
+        return ImageVfxKind::Wood;
     case EnemyUnit::Frost:
         return ImageVfxKind::Ice;
     case EnemyUnit::Tide:
@@ -56,11 +64,16 @@ ImageVfxKind UnitImageVfxKind(const Unit& unit)
     case EnemyUnit::Storm:
     case EnemyUnit::Quake:
         return ImageVfxKind::Earth;
+    case EnemyUnit::Skitter:
+        return ImageVfxKind::Smear;
+    case EnemyUnit::Dust:
+        return ImageVfxKind::HitFlash;
     default:
         return ImageVfxKind::EnemySlash;
     }
 }
 
+// 투사체는 발사체 모양과 충돌 이미지가 함께 읽혀야 하므로 ProjectileVisual에서 VFX를 결정한다.
 ImageVfxKind ProjectileImageVfxKind(ProjectileVisual visual, Team team)
 {
     switch (visual)
@@ -86,7 +99,7 @@ ImageVfxKind ProjectileImageVfxKind(ProjectileVisual visual, Team team)
     case ProjectileVisual::TideWave:
         return ImageVfxKind::Water;
     default:
-        return team == Team::Player ? ImageVfxKind::Slash : ImageVfxKind::EnemySlash;
+        return team == Team::Player ? ImageVfxKind::WindHit : ImageVfxKind::HitFlash;
     }
 }
 }
@@ -1542,6 +1555,8 @@ void PawlineGameImpl::BeginAttack(Unit& attacker, Vec2 targetPos)
 
 void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_COLOR_F color)
 {
+    // 공격이 시작되는 순간의 공통 이펙트 진입점.
+    // 여기에서 이미지 VFX, 링, 빔, 파편을 함께 생성하고 각 객체는 UpdateParticles에서 수명을 소모한다.
     const Vec2 dir = Normalize(targetPos - attacker.pos);
     const Vec2 muzzle = attacker.pos + dir * (attacker.radius + 10.0f);
     const ImageVfxKind imageKind = UnitImageVfxKind(attacker);
@@ -1998,7 +2013,9 @@ void PawlineGameImpl::AddProjectileImpact(const Projectile& projectile)
     AddBeam(projectile.lastPos, pos, projectile.radius * 1.6f, 0.13f, FadeColor(projectile.color, 0.88f));
     const ImageVfxKind imageKind = ProjectileImageVfxKind(projectile.visual, projectile.team);
     const bool healingVisual = imageKind == ImageVfxKind::Heal || imageKind == ImageVfxKind::HealSoft;
-    const bool largeVisual = imageKind == ImageVfxKind::Water || imageKind == ImageVfxKind::Fire || imageKind == ImageVfxKind::Dark;
+    const bool largeVisual = imageKind == ImageVfxKind::Water || imageKind == ImageVfxKind::Fire ||
+                             imageKind == ImageVfxKind::Dark || imageKind == ImageVfxKind::Wind ||
+                             imageKind == ImageVfxKind::Thrust;
     AddImageVfx(imageKind, pos, healingVisual ? 92.0f : (largeVisual ? 92.0f : 66.0f + projectile.radius * 3.0f),
                 healingVisual ? 0.38f : 0.24f, projectile.color, projectile.team == Team::Player ? 1.0f : -1.0f);
 
@@ -2578,6 +2595,7 @@ void PawlineGameImpl::AddBeam(Vec2 start, Vec2 end, float width, float life, D2D
 
 void PawlineGameImpl::AddSparkLines(Vec2 pos, D2D1_COLOR_F color, int count)
 {
+    // 선처럼 보이는 스파크를 줄이고, 충돌 지점 주변의 작은 빛 파편으로 쓰기 위해 짧게 생성한다.
     std::uniform_real_distribution<float> angleDist(0.0f, kPi * 2.0f);
     std::uniform_real_distribution<float> lengthDist(10.0f, 34.0f);
     std::uniform_real_distribution<float> widthDist(0.8f, 1.7f);
@@ -2600,6 +2618,8 @@ void PawlineGameImpl::AddSparkLines(Vec2 pos, D2D1_COLOR_F color, int count)
 
 void PawlineGameImpl::AddImageVfx(ImageVfxKind kind, Vec2 pos, float size, float life, D2D1_COLOR_F color, float dir)
 {
+    // 외부 PNG 시트를 재생하는 고수준 VFX 객체를 만든다.
+    // 개별 프레임 계산은 렌더러가 맡고, 게임플레이는 위치/크기/수명만 지정한다.
     ImageVfx effect;
     effect.kind = kind;
     effect.pos = pos;

@@ -400,6 +400,7 @@ void PawlineGameImpl::LoadBitmapAssets()
         return;
     }
 
+    // VFX 시트는 게임플레이 코드가 ImageVfxKind만 요청하면 렌더러가 고르게 쓰는 공용 리소스다.
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\combat_vfx_atlas.png"), m_vfxAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\slash_effect_sheet.png"), m_slashEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\slash_gameboy_effect_sheet.png"), m_enemySlashEffectSheet.ReleaseAndGetAddressOf());
@@ -414,6 +415,12 @@ void PawlineGameImpl::LoadBitmapAssets()
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\earth_impact_sheet.png"), m_earthEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\smoke_puff_sheet.png"), m_smokeEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\holy_flash_sheet.png"), m_holyEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\wind_breath_sheet.png"), m_windEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\wind_hit_sheet.png"), m_windHitEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\wood_hit_sheet.png"), m_woodEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\hit_flash_sheet.png"), m_hitFlashEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\smear_horizontal_sheet.png"), m_smearEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\thrust_sheet.png"), m_thrustEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\ui\\pawline_ui_atlas.png"), m_uiAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\cutins\\solar_gatekeeper_cutin.png"), m_bossCutin.ReleaseAndGetAddressOf());
 
@@ -443,6 +450,12 @@ void PawlineGameImpl::DiscardBitmapAssets()
     m_earthEffectSheet.Reset();
     m_smokeEffectSheet.Reset();
     m_holyEffectSheet.Reset();
+    m_windEffectSheet.Reset();
+    m_windHitEffectSheet.Reset();
+    m_woodEffectSheet.Reset();
+    m_hitFlashEffectSheet.Reset();
+    m_smearEffectSheet.Reset();
+    m_thrustEffectSheet.Reset();
     m_uiAtlas.Reset();
     m_bossCutin.Reset();
     for (auto& bitmap : m_backgroundBitmaps)

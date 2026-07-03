@@ -190,7 +190,13 @@ enum class ImageVfxKind
     Acid,
     Earth,
     Smoke,
-    Holy
+    Holy,
+    Wind,
+    WindHit,
+    Wood,
+    HitFlash,
+    Smear,
+    Thrust
 };
 
 enum class Difficulty
@@ -335,8 +341,8 @@ struct RingEffect
     D2D1_COLOR_F color = D2D1::ColorF(0xFFFFFF);
 };
 
-// Short-lived VFX primitives. They are updated with delta time like gameplay
-// objects, then drawn as layered Direct2D strokes for a shader-like bloom feel.
+// 전투에서 잠깐 생겼다가 사라지는 빛 줄기.
+// UpdateParticles에서 델타타임으로 수명을 줄이고, Render에서는 블룸 레이어처럼 겹쳐 그린다.
 struct BeamEffect
 {
     Vec2 start;
@@ -349,6 +355,7 @@ struct BeamEffect
 
 struct SparkLine
 {
+    // 이름은 SparkLine이지만 화면에는 선보다 작은 빛 파편으로 보이도록 렌더링한다.
     Vec2 start;
     Vec2 end;
     float life = 0.22f;
@@ -1082,6 +1089,12 @@ private:
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_earthEffectSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_smokeEffectSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_holyEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_windEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_windHitEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_woodEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_hitFlashEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_smearEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_thrustEffectSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_uiAtlas;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_bossCutin;
     bool m_comInitialized = false;

@@ -100,6 +100,63 @@ float Smooth01(float t)
     return t * t * (3.0f - 2.0f * t);
 }
 
+struct ImageVfxSheetSpec
+{
+    int columns = 1;
+    int rows = 8;
+    float frameWidth = 64.0f;
+    float frameHeight = 64.0f;
+};
+
+ImageVfxSheetSpec ImageVfxSpec(ImageVfxKind kind)
+{
+    // 렌더러가 VFX 시트의 행/열 정보를 한 곳에서 해석하도록 만든다.
+    // DrawImageVfxFrame과 DrawImageVfxSprites가 같은 기준을 써야 프레임이 밀리지 않는다.
+    switch (kind)
+    {
+    case ImageVfxKind::Heal:
+    case ImageVfxKind::HealSoft:
+        return {4, 4, 128.0f, 128.0f};
+    case ImageVfxKind::Fire:
+    case ImageVfxKind::Water:
+        return {4, 4, 64.0f, 64.0f};
+    case ImageVfxKind::Dark:
+        return {16, 1, 48.0f, 64.0f};
+    case ImageVfxKind::Acid:
+        return {16, 1, 32.0f, 32.0f};
+    case ImageVfxKind::Holy:
+        return {16, 1, 48.0f, 48.0f};
+    case ImageVfxKind::Ice:
+        return {5, 4, 192.0f, 192.0f};
+    case ImageVfxKind::Thunder:
+        return {13, 1, 64.0f, 64.0f};
+    case ImageVfxKind::Smoke:
+        return {13, 1, 64.0f, 64.0f};
+    case ImageVfxKind::Earth:
+        return {7, 1, 48.0f, 48.0f};
+    case ImageVfxKind::Wood:
+        return {7, 1, 32.0f, 32.0f};
+    case ImageVfxKind::HitFlash:
+        return {7, 1, 48.0f, 48.0f};
+    case ImageVfxKind::Wind:
+        return {18, 1, 32.0f, 32.0f};
+    case ImageVfxKind::WindHit:
+        return {3, 1, 32.0f, 64.0f};
+    case ImageVfxKind::Thrust:
+        return {1, 3, 64.0f, 64.0f};
+    case ImageVfxKind::Smear:
+        return {5, 1, 48.0f, 48.0f};
+    default:
+        return {};
+    }
+}
+
+int ImageVfxFrameCount(ImageVfxKind kind)
+{
+    const ImageVfxSheetSpec spec = ImageVfxSpec(kind);
+    return spec.columns * spec.rows;
+}
+
 float UnitMoveStride(const Unit& unit)
 {
     return unit.animState == UnitAnimState::Move ? std::sin(unit.walkCycle + unit.shakePhase * 0.15f) : 0.0f;
@@ -511,10 +568,7 @@ void PawlineGameImpl::DrawVfxAtlasTile(int tileX, int tileY, Vec2 center, float 
 void PawlineGameImpl::DrawImageVfxFrame(ImageVfxKind kind, int frame, Vec2 center, float size, float opacity)
 {
     ID2D1Bitmap* sheet = nullptr;
-    int columns = 1;
-    int rows = 8;
-    float frameWidth = 64.0f;
-    float frameHeight = 64.0f;
+    const ImageVfxSheetSpec spec = ImageVfxSpec(kind);
 
     switch (kind)
     {
@@ -526,80 +580,54 @@ void PawlineGameImpl::DrawImageVfxFrame(ImageVfxKind kind, int frame, Vec2 cente
         break;
     case ImageVfxKind::Heal:
         sheet = m_healEffectSheet.Get();
-        columns = 4;
-        rows = 4;
-        frameWidth = 128.0f;
-        frameHeight = 128.0f;
         break;
     case ImageVfxKind::HealSoft:
         sheet = m_healSoftEffectSheet ? m_healSoftEffectSheet.Get() : m_healEffectSheet.Get();
-        columns = 4;
-        rows = 4;
-        frameWidth = 128.0f;
-        frameHeight = 128.0f;
         break;
     case ImageVfxKind::Fire:
         sheet = m_fireEffectSheet.Get();
-        columns = 4;
-        rows = 4;
-        frameWidth = 64.0f;
-        frameHeight = 64.0f;
         break;
     case ImageVfxKind::Ice:
         sheet = m_iceEffectSheet.Get();
-        columns = 5;
-        rows = 4;
-        frameWidth = 192.0f;
-        frameHeight = 192.0f;
         break;
     case ImageVfxKind::Thunder:
         sheet = m_thunderEffectSheet.Get();
-        columns = 13;
-        rows = 1;
-        frameWidth = 64.0f;
-        frameHeight = 64.0f;
         break;
     case ImageVfxKind::Water:
         sheet = m_waterEffectSheet.Get();
-        columns = 4;
-        rows = 4;
-        frameWidth = 64.0f;
-        frameHeight = 64.0f;
         break;
     case ImageVfxKind::Dark:
         sheet = m_darkEffectSheet.Get();
-        columns = 16;
-        rows = 1;
-        frameWidth = 48.0f;
-        frameHeight = 64.0f;
         break;
     case ImageVfxKind::Acid:
         sheet = m_acidEffectSheet.Get();
-        columns = 16;
-        rows = 1;
-        frameWidth = 32.0f;
-        frameHeight = 32.0f;
         break;
     case ImageVfxKind::Earth:
         sheet = m_earthEffectSheet.Get();
-        columns = 7;
-        rows = 1;
-        frameWidth = 48.0f;
-        frameHeight = 48.0f;
         break;
     case ImageVfxKind::Smoke:
         sheet = m_smokeEffectSheet.Get();
-        columns = 13;
-        rows = 1;
-        frameWidth = 64.0f;
-        frameHeight = 64.0f;
         break;
     case ImageVfxKind::Holy:
         sheet = m_holyEffectSheet.Get();
-        columns = 16;
-        rows = 1;
-        frameWidth = 48.0f;
-        frameHeight = 48.0f;
+        break;
+    case ImageVfxKind::Wind:
+        sheet = m_windEffectSheet.Get();
+        break;
+    case ImageVfxKind::WindHit:
+        sheet = m_windHitEffectSheet.Get();
+        break;
+    case ImageVfxKind::Wood:
+        sheet = m_woodEffectSheet.Get();
+        break;
+    case ImageVfxKind::HitFlash:
+        sheet = m_hitFlashEffectSheet.Get();
+        break;
+    case ImageVfxKind::Smear:
+        sheet = m_smearEffectSheet.Get();
+        break;
+    case ImageVfxKind::Thrust:
+        sheet = m_thrustEffectSheet.Get();
         break;
     }
 
@@ -608,13 +636,13 @@ void PawlineGameImpl::DrawImageVfxFrame(ImageVfxKind kind, int frame, Vec2 cente
         return;
     }
 
-    const int frameCount = columns * rows;
+    const int frameCount = spec.columns * spec.rows;
     const int safeFrame = std::clamp(frame, 0, frameCount - 1);
-    const int x = safeFrame % columns;
-    const int y = safeFrame / columns;
-    const D2D1_RECT_F source = D2D1::RectF(static_cast<float>(x) * frameWidth, static_cast<float>(y) * frameHeight,
-                                           static_cast<float>(x + 1) * frameWidth, static_cast<float>(y + 1) * frameHeight);
-    const float aspect = frameWidth / frameHeight;
+    const int x = safeFrame % spec.columns;
+    const int y = safeFrame / spec.columns;
+    const D2D1_RECT_F source = D2D1::RectF(static_cast<float>(x) * spec.frameWidth, static_cast<float>(y) * spec.frameHeight,
+                                           static_cast<float>(x + 1) * spec.frameWidth, static_cast<float>(y + 1) * spec.frameHeight);
+    const float aspect = spec.frameWidth / spec.frameHeight;
     const D2D1_RECT_F destination = D2D1::RectF(center.x - size * aspect * 0.5f, center.y - size * 0.5f,
                                                 center.x + size * aspect * 0.5f, center.y + size * 0.5f);
     DrawBitmap(sheet, destination, opacity, &source);
@@ -627,37 +655,28 @@ void PawlineGameImpl::DrawImageVfxSprites()
         const float alpha = Clamp01(effect.life / effect.maxLife);
         const float progress = 1.0f - alpha;
         const bool heal = effect.kind == ImageVfxKind::Heal || effect.kind == ImageVfxKind::HealSoft;
-        int frameCount = heal ? 16 : 8;
-        switch (effect.kind)
-        {
-        case ImageVfxKind::Thunder:
-            frameCount = 13;
-            break;
-        case ImageVfxKind::Ice:
-            frameCount = 20;
-            break;
-        case ImageVfxKind::Fire:
-        case ImageVfxKind::Water:
-        case ImageVfxKind::Dark:
-        case ImageVfxKind::Acid:
-        case ImageVfxKind::Holy:
-            frameCount = 16;
-            break;
-        case ImageVfxKind::Earth:
-            frameCount = 7;
-            break;
-        case ImageVfxKind::Smoke:
-            frameCount = 13;
-            break;
-        default:
-            break;
-        }
+        const bool smoke = effect.kind == ImageVfxKind::Smoke;
+        const int frameCount = ImageVfxFrameCount(effect.kind);
         const int frame = std::clamp(static_cast<int>((progress + effect.frameOffset) * static_cast<float>(frameCount)), 0, frameCount - 1);
-        const float pop = 1.0f + std::sin(progress * kPi) * (heal ? 0.10f : 0.18f);
-        const float glow = effect.kind == ImageVfxKind::Smoke ? 0.07f : (heal ? 0.12f : 0.16f);
-        FillEllipse(effect.pos, effect.size * (heal ? 0.44f : 0.50f) * pop, effect.size * (heal ? 0.32f : 0.28f) * pop,
-                    D2D1::ColorF(effect.color.r, effect.color.g, effect.color.b, effect.color.a * alpha * glow));
+        const float pulse = std::sin(progress * kPi);
+        const float pop = 1.0f + pulse * (heal ? 0.10f : 0.20f);
+        const float lightAlpha = smoke ? 0.055f : (heal ? 0.11f : 0.18f);
+
+        // 실제 셰이더 대신 Direct2D 레이어를 여러 겹 합성해 로컬 블룸처럼 보이게 한다.
+        FillEllipse(effect.pos, effect.size * (0.78f + pulse * 0.28f), effect.size * (0.42f + pulse * 0.18f),
+                    D2D1::ColorF(effect.color.r, effect.color.g, effect.color.b, effect.color.a * alpha * lightAlpha));
+        FillEllipse(effect.pos, effect.size * (0.48f + pulse * 0.16f), effect.size * (0.28f + pulse * 0.10f),
+                    D2D1::ColorF(effect.color.r, effect.color.g, effect.color.b, effect.color.a * alpha * lightAlpha * 1.35f));
+        if (!smoke)
+        {
+            DrawImageVfxFrame(effect.kind, frame, effect.pos, effect.size * (pop + 0.18f), effect.color.a * alpha * 0.22f);
+        }
         DrawImageVfxFrame(effect.kind, frame, effect.pos, effect.size * pop, effect.color.a * alpha);
+        if (!smoke)
+        {
+            FillEllipse({effect.pos.x, effect.pos.y - effect.size * 0.06f}, effect.size * 0.18f, effect.size * 0.10f,
+                        D2D1::ColorF(0xFFFFFF, effect.color.a * alpha * 0.08f));
+        }
     }
 }
 
@@ -2537,17 +2556,14 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
     FillEllipse({pos.x - unit.radius * 0.24f, pos.y - unit.radius * 0.46f}, unit.radius * 0.30f, unit.radius * 0.18f, D2D1::ColorF(0xFFFFFF, 0.18f));
     StrokeEllipse(pos, bodyRx, bodyRy, stats.accent, 2.4f);
     DrawUnitIdentityMark(unit, pos, stats.accent);
-    const float pawReach = strike * 17.0f - windup * 9.0f - recoil * 5.0f;
-    const Vec2 frontPaw = {pos.x + dir * (unit.radius * 0.62f + pawReach), pos.y + unit.radius * 0.22f - strike * 7.0f + stride * 2.2f};
-    const Vec2 backPaw = {pos.x - dir * (unit.radius * 0.55f + windup * 5.0f - recoil * 3.0f), pos.y + unit.radius * 0.28f - stride * 2.0f + deathPose * 4.0f};
-    DrawLine({pos.x + dir * unit.radius * 0.25f, pos.y + unit.radius * 0.08f}, frontPaw, ink, 7.4f);
-    DrawLine({pos.x + dir * unit.radius * 0.25f, pos.y + unit.radius * 0.08f}, frontPaw, D2D1::ColorF(0xFFF7D6), 4.4f);
-    DrawLine({pos.x - dir * unit.radius * 0.24f, pos.y + unit.radius * 0.15f}, backPaw, ink, 6.6f);
-    DrawLine({pos.x - dir * unit.radius * 0.24f, pos.y + unit.radius * 0.15f}, backPaw, body, 3.8f);
-    FillEllipse(frontPaw, 7.6f + strike * 2.0f, 6.0f + strike * 1.5f, ink);
-    FillEllipse(frontPaw, 5.2f + strike * 1.6f, 4.0f + strike * 1.0f, D2D1::ColorF(0xFFF7D6));
-    FillEllipse(backPaw, 6.6f, 4.6f, ink);
-    FillEllipse(backPaw, 4.5f, 3.2f, body);
+    if (strike > 0.0f || windup > 0.0f)
+    {
+        // 손처럼 보이던 공통 원형 파츠를 없애고, 공격 방향만 읽히는 짧은 로컬 빛으로 대체한다.
+        const Vec2 handGlow = {pos.x + dir * (unit.radius * 0.72f + strike * 12.0f - windup * 5.0f),
+                               pos.y + unit.radius * 0.16f - strike * 5.0f};
+        FillEllipse(handGlow, unit.radius * (0.62f + strike * 0.35f), unit.radius * (0.22f + strike * 0.18f),
+                    D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.06f + strike * 0.12f + windup * 0.03f));
+    }
     if (IsUnitEvolved(playerType))
     {
         // 진화한 유닛은 머리 위의 작은 빛 장식과 공격 잔광으로 일반 유닛과 구분한다.
@@ -2762,18 +2778,13 @@ void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
     FillEllipse({pos.x - unit.radius * 0.18f, pos.y - unit.radius * 0.42f}, unit.radius * 0.28f, unit.radius * 0.15f, D2D1::ColorF(0xFFFFFF, 0.12f));
     StrokeEllipse(pos, bodyRx, bodyRy, stats.accent, 2.2f);
     DrawUnitIdentityMark(unit, pos, stats.accent);
-    const float clawReach = strike * 16.0f - windup * 8.0f - recoil * 4.0f;
-    const Vec2 frontClaw = {pos.x + dir * (unit.radius * 0.68f + clawReach), pos.y + unit.radius * 0.20f - strike * 5.5f + stride * 1.8f};
-    const Vec2 rearClaw = {pos.x - dir * (unit.radius * 0.58f + windup * 4.0f), pos.y + unit.radius * 0.28f - stride * 1.8f + deathPose * 4.5f};
-    DrawLine({pos.x + dir * unit.radius * 0.24f, pos.y + unit.radius * 0.10f}, frontClaw, ink, 7.0f);
-    DrawLine({pos.x + dir * unit.radius * 0.24f, pos.y + unit.radius * 0.10f}, frontClaw, stats.accent, 3.8f);
-    DrawLine({pos.x - dir * unit.radius * 0.22f, pos.y + unit.radius * 0.15f}, rearClaw, ink, 6.2f);
-    DrawLine({pos.x - dir * unit.radius * 0.22f, pos.y + unit.radius * 0.15f}, rearClaw, body, 3.5f);
-    for (int i = -1; i <= 1; ++i)
+    if (strike > 0.0f || windup > 0.0f)
     {
-        const Vec2 tip = {frontClaw.x + dir * (7.0f + strike * 5.0f), frontClaw.y + static_cast<float>(i) * 4.0f};
-        DrawLine(frontClaw, tip, ink, 3.0f);
-        DrawLine(frontClaw, tip, D2D1::ColorF(0xFFE3E8), 1.4f);
+        // 적도 공통 손/발 원형을 쓰지 않고, 공격 순간의 색광으로만 타격 방향을 보여준다.
+        const Vec2 clawGlow = {pos.x + dir * (unit.radius * 0.76f + strike * 12.0f - windup * 5.0f),
+                               pos.y + unit.radius * 0.16f - strike * 4.0f};
+        FillEllipse(clawGlow, unit.radius * (0.66f + strike * 0.32f), unit.radius * (0.22f + strike * 0.16f),
+                    D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.06f + strike * 0.12f + windup * 0.03f));
     }
     DrawEnemyWeapon(unit, pos, stats, windup, strike, recoil);
     DrawUnitActionLines(unit, pos, stats.accent);
@@ -3124,9 +3135,10 @@ void PawlineGameImpl::DrawSparkLines()
     {
         const float alpha = Clamp01(line.life / line.maxLife);
         const Vec2 mid = (line.start + line.end) * 0.5f;
-        FillEllipse(mid, line.width * (3.8f + alpha * 2.0f), line.width * (2.0f + alpha), FadeColor(line.color, 0.18f * alpha));
-        FillEllipse(line.end, line.width * (2.0f + alpha * 2.2f), line.width * (1.4f + alpha * 1.2f), FadeColor(line.color, 0.42f * alpha));
-        DrawLine(line.start, line.end, FadeColor(line.color, 0.14f * alpha), std::max(1.0f, line.width * 1.4f));
+        // 충돌 파편은 선 대신 빛점과 작은 블룸으로 표현해, 외부 이펙트 시트가 주인공처럼 보이게 한다.
+        FillEllipse(mid, line.width * (5.6f + alpha * 2.4f), line.width * (2.8f + alpha * 1.2f), FadeColor(line.color, 0.13f * alpha));
+        FillEllipse(line.end, line.width * (2.6f + alpha * 2.6f), line.width * (1.8f + alpha * 1.4f), FadeColor(line.color, 0.36f * alpha));
+        FillEllipse(line.end, line.width * (1.0f + alpha), line.width * (1.0f + alpha), FadeColor(D2D1::ColorF(0xFFFFFF), 0.30f * alpha));
     }
 }
 
@@ -3232,6 +3244,31 @@ void PawlineGameImpl::DrawShaderPostProcess()
         FillEllipse(screen, projectile.radius * (5.8f + pulse * 1.6f + feedback * 2.2f), projectile.radius * (3.8f + pulse * 1.0f + feedback * 1.4f), D2D1::ColorF(projectile.color.r, projectile.color.g, projectile.color.b, 0.035f + pulse * 0.026f + feedback * 0.020f));
         FillEllipse({screen.x, screen.y + projectile.radius + 14.0f}, projectile.radius * 2.4f, projectile.radius * 0.48f, D2D1::ColorF(0x000000, 0.12f));
         StrokeEllipse(screen, projectile.radius * (2.6f + pulse * 0.8f), projectile.radius * (1.6f + pulse * 0.5f), D2D1::ColorF(0xFFFFFF, 0.055f + pulse * 0.045f), 1.2f);
+    }
+
+    // 외부 이미지 이펙트 주변에 후처리용 로컬 라이트를 한 번 더 올린다.
+    // 화면 전체를 밝히지 않고, 타격 지점 근처만 빛나게 해서 그림자가 살아 보이게 한다.
+    for (const ImageVfx& effect : m_imageVfx)
+    {
+        const float alpha = Clamp01(effect.life / effect.maxLife);
+        if (alpha <= 0.0f)
+        {
+            continue;
+        }
+        const Vec2 screen = WorldToScreen(effect.pos);
+        if (screen.x < arena.left - 120.0f || screen.x > arena.right + 120.0f ||
+            screen.y < arena.top - 100.0f || screen.y > arena.bottom + 100.0f)
+        {
+            continue;
+        }
+        const float pulse = std::sin((1.0f - alpha) * kPi);
+        const float strongKind = effect.kind == ImageVfxKind::Fire || effect.kind == ImageVfxKind::Thunder ||
+                                 effect.kind == ImageVfxKind::Holy || effect.kind == ImageVfxKind::Wind ||
+                                 effect.kind == ImageVfxKind::Thrust ? 1.0f : 0.72f;
+        FillEllipse(screen, effect.size * (0.82f + pulse * 0.28f), effect.size * (0.38f + pulse * 0.16f),
+                    D2D1::ColorF(effect.color.r, effect.color.g, effect.color.b, effect.color.a * alpha * (0.022f + feedback * 0.014f) * strongKind));
+        FillEllipse({screen.x, screen.y + effect.size * 0.22f}, effect.size * 0.42f, effect.size * 0.08f,
+                    D2D1::ColorF(0x000000, 0.045f * alpha));
     }
 
     for (const BeamEffect& beam : m_beams)
