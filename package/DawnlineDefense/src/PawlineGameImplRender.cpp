@@ -155,6 +155,23 @@ void PawlineGameImpl::Render()
         return;
     }
 
+    if (m_screen == GameScreen::Codex)
+    {
+        DrawCodex();
+        DrawMessage();
+        DrawUiPulses();
+        if (m_escapeMenuOpen)
+        {
+            DrawEscapeMenuClean();
+        }
+        hr = m_renderTarget->EndDraw();
+        if (hr == D2DERR_RECREATE_TARGET)
+        {
+            DiscardDeviceResources();
+        }
+        return;
+    }
+
     if (m_screen == GameScreen::Briefing)
     {
         DrawBriefing();
@@ -215,6 +232,7 @@ void PawlineGameImpl::Render()
     DrawBossPresentation();
     DrawTutorialTips();
     DrawShowcaseBadge();
+    DrawDebugBadge();
     DrawCommandBar();
     DrawUiPulses();
     DrawMessage();
@@ -558,6 +576,10 @@ void PawlineGameImpl::DrawMenu()
     DrawPixelText(L"PAWLINE DEFENSE", {48.0f, 42.0f}, 4.2f, D2D1::ColorF(0xF3FBFF));
     DrawPixelText(L"CHOOSE A STAGE AND FIVE UNITS", {58.0f, 92.0f}, 2.1f, D2D1::ColorF(0x9AB2BF));
     DrawPixelText(L"LUMEN " + ToWideInt(m_lumen), {1000.0f, 50.0f}, 3.0f, D2D1::ColorF(0xF6FF83));
+    if (m_debugMode)
+    {
+        DrawPixelText(L"DEBUG ON", {1004.0f, 88.0f}, 2.0f, D2D1::ColorF(0xFFB6C2));
+    }
 
     DrawString(L"Stage", D2D1::RectF(48.0f, 112.0f, 260.0f, 138.0f), m_headerFormat, D2D1::ColorF(0xEAF7FF));
     for (int i = 0; i < kStageCount; ++i)
@@ -587,10 +609,98 @@ void PawlineGameImpl::DrawMenu()
     DrawString(L"Enemy base " + ToWideInt(static_cast<int>(stage.enemyHp)) + L" HP", D2D1::RectF(82.0f, 650.0f, 540.0f, 674.0f), m_bodyFormat, D2D1::ColorF(0xFFB6C2));
     DrawString(L"Start energy " + ToWideInt(static_cast<int>(stage.startEnergy)), D2D1::RectF(82.0f, 676.0f, 540.0f, 700.0f), m_bodyFormat, D2D1::ColorF(0xB8FF89));
 
+    const bool selectedUnlocked = IsStageUnlocked(m_selectedStage);
+    DrawButton(MenuCodexButtonRect(), L"Codex", true, D2D1::ColorF(0x22323F));
     DrawButton(MenuShopButtonRect(), L"Shop", true, D2D1::ColorF(0x4B4321));
-    DrawButton(StartGameButtonRect(), L"Start Stage", true, D2D1::ColorF(0x173C4B));
+    DrawButton(StartGameButtonRect(), selectedUnlocked ? L"Start Stage" : L"Locked", selectedUnlocked, D2D1::ColorF(0x173C4B));
+    DrawString(L"C", D2D1::RectF(MenuCodexButtonRect().left, MenuCodexButtonRect().bottom + 4.0f, MenuCodexButtonRect().right, MenuCodexButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
     DrawString(L"S / B", D2D1::RectF(MenuShopButtonRect().left, MenuShopButtonRect().bottom + 4.0f, MenuShopButtonRect().right, MenuShopButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
-    DrawString(L"Enter / Space", D2D1::RectF(StartGameButtonRect().left, StartGameButtonRect().bottom + 4.0f, StartGameButtonRect().right, StartGameButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+    DrawString(selectedUnlocked ? L"Enter / Space" : L"Clear previous", D2D1::RectF(StartGameButtonRect().left, StartGameButtonRect().bottom + 4.0f, StartGameButtonRect().right, StartGameButtonRect().bottom + 24.0f), m_centerFormat, selectedUnlocked ? D2D1::ColorF(0x8EA9B8) : D2D1::ColorF(0xFFB6C2));
+}
+
+void PawlineGameImpl::DrawCodex()
+{
+    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0x071017));
+    for (float y = 28.0f; y < kHeight; y += 42.0f)
+    {
+        DrawLine({24.0f, y}, {1256.0f, y}, D2D1::ColorF(0x17303C, 0.18f), 1.0f);
+    }
+    for (float x = 34.0f; x < kWidth; x += 50.0f)
+    {
+        DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.12f), 1.0f);
+    }
+
+    DrawPixelText(L"FIELD CODEX", {52.0f, 42.0f}, 4.2f, D2D1::ColorF(0xF3FBFF));
+    DrawString(L"유닛, 적, 행성 정보를 한곳에서 확인합니다.", D2D1::RectF(58.0f, 92.0f, 520.0f, 120.0f), m_bodyFormat, D2D1::ColorF(0xBFD1DB));
+
+    const std::array<std::wstring, 3> tabs = {L"유닛", L"적", L"스테이지"};
+    for (int i = 0; i < 3; ++i)
+    {
+        const bool active = m_codexTab == i;
+        DrawButton(CodexTabRect(i), tabs[i], true, active ? D2D1::ColorF(0x173C4B) : D2D1::ColorF(0x202833));
+    }
+
+    const D2D1_RECT_F board = D2D1::RectF(52.0f, 186.0f, 1228.0f, 690.0f);
+    DrawCartoonPanel(board, D2D1::ColorF(0x0D1821, 0.96f), D2D1::ColorF(0x65B8FF));
+
+    if (m_codexTab == 0)
+    {
+        for (int i = 0; i < kRosterCount; ++i)
+        {
+            const PlayerUnit unit = static_cast<PlayerUnit>(i);
+            const UnitStats stats = PlayerStats(unit);
+            const bool unlocked = IsUnitUnlocked(unit);
+            const int col = i / 7;
+            const int row = i % 7;
+            const float x = 82.0f + static_cast<float>(col) * 570.0f;
+            const float y = 212.0f + static_cast<float>(row) * 64.0f;
+            const D2D1_RECT_F rect = D2D1::RectF(x, y, x + 516.0f, y + 52.0f);
+            DrawCartoonPanel(rect, unlocked ? D2D1::ColorF(0x101D26, 0.96f) : D2D1::ColorF(0x101820, 0.78f), unlocked ? stats.accent : D2D1::ColorF(0x394955));
+            DrawPlayerIcon(unit, {rect.left + 30.0f, rect.top + 26.0f}, 0.52f, unlocked);
+            DrawString(unlocked ? stats.name : L"잠김 유닛", D2D1::RectF(rect.left + 64.0f, rect.top + 8.0f, rect.left + 238.0f, rect.top + 30.0f), m_smallFormat, unlocked ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x73818A));
+            DrawString(unlocked ? L"Lv." + ToWideInt(UnitLevel(unit)) + (IsUnitEvolved(unit) ? L"  진화" : L"") : L"상점에서 구매", D2D1::RectF(rect.left + 64.0f, rect.top + 29.0f, rect.left + 238.0f, rect.bottom - 4.0f), m_smallFormat, unlocked ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xFFB6C2));
+            DrawString(L"HP " + ToWideInt(static_cast<int>(stats.hp)) + L"  DMG " + ToWideInt(static_cast<int>(stats.damage)) + L"  COST " + ToWideInt(UnitEnergyCost(unit)), D2D1::RectF(rect.left + 248.0f, rect.top + 15.0f, rect.right - 12.0f, rect.bottom - 8.0f), m_smallFormat, D2D1::ColorF(0xC7D8FF));
+        }
+    }
+    else if (m_codexTab == 1)
+    {
+        for (int i = 0; i <= static_cast<int>(EnemyUnit::Boss); ++i)
+        {
+            const EnemyUnit enemy = static_cast<EnemyUnit>(i);
+            const UnitStats stats = GetEnemyStats(enemy, DifficultyThreatMultiplier() * 2.0f + static_cast<float>(m_selectedStage) * 0.45f);
+            const int col = i / 9;
+            const int row = i % 9;
+            const float x = 84.0f + static_cast<float>(col) * 568.0f;
+            const float y = 210.0f + static_cast<float>(row) * 50.0f;
+            const D2D1_RECT_F rect = D2D1::RectF(x, y, x + 512.0f, y + 40.0f);
+            DrawCartoonPanel(rect, D2D1::ColorF(0x111923, 0.94f), stats.accent);
+            FillEllipse({rect.left + 24.0f, rect.top + 20.0f}, stats.radius * 0.55f, stats.radius * 0.48f, stats.color);
+            StrokeEllipse({rect.left + 24.0f, rect.top + 20.0f}, stats.radius * 0.55f, stats.radius * 0.48f, stats.accent, 1.6f);
+            DrawString(stats.name, D2D1::RectF(rect.left + 54.0f, rect.top + 8.0f, rect.left + 236.0f, rect.bottom - 6.0f), m_smallFormat, D2D1::ColorF(0xF3FBFF));
+            DrawString(L"HP " + ToWideInt(static_cast<int>(stats.hp)) + L"  DMG " + ToWideInt(static_cast<int>(stats.damage)) + L"  보상 " + ToWideInt(stats.reward), D2D1::RectF(rect.left + 244.0f, rect.top + 8.0f, rect.right - 10.0f, rect.bottom - 6.0f), m_smallFormat, D2D1::ColorF(0xFFCAD1));
+        }
+    }
+    else
+    {
+        for (int i = 0; i < kStageCount; ++i)
+        {
+            const StageDefinition stage = GetStageDefinition(i);
+            const bool unlocked = IsStageUnlocked(i);
+            const int col = i / 5;
+            const int row = i % 5;
+            const float x = 86.0f + static_cast<float>(col) * 568.0f;
+            const float y = 220.0f + static_cast<float>(row) * 84.0f;
+            const D2D1_RECT_F rect = D2D1::RectF(x, y, x + 510.0f, y + 66.0f);
+            DrawCartoonPanel(rect, unlocked ? D2D1::ColorF(0x101D26, 0.96f) : D2D1::ColorF(0x101820, 0.76f), unlocked ? stage.lineColor : D2D1::ColorF(0x394955));
+            FillEllipse({rect.left + 34.0f, rect.top + 33.0f}, 20.0f, 20.0f, unlocked ? stage.laneColor : D2D1::ColorF(0x394955));
+            StrokeEllipse({rect.left + 34.0f, rect.top + 33.0f}, 20.0f, 20.0f, stage.lineColor, 2.0f);
+            DrawString(stage.name + (m_stageCleared[i] ? L"  클리어" : (unlocked ? L"  진행 가능" : L"  잠김")), D2D1::RectF(rect.left + 72.0f, rect.top + 8.0f, rect.left + 264.0f, rect.top + 32.0f), m_smallFormat, unlocked ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x73818A));
+            DrawString(stage.gimmick, D2D1::RectF(rect.left + 72.0f, rect.top + 34.0f, rect.right - 12.0f, rect.bottom - 8.0f), m_smallFormat, unlocked ? D2D1::ColorF(0xF6FF83) : D2D1::ColorF(0x7E919C));
+        }
+    }
+
+    DrawButton(CodexBackButtonRect(), L"Back", true, D2D1::ColorF(0x173C4B));
+    DrawString(L"Esc / M", D2D1::RectF(CodexBackButtonRect().right + 12.0f, CodexBackButtonRect().top + 14.0f, CodexBackButtonRect().right + 120.0f, CodexBackButtonRect().bottom), m_bodyFormat, D2D1::ColorF(0x8EA9B8));
 }
 
 void PawlineGameImpl::DrawBriefing()
@@ -748,7 +858,7 @@ void PawlineGameImpl::DrawShopUnitDetail()
     // 상점 카드만으로 부족한 수치를 보완하는 상세 정보 패널이다.
     DrawCartoonPanel(panel, D2D1::ColorF(0x0F1A22, 0.97f), unlocked ? stats.accent : D2D1::ColorF(0x394955));
     DrawPlayerIcon(unit, {panel.left + 34.0f, panel.top + 31.0f}, 0.50f, unlocked);
-    DrawPixelText(base.name, {panel.left + 72.0f, panel.top + 12.0f}, 1.8f, unlocked ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x9AA8B0));
+    DrawPixelTextCentered(base.name, D2D1::RectF(panel.left + 70.0f, panel.top + 8.0f, panel.left + 252.0f, panel.top + 32.0f), 1.75f, unlocked ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x9AA8B0), 1.0f);
     DrawPixelText(unlocked ? L"LV." + ToWideInt(UnitLevel(unit)) : L"LOCKED", {panel.left + 72.0f, panel.top + 36.0f}, 1.55f, unlocked ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xFFB6C2));
     DrawPixelText(L"HP " + ToWideInt(static_cast<int>(stats.hp)), {panel.left + 170.0f, panel.top + 36.0f}, 1.55f, D2D1::ColorF(0xC7D8FF));
     DrawPixelText(L"DMG " + ToWideInt(static_cast<int>(stats.damage)), {panel.left + 254.0f, panel.top + 36.0f}, 1.55f, D2D1::ColorF(0xFFB6C2));
@@ -761,14 +871,21 @@ void PawlineGameImpl::DrawStageCard(int index)
     const D2D1_RECT_F rect = MenuStageRect(index);
     const bool active = index == m_selectedStage;
     const bool hover = Contains(rect, m_mouse);
+    const bool unlocked = IsStageUnlocked(index);
     FillRoundRect(rect, 8.0f, active ? D2D1::ColorF(0x142A35) : D2D1::ColorF(0x0E1A22));
-    StrokeRoundRect(rect, 8.0f, active ? stage.lineColor : D2D1::ColorF(0x2C4A5B), hover || active ? 2.0f : 1.0f);
-    FillRoundRect(D2D1::RectF(rect.left + 12.0f, rect.top + 15.0f, rect.left + 68.0f, rect.bottom - 15.0f), 8.0f, stage.laneColor);
+    StrokeRoundRect(rect, 8.0f, unlocked ? (active ? stage.lineColor : D2D1::ColorF(0x2C4A5B)) : D2D1::ColorF(0x33404A), hover || active ? 2.0f : 1.0f);
+    FillRoundRect(D2D1::RectF(rect.left + 12.0f, rect.top + 15.0f, rect.left + 68.0f, rect.bottom - 15.0f), 8.0f, unlocked ? stage.laneColor : D2D1::ColorF(0x26313A));
     DrawLine({rect.left + 22.0f, rect.top + 42.0f}, {rect.left + 58.0f, rect.top + 42.0f}, stage.lineColor, 3.5f);
-    DrawString(stage.name, D2D1::RectF(rect.left + 84.0f, rect.top + 12.0f, rect.right - 10.0f, rect.top + 38.0f), m_headerFormat, D2D1::ColorF(0xF3FBFF));
-    DrawString(stage.subtitle, D2D1::RectF(rect.left + 84.0f, rect.top + 38.0f, rect.right - 10.0f, rect.top + 60.0f), m_smallFormat, D2D1::ColorF(0xAFC2CD));
+    DrawString(stage.name, D2D1::RectF(rect.left + 84.0f, rect.top + 12.0f, rect.right - 10.0f, rect.top + 38.0f), m_headerFormat, unlocked ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x73818A));
+    DrawString(unlocked ? stage.subtitle : L"이전 행성 클리어 필요", D2D1::RectF(rect.left + 84.0f, rect.top + 38.0f, rect.right - 10.0f, rect.top + 60.0f), m_smallFormat, unlocked ? D2D1::ColorF(0xAFC2CD) : D2D1::ColorF(0xFFB6C2));
     const std::wstring stageLabel = index == 9 ? L"Stage 0" : L"Stage " + ToWideInt(index + 1);
-    DrawString(stageLabel, D2D1::RectF(rect.left + 84.0f, rect.bottom - 24.0f, rect.right - 10.0f, rect.bottom - 6.0f), m_smallFormat, active ? D2D1::ColorF(0xF6FF83) : D2D1::ColorF(0x7E919C));
+    DrawString(unlocked ? stageLabel : L"LOCKED", D2D1::RectF(rect.left + 84.0f, rect.bottom - 24.0f, rect.right - 10.0f, rect.bottom - 6.0f), m_smallFormat, active ? D2D1::ColorF(0xF6FF83) : (unlocked ? D2D1::ColorF(0x7E919C) : D2D1::ColorF(0xFFB6C2)));
+    if (!unlocked)
+    {
+        FillRoundRect(rect, 8.0f, D2D1::ColorF(0x000000, 0.22f));
+        DrawLine({rect.left + 32.0f, rect.top + 31.0f}, {rect.left + 48.0f, rect.top + 31.0f}, D2D1::ColorF(0xFFB6C2, 0.70f), 3.0f);
+        StrokeRoundRect(D2D1::RectF(rect.left + 25.0f, rect.top + 32.0f, rect.left + 55.0f, rect.top + 54.0f), 5.0f, D2D1::ColorF(0xFFB6C2, 0.70f), 2.0f);
+    }
 }
 
 void PawlineGameImpl::DrawLoadoutSlot(int index)
@@ -1261,8 +1378,69 @@ float PawlineGameImpl::AttackWindup(const Unit& unit) const
 float PawlineGameImpl::AttackStrike(const Unit& unit) const
 {
     const float p = AttackProgress(unit);
-    const float center = unit.ranged ? 0.46f : 0.56f;
-    const float width = unit.ranged ? 0.18f : 0.16f;
+    float center = unit.ranged ? 0.46f : 0.56f;
+    float width = unit.ranged ? 0.18f : 0.16f;
+    if (unit.team == Team::Player)
+    {
+        switch (static_cast<PlayerUnit>(unit.kind))
+        {
+        case PlayerUnit::Dash:
+        case PlayerUnit::Comet:
+            center = 0.42f;
+            width = 0.13f;
+            break;
+        case PlayerUnit::Box:
+        case PlayerUnit::Titan:
+        case PlayerUnit::Solar:
+        case PlayerUnit::Drill:
+            center = 0.63f;
+            width = 0.19f;
+            break;
+        case PlayerUnit::Bell:
+        case PlayerUnit::Mint:
+            center = 0.50f;
+            width = 0.23f;
+            break;
+        case PlayerUnit::Orbit:
+        case PlayerUnit::Prism:
+        case PlayerUnit::Nebula:
+            center = 0.50f;
+            width = 0.20f;
+            break;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        switch (static_cast<EnemyUnit>(unit.kind))
+        {
+        case EnemyUnit::Skitter:
+        case EnemyUnit::Flare:
+        case EnemyUnit::Comet:
+        case EnemyUnit::Frost:
+            center = 0.41f;
+            width = 0.12f;
+            break;
+        case EnemyUnit::Brute:
+        case EnemyUnit::Storm:
+        case EnemyUnit::Quake:
+        case EnemyUnit::Boss:
+            center = 0.64f;
+            width = 0.20f;
+            break;
+        case EnemyUnit::Sulfur:
+        case EnemyUnit::Ring:
+        case EnemyUnit::Tide:
+        case EnemyUnit::Void:
+        case EnemyUnit::Spore:
+            center = 0.50f;
+            width = 0.19f;
+            break;
+        default:
+            break;
+        }
+    }
     return Clamp01(1.0f - std::abs(p - center) / width);
 }
 
@@ -1691,6 +1869,20 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
     FillEllipse(pos, bodyRx, bodyRy, body);
     FillEllipse({pos.x - unit.radius * 0.24f, pos.y - unit.radius * 0.46f}, unit.radius * 0.30f, unit.radius * 0.18f, D2D1::ColorF(0xFFFFFF, 0.18f));
     StrokeEllipse(pos, bodyRx, bodyRy, stats.accent, 2.4f);
+    if (IsUnitEvolved(playerType))
+    {
+        // 진화한 유닛은 머리 위의 작은 빛 장식과 공격 잔광으로 일반 유닛과 구분한다.
+        const float crownPulse = 0.72f + std::sin(m_uiTime * 5.0f + static_cast<float>(unit.id)) * 0.16f;
+        FillEllipse({pos.x, pos.y - unit.radius - 17.0f}, 18.0f, 5.0f, D2D1::ColorF(0xF6FF83, 0.18f * crownPulse));
+        StrokeEllipse({pos.x, pos.y - unit.radius - 17.0f}, 18.0f, 5.0f, D2D1::ColorF(0xF6FF83, 0.72f * crownPulse), 2.0f);
+        FillEllipse({pos.x - 12.0f, pos.y - unit.radius - 22.0f}, 3.5f, 3.5f, D2D1::ColorF(0xF6FF83, 0.92f));
+        FillEllipse({pos.x, pos.y - unit.radius - 25.0f}, 4.5f, 4.5f, D2D1::ColorF(0xFFF4B8, 0.96f));
+        FillEllipse({pos.x + 12.0f, pos.y - unit.radius - 22.0f}, 3.5f, 3.5f, D2D1::ColorF(0xF6FF83, 0.92f));
+        if (attack > 0.0f)
+        {
+            FillEllipse(pos, unit.radius * (1.95f + attack * 0.75f), unit.radius * (1.15f + attack * 0.45f), D2D1::ColorF(0xF6FF83, 0.045f + attack * 0.055f));
+        }
+    }
 
     DrawPlayerWeapon(unit, pos, stats, windup, strike, recoil);
 
@@ -2159,8 +2351,12 @@ void PawlineGameImpl::DrawShaderPostProcess()
             {
                 continue;
             }
-            const D2D1_COLOR_F color = unit.team == Team::Player ? D2D1::ColorF(0x65B8FF, 0.20f * strike) : D2D1::ColorF(0xFF9BA8, 0.20f * strike);
-            StrokeEllipse({screen.x, screen.y + 4.0f}, unit.radius + 28.0f * strike, unit.radius * 0.58f + 15.0f * strike, color, 2.0f + strike * 1.8f);
+            const D2D1_COLOR_F accent = unit.team == Team::Player
+                                            ? PlayerStats(static_cast<PlayerUnit>(unit.kind)).accent
+                                            : GetEnemyStats(static_cast<EnemyUnit>(unit.kind), ThreatLevel()).accent;
+            FillEllipse({screen.x + unit.attackDir * 20.0f, screen.y - 4.0f}, unit.radius * (2.8f + strike * 2.0f), unit.radius * (1.45f + strike * 0.90f), D2D1::ColorF(accent.r, accent.g, accent.b, 0.030f + strike * 0.060f));
+            FillEllipse({screen.x - 18.0f, screen.y + unit.radius + 14.0f}, unit.radius * 1.9f, unit.radius * 0.46f, D2D1::ColorF(0x000000, 0.16f + strike * 0.08f));
+            StrokeEllipse({screen.x, screen.y + 4.0f}, unit.radius + 28.0f * strike, unit.radius * 0.58f + 15.0f * strike, D2D1::ColorF(accent.r, accent.g, accent.b, 0.20f * strike), 2.0f + strike * 1.8f);
         }
     }
 
@@ -2402,7 +2598,19 @@ void PawlineGameImpl::DrawShowcaseBadge()
 
     const D2D1_RECT_F badge = D2D1::RectF(1010.0f, 112.0f, 1238.0f, 148.0f);
     DrawCartoonPanel(badge, D2D1::ColorF(0x0F1A22, 0.92f), D2D1::ColorF(0xF6FF83), true);
-    DrawPixelTextCentered(L"SHOWCASE CAMERA", badge, 2.2f, D2D1::ColorF(0xF6FF83), 1.0f);
+    DrawPixelTextCentered(L"DEMO MODE", badge, 2.4f, D2D1::ColorF(0xF6FF83), 1.0f);
+}
+
+void PawlineGameImpl::DrawDebugBadge()
+{
+    if (!m_debugMode)
+    {
+        return;
+    }
+
+    const D2D1_RECT_F badge = D2D1::RectF(1010.0f, m_showcaseMode && m_screen == GameScreen::Playing ? 154.0f : 112.0f, 1238.0f, m_showcaseMode && m_screen == GameScreen::Playing ? 190.0f : 148.0f);
+    DrawCartoonPanel(badge, D2D1::ColorF(0x1E1520, 0.92f), D2D1::ColorF(0xFF9BA8), true);
+    DrawPixelTextCentered(L"DEBUG F2", badge, 2.3f, D2D1::ColorF(0xFFB6C2), 1.0f);
 }
 
 void PawlineGameImpl::DrawBattleLogo()
@@ -2498,7 +2706,7 @@ void PawlineGameImpl::DrawCameraHud()
         return;
     }
 
-    const D2D1_RECT_F rail = D2D1::RectF(40.0f, 84.0f, 1240.0f, 93.0f);
+    const D2D1_RECT_F rail = D2D1::RectF(40.0f, 98.0f, 1240.0f, 108.0f);
     FillRoundRect(rail, 4.0f, D2D1::ColorF(0x071017, 0.76f));
     StrokeRoundRect(rail, 4.0f, D2D1::ColorF(0x38576A, 0.68f), 1.0f);
 
@@ -2523,10 +2731,10 @@ void PawlineGameImpl::DrawCameraHud()
                     unit.team == Team::Player ? D2D1::ColorF(0xB8FF89, 0.88f) : D2D1::ColorF(0xFF9BA8, 0.82f));
     }
 
-    DrawLine({50.0f, 74.0f}, {40.0f, 88.0f}, D2D1::ColorF(0xCFE8F5, 0.40f), 2.0f);
-    DrawLine({40.0f, 88.0f}, {50.0f, 102.0f}, D2D1::ColorF(0xCFE8F5, 0.40f), 2.0f);
-    DrawLine({1230.0f, 74.0f}, {1240.0f, 88.0f}, D2D1::ColorF(0xCFE8F5, 0.40f), 2.0f);
-    DrawLine({1240.0f, 88.0f}, {1230.0f, 102.0f}, D2D1::ColorF(0xCFE8F5, 0.40f), 2.0f);
+    DrawLine({50.0f, 88.0f}, {40.0f, 103.0f}, D2D1::ColorF(0xCFE8F5, 0.40f), 2.0f);
+    DrawLine({40.0f, 103.0f}, {50.0f, 118.0f}, D2D1::ColorF(0xCFE8F5, 0.40f), 2.0f);
+    DrawLine({1230.0f, 88.0f}, {1240.0f, 103.0f}, D2D1::ColorF(0xCFE8F5, 0.40f), 2.0f);
+    DrawLine({1240.0f, 103.0f}, {1230.0f, 118.0f}, D2D1::ColorF(0xCFE8F5, 0.40f), 2.0f);
 }
 
 void PawlineGameImpl::DrawTopStat(float x, const std::wstring& label, const std::wstring& value, D2D1_COLOR_F color)

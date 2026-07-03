@@ -300,6 +300,17 @@ int PawlineGameImpl::UnitLevel(PlayerUnit unit) const
     return m_unitLevels[UnitIndex(unit)];
 }
 
+bool PawlineGameImpl::IsUnitEvolved(PlayerUnit unit) const
+{
+    return IsUnitUnlocked(unit) && UnitLevel(unit) >= kMaxUnitLevel;
+}
+
+std::wstring PawlineGameImpl::UnitDisplayName(PlayerUnit unit) const
+{
+    const UnitStats base = GetPlayerStats(unit);
+    return IsUnitEvolved(unit) ? L"진화 " + base.name : base.name;
+}
+
 UnitStats PawlineGameImpl::PlayerStats(PlayerUnit unit) const
 {
     UnitStats stats = GetPlayerStats(unit);
@@ -313,6 +324,16 @@ UnitStats PawlineGameImpl::PlayerStats(PlayerUnit unit) const
     stats.speed *= SynergySpeedMultiplier(unit);
     stats.cooldown *= cooldownScale;
     stats.cost += (level - 1) * 10;
+    if (IsUnitEvolved(unit))
+    {
+        // 레벨 5 유닛은 이름과 전투 성능이 한 번 더 변해, 성장의 보상이 눈에 보이게 한다.
+        stats.name = UnitDisplayName(unit);
+        stats.hp *= 1.10f;
+        stats.damage *= 1.12f;
+        stats.range *= stats.ranged ? 1.06f : 1.0f;
+        stats.speed *= 1.04f;
+        stats.cooldown *= 0.94f;
+    }
     return stats;
 }
 
@@ -383,6 +404,44 @@ std::wstring PawlineGameImpl::DifficultyLabel() const
     default:
         return L"NORMAL";
     }
+}
+
+bool PawlineGameImpl::IsStageUnlocked(int index) const
+{
+    if (index <= 0 || m_debugMode)
+    {
+        return true;
+    }
+    if (index >= kStageCount)
+    {
+        return false;
+    }
+    return m_stageCleared[index] || m_stageCleared[index - 1];
+}
+
+int PawlineGameImpl::HighestUnlockedStage() const
+{
+    int highest = 0;
+    for (int i = 1; i < kStageCount; ++i)
+    {
+        if (IsStageUnlocked(i))
+        {
+            highest = i;
+        }
+    }
+    return highest;
+}
+
+void PawlineGameImpl::SelectStage(int index)
+{
+    const int clamped = std::max(0, std::min(kStageCount - 1, index));
+    if (!IsStageUnlocked(clamped))
+    {
+        SetMessage(L"이전 스테이지를 먼저 클리어해야 해.");
+        AddUiPulse({m_mouse.x, m_mouse.y}, D2D1::ColorF(0xFF9BA8));
+        return;
+    }
+    m_selectedStage = clamped;
 }
 
 void PawlineGameImpl::GrantStageReward()
@@ -496,6 +555,9 @@ void PawlineGameImpl::ResetToTitle()
     m_pauseBeforeEscape = false;
     m_gameOver = false;
     m_victory = false;
+    m_showcaseMode = false;
+    m_demoSpawnTimer = 0.0f;
+    m_demoWalletTimer = 0.0f;
     m_message.clear();
     m_messageTimer = 0.0f;
 }
@@ -518,6 +580,9 @@ void PawlineGameImpl::ResetToMenu()
     m_pauseBeforeEscape = false;
     m_gameOver = false;
     m_victory = false;
+    m_showcaseMode = false;
+    m_demoSpawnTimer = 0.0f;
+    m_demoWalletTimer = 0.0f;
     m_message.clear();
     m_messageTimer = 0.0f;
 }
@@ -574,6 +639,8 @@ void PawlineGameImpl::ResetGame()
     m_gameOver = false;
     m_victory = false;
     m_bossPhaseTwoTriggered = false;
+    m_demoSpawnTimer = 0.70f;
+    m_demoWalletTimer = 2.20f;
     SetMessage(stage.name + L": summon units and break the enemy base.");
 }
 
@@ -623,7 +690,7 @@ void PawlineGameImpl::Update(float dt)
         m_showcaseTimer += dt;
     }
 
-    if (m_screen == GameScreen::Title || m_screen == GameScreen::Options || m_screen == GameScreen::Menu || m_screen == GameScreen::Shop || m_screen == GameScreen::Briefing || m_screen == GameScreen::Result)
+    if (m_screen == GameScreen::Title || m_screen == GameScreen::Options || m_screen == GameScreen::Menu || m_screen == GameScreen::Codex || m_screen == GameScreen::Shop || m_screen == GameScreen::Briefing || m_screen == GameScreen::Result)
     {
         if (m_screen == GameScreen::Result)
         {
@@ -651,6 +718,7 @@ void PawlineGameImpl::Update(float dt)
     const float cannonSynergy = HasLoadoutUnit(PlayerUnit::Solar) && HasLoadoutUnit(PlayerUnit::Bell) ? 1.12f : 1.0f;
     m_cannonCharge = std::min(100.0f, m_cannonCharge + (6.8f + static_cast<float>(m_walletLevel) * 1.1f) * cannonSynergy * gameDt);
     UpdateWalletPulse(gameDt);
+    UpdateDemoMode(gameDt);
     UpdateStageGimmicks(gameDt);
     UpdateBossPatterns(gameDt);
 
@@ -685,6 +753,78 @@ void PawlineGameImpl::Update(float dt)
         m_resultTime = m_stageTime;
         SetMessage(L"Home base fell. Press R to rebuild.");
     }
+}
+
+void PawlineGameImpl::UpdateDemoMode(float dt)
+{
+    if (!m_showcaseMode || m_screen != GameScreen::Playing || m_gameOver || m_victory || m_paused || m_escapeMenuOpen)
+    {
+        return;
+    }
+
+    m_demoWalletTimer -= dt;
+    if (m_demoWalletTimer <= 0.0f)
+    {
+        // 데모 모드에서는 경제 시스템이 보이도록 월렛 강화와 캐논 사용을 자동으로 시도한다.
+        if (WalletUpgradeCost() > 0 && m_energy >= static_cast<float>(WalletUpgradeCost()))
+        {
+            TryUpgradeWallet();
+        }
+        if (m_cannonCharge >= 100.0f)
+        {
+            TryFireCannon();
+        }
+        m_demoWalletTimer = 4.8f;
+    }
+
+    m_demoSpawnTimer -= dt;
+    if (m_demoSpawnTimer > 0.0f)
+    {
+        return;
+    }
+
+    const int start = static_cast<int>(std::floor(m_showcaseTimer * 0.67f)) % kLoadoutSize;
+    for (int offset = 0; offset < kLoadoutSize; ++offset)
+    {
+        const int index = (start + offset) % kLoadoutSize;
+        const PlayerUnit unit = m_loadout[index];
+        if (m_cardCooldowns[index] <= 0.0f && IsUnitUnlocked(unit) && m_energy >= static_cast<float>(UnitEnergyCost(unit)))
+        {
+            TrySpawnPlayer(index);
+            break;
+        }
+    }
+    m_demoSpawnTimer = 1.15f;
+}
+
+void PawlineGameImpl::TriggerDebugClear()
+{
+    if (m_screen != GameScreen::Playing)
+    {
+        return;
+    }
+
+    // 테스트 모드용 즉시 클리어. 밸런스 확인과 제출 영상 체크 때만 쓰는 숨은 도구다.
+    m_enemyBaseHp = 0.0f;
+    AddBurst({kEnemyBaseX - 64.0f, kLaneY}, D2D1::ColorF(0xF6FF83), 54);
+    AddCameraTrauma(0.70f);
+    SetMessage(L"테스트 클리어 실행.");
+}
+
+void PawlineGameImpl::TriggerDebugUnlockAll()
+{
+    // 빌드 확인용으로 모든 유닛과 스테이지를 여는 기능이다. 진행 저장에도 반영된다.
+    for (int i = 0; i < kRosterCount; ++i)
+    {
+        m_unitUnlocked[i] = true;
+        m_unitLevels[i] = std::max(m_unitLevels[i], 3);
+    }
+    for (int i = 0; i < kStageCount; ++i)
+    {
+        m_stageCleared[i] = true;
+    }
+    SaveProgress();
+    SetMessage(L"테스트 모드: 전체 잠금 해제.");
 }
 
 void PawlineGameImpl::UpdateViewMetrics()

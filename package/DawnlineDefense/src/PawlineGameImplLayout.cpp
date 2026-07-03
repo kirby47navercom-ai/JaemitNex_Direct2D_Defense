@@ -83,12 +83,28 @@ D2D1_RECT_F PawlineGameImpl::RosterCardRect(int index) const
 
 D2D1_RECT_F PawlineGameImpl::StartGameButtonRect() const
 {
-    return D2D1::RectF(936.0f, 720.0f, 1228.0f, 774.0f);
+    return D2D1::RectF(986.0f, 720.0f, 1228.0f, 774.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::MenuShopButtonRect() const
 {
-    return D2D1::RectF(650.0f, 720.0f, 928.0f, 774.0f);
+    return D2D1::RectF(818.0f, 720.0f, 974.0f, 774.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::MenuCodexButtonRect() const
+{
+    return D2D1::RectF(650.0f, 720.0f, 806.0f, 774.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::CodexBackButtonRect() const
+{
+    return D2D1::RectF(58.0f, 716.0f, 244.0f, 768.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::CodexTabRect(int index) const
+{
+    const float x = 410.0f + static_cast<float>(index) * 160.0f;
+    return D2D1::RectF(x, 116.0f, x + 144.0f, 166.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::BriefingStartButtonRect() const

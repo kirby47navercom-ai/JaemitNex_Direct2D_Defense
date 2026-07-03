@@ -82,6 +82,23 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
         OnMenuClick(pos);
         return;
     }
+    if (m_screen == GameScreen::Codex)
+    {
+        if (Contains(CodexBackButtonRect(), pos))
+        {
+            ResetToMenu();
+            return;
+        }
+        for (int i = 0; i < 3; ++i)
+        {
+            if (Contains(CodexTabRect(i), pos))
+            {
+                m_codexTab = i;
+                return;
+            }
+        }
+        return;
+    }
     if (m_screen == GameScreen::Briefing)
     {
         OnBriefingClick(pos);
@@ -98,14 +115,14 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
         return;
     }
 
-    const D2D1_RECT_F cameraRail = D2D1::RectF(40.0f, 80.0f, 1240.0f, 106.0f);
+    const D2D1_RECT_F cameraRail = D2D1::RectF(40.0f, 94.0f, 1240.0f, 116.0f);
     if (Contains(cameraRail, pos))
     {
         // 상단 미니맵 레일을 클릭하면 해당 월드 위치로 카메라를 이동한다.
         const float pct = Clamp01((pos.x - cameraRail.left) / (cameraRail.right - cameraRail.left));
         m_cameraTargetX = std::max(0.0f, std::min(kCameraMaxX, pct * kWorldWidth - kWidth * 0.5f));
         m_cameraX = Lerp(m_cameraX, m_cameraTargetX, 0.45f);
-        SetMessage(L"Camera jumped.");
+        SetMessage(L"카메라를 이동했어.");
         return;
     }
 
@@ -157,7 +174,7 @@ void PawlineGameImpl::OnMenuClick(Vec2 pos)
     {
         if (Contains(MenuStageRect(i), pos))
         {
-            m_selectedStage = i;
+            SelectStage(i);
             return;
         }
     }
@@ -182,12 +199,23 @@ void PawlineGameImpl::OnMenuClick(Vec2 pos)
 
     if (Contains(StartGameButtonRect(), pos))
     {
+        if (!IsStageUnlocked(m_selectedStage))
+        {
+            SetMessage(L"잠긴 스테이지야. 이전 행성을 먼저 클리어해줘.");
+            return;
+        }
         m_screen = GameScreen::Briefing;
         SetMessage(L"Check your deck before launch.");
+        return;
     }
     if (Contains(MenuShopButtonRect(), pos))
     {
         m_screen = GameScreen::Shop;
+        return;
+    }
+    if (Contains(MenuCodexButtonRect(), pos))
+    {
+        m_screen = GameScreen::Codex;
     }
 }
 
@@ -364,15 +392,15 @@ void PawlineGameImpl::TryBuyOrUpgradeUnit(PlayerUnit unit)
         const int cost = UnitUnlockCost(unit);
         if (m_lumen < cost)
         {
-            SetMessage(L"Need " + ToWideInt(cost) + L" LUMEN to buy " + base.name + L".");
+            SetMessage(base.name + L" 구매에 LUMEN " + ToWideInt(cost) + L" 필요.");
             return;
         }
 
         m_lumen -= cost;
         m_unitUnlocked[index] = true;
         m_unitLevels[index] = 1;
-        SetMessage(base.name + L" unlocked.");
-        AddFloatText({640.0f, 702.0f}, base.name + L" unlocked", D2D1::ColorF(0xB8FF89), 1.2f);
+        SetMessage(base.name + L" 해금 완료.");
+        AddFloatText({640.0f, 702.0f}, base.name + L" 해금", D2D1::ColorF(0xB8FF89), 1.2f);
         AddRing({640.0f, 402.0f}, 180.0f, 0.55f, base.accent, 3.0f);
         SaveProgress();
         return;
@@ -380,22 +408,23 @@ void PawlineGameImpl::TryBuyOrUpgradeUnit(PlayerUnit unit)
 
     if (m_unitLevels[index] >= kMaxUnitLevel)
     {
-        SetMessage(base.name + L" is already max level.");
+        SetMessage(base.name + L"은 이미 최대 진화 상태야.");
         return;
     }
 
     const int cost = UnitUpgradeCost(unit);
     if (m_lumen < cost)
     {
-        SetMessage(L"Need " + ToWideInt(cost) + L" LUMEN to upgrade " + base.name + L".");
+        SetMessage(base.name + L" 강화에 LUMEN " + ToWideInt(cost) + L" 필요.");
         return;
     }
 
     m_lumen -= cost;
     ++m_unitLevels[index];
-    SetMessage(base.name + L" upgraded to Lv." + ToWideInt(m_unitLevels[index]) + L".");
-    AddFloatText({640.0f, 702.0f}, base.name + L" Lv." + ToWideInt(m_unitLevels[index]), base.accent, 1.2f);
-    AddRing({640.0f, 402.0f}, 150.0f, 0.48f, base.accent, 3.0f);
+    const bool evolved = m_unitLevels[index] >= kMaxUnitLevel;
+    SetMessage(evolved ? base.name + L" 진화 완료." : base.name + L" Lv." + ToWideInt(m_unitLevels[index]) + L" 강화 완료.");
+    AddFloatText({640.0f, 702.0f}, evolved ? L"진화 " + base.name : base.name + L" Lv." + ToWideInt(m_unitLevels[index]), evolved ? D2D1::ColorF(0xF6FF83) : base.accent, 1.2f);
+    AddRing({640.0f, 402.0f}, evolved ? 210.0f : 150.0f, evolved ? 0.72f : 0.48f, evolved ? D2D1::ColorF(0xF6FF83) : base.accent, evolved ? 5.0f : 3.0f);
     SaveProgress();
 }
 
@@ -403,7 +432,7 @@ void PawlineGameImpl::SetLoadoutUnit(PlayerUnit unit)
 {
     if (!IsUnitUnlocked(unit))
     {
-        SetMessage(L"Locked unit. Open the shop to buy it.");
+        SetMessage(L"잠긴 유닛이야. 상점에서 먼저 구매해줘.");
         return;
     }
 
@@ -447,6 +476,40 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         else if (key == 'Q')
         {
             PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
+        }
+        return;
+    }
+
+    if (key == VK_F2)
+    {
+        m_debugMode = !m_debugMode;
+        SetMessage(m_debugMode ? L"테스트 모드 켜짐." : L"테스트 모드 꺼짐.");
+        return;
+    }
+
+    if (m_debugMode && key == VK_F6)
+    {
+        TriggerDebugUnlockAll();
+        return;
+    }
+
+    if (m_screen == GameScreen::Codex)
+    {
+        if (key == VK_ESCAPE || key == VK_BACK || key == 'M')
+        {
+            ResetToMenu();
+        }
+        else if (key == VK_LEFT)
+        {
+            m_codexTab = (m_codexTab + 2) % 3;
+        }
+        else if (key == VK_RIGHT || key == VK_TAB)
+        {
+            m_codexTab = (m_codexTab + 1) % 3;
+        }
+        else if (key >= '1' && key <= '3')
+        {
+            m_codexTab = static_cast<int>(key - '1');
         }
         return;
     }
@@ -555,28 +618,37 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
     {
         if (key >= '1' && key <= '9')
         {
-            m_selectedStage = static_cast<int>(key - '1');
+            SelectStage(static_cast<int>(key - '1'));
         }
         else if (key == '0')
         {
-            m_selectedStage = 9;
+            SelectStage(9);
         }
         else if (key == VK_LEFT)
         {
-            m_selectedStage = std::max(0, m_selectedStage - 1);
+            SelectStage(m_selectedStage - 1);
         }
         else if (key == VK_RIGHT)
         {
-            m_selectedStage = std::min(kStageCount - 1, m_selectedStage + 1);
+            SelectStage(m_selectedStage + 1);
         }
         else if (key == VK_RETURN || key == VK_SPACE)
         {
+            if (!IsStageUnlocked(m_selectedStage))
+            {
+                SetMessage(L"잠긴 스테이지야. 이전 행성을 먼저 클리어해줘.");
+                return;
+            }
             m_screen = GameScreen::Briefing;
             SetMessage(L"Check your deck before launch.");
         }
         else if (key == 'S' || key == 'B')
         {
             m_screen = GameScreen::Shop;
+        }
+        else if (key == 'C')
+        {
+            m_screen = GameScreen::Codex;
         }
         return;
     }
@@ -599,11 +671,35 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         return;
     }
 
+    if (m_debugMode && key == VK_F3)
+    {
+        m_energy = MaxEnergy();
+        m_lumen += 500;
+        m_cannonCharge = 100.0f;
+        SetMessage(L"테스트 자원 충전.");
+        return;
+    }
+
+    if (m_debugMode && key == VK_F4 && m_screen == GameScreen::Playing)
+    {
+        SpawnEnemy(StageBossType(), true);
+        SetMessage(L"테스트 보스 소환.");
+        return;
+    }
+
+    if (m_debugMode && key == VK_F5)
+    {
+        TriggerDebugClear();
+        return;
+    }
+
     if (key == VK_F1 && m_screen == GameScreen::Playing)
     {
         m_showcaseMode = !m_showcaseMode;
         m_showcaseTimer = 0.0f;
-        SetMessage(m_showcaseMode ? L"Showcase camera on." : L"Showcase camera off.");
+        m_demoSpawnTimer = 0.35f;
+        m_demoWalletTimer = 1.4f;
+        SetMessage(m_showcaseMode ? L"데모 모드 켜짐." : L"데모 모드 꺼짐.");
         return;
     }
 

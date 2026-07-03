@@ -166,25 +166,25 @@ std::wstring PawlineGameImpl::StageEnemySummary() const
     switch (m_selectedStage)
     {
     case 0:
-        return L"Dustling / Needle / Tin";
+        return L"먼지 / 침돌이 / 양철";
     case 1:
-        return L"Sulfur / Mirror / Needle";
+        return L"황산 / 반사 / 침돌이";
     case 2:
-        return L"Moss / Spore / Tin";
+        return L"이끼 / 포자 / 양철";
     case 3:
-        return L"Rust / Dust / Tin";
+        return L"녹슨 / 먼지 / 양철";
     case 4:
-        return L"Storm / Quake / Sulfur";
+        return L"폭풍 / 지진 / 황산";
     case 5:
-        return L"Ring / Needle / Storm";
+        return L"고리 / 침돌이 / 폭풍";
     case 6:
-        return L"Cryo / Ring / Tide";
+        return L"빙결 / 고리 / 파도";
     case 7:
-        return L"Tide / Cryo / Void";
+        return L"파도 / 빙결 / 공허";
     case 8:
-        return L"Void / Quake / Rust";
+        return L"공허 / 지진 / 녹슨";
     default:
-        return L"Flare / Comet / Solar";
+        return L"플레어 / 혜성 / 태양";
     }
 }
 
@@ -243,6 +243,7 @@ void PawlineGameImpl::UpdateBossPatterns(float dt)
     if (!boss)
     {
         m_bossPatternTimer = std::max(4.5f, 8.0f - static_cast<float>(m_selectedStage) * 0.25f);
+        m_bossPhaseTwoTriggered = false;
         return;
     }
 
@@ -270,21 +271,75 @@ void PawlineGameImpl::UpdateBossPatterns(float dt)
 void PawlineGameImpl::TriggerBossPattern(Unit& boss)
 {
     const int pattern = static_cast<int>(std::fmod(m_stageTime * 10.0f + static_cast<float>(boss.id * 7), 3.0f));
+    const EnemyUnit bossType = static_cast<EnemyUnit>(boss.kind);
     const D2D1_COLOR_F bossColor = GetEnemyStats(static_cast<EnemyUnit>(boss.kind), ThreatLevel()).accent;
+    const float threat = ThreatLevel();
+    const Vec2 bossCenter = boss.pos;
+
+    // 보스는 공통 공격만 쓰지 않고, 자기 행성의 대표 기믹을 더 강한 패턴으로 변형해서 사용한다.
+    switch (bossType)
+    {
+    case EnemyUnit::Brute:
+        SetMessage(L"양철 보스: 압축 파동.");
+        AddTelegraph(TelegraphKind::BossPulseCircle, TelegraphShape::Circle, bossCenter, bossCenter, 190.0f, 0.0f, 1.08f, 58.0f + threat * 3.6f, D2D1::ColorF(0xCFA27B));
+        return;
+    case EnemyUnit::Sulfur:
+        SetMessage(L"황산 보스: 산성 장막.");
+        AddTelegraph(TelegraphKind::VenusFog, TelegraphShape::FullLane, {std::max(kPlayerBaseX + 90.0f, bossCenter.x - 620.0f), kLaneY}, {bossCenter.x + 120.0f, kLaneY}, 360.0f, 0.0f, 0.95f, 16.0f + threat * 1.3f, D2D1::ColorF(0xE0B16D));
+        return;
+    case EnemyUnit::Moss:
+        SetMessage(L"이끼 보스: 포자 증식.");
+        AddTelegraph(TelegraphKind::BossReinforce, TelegraphShape::Circle, {std::max(kPlayerBaseX + 360.0f, bossCenter.x - 260.0f), RandomLaneY()}, bossCenter, 112.0f, 0.0f, 0.90f, 0.0f, D2D1::ColorF(0xB8FF89));
+        return;
+    case EnemyUnit::Rust:
+        SetMessage(L"녹슨 보스: 붉은 낙하.");
+        AddTelegraph(TelegraphKind::MarsMeteor, TelegraphShape::Circle, {std::max(kPlayerBaseX + 240.0f, bossCenter.x - 360.0f), RandomLaneY()}, bossCenter, 138.0f, 0.0f, 0.86f, 62.0f + threat * 3.8f, D2D1::ColorF(0xFF8B60));
+        AddTelegraph(TelegraphKind::MarsMeteor, TelegraphShape::Circle, {std::max(kPlayerBaseX + 380.0f, bossCenter.x - 180.0f), RandomLaneY()}, bossCenter, 112.0f, 0.0f, 1.06f, 48.0f + threat * 3.0f, D2D1::ColorF(0xFFB08B));
+        return;
+    case EnemyUnit::Storm:
+        SetMessage(L"폭풍 보스: 중력 소용돌이.");
+        AddTelegraph(TelegraphKind::JupiterGravity, TelegraphShape::Circle, {std::max(kPlayerBaseX + 430.0f, bossCenter.x - 260.0f), kLaneY}, bossCenter, 330.0f, 0.0f, 1.12f, 18.0f + threat * 1.8f, D2D1::ColorF(0xD8A66A));
+        return;
+    case EnemyUnit::Ring:
+        SetMessage(L"고리 보스: 고리 창 소환.");
+        AddTelegraph(TelegraphKind::SaturnReinforce, TelegraphShape::Circle, {std::max(kPlayerBaseX + 390.0f, bossCenter.x - 300.0f), RandomLaneY()}, bossCenter, 120.0f, 0.0f, 0.88f, 0.0f, D2D1::ColorF(0xE6D392));
+        AddTelegraph(TelegraphKind::BossFlareLine, TelegraphShape::Line, bossCenter, {std::max(kPlayerBaseX + 80.0f, bossCenter.x - 560.0f), bossCenter.y - 54.0f}, 0.0f, 62.0f, 1.05f, 46.0f + threat * 2.5f, D2D1::ColorF(0xE6D392));
+        return;
+    case EnemyUnit::Frost:
+        SetMessage(L"빙결 보스: 얼음 가름.");
+        AddTelegraph(TelegraphKind::UranusIce, TelegraphShape::Line, {bossCenter.x, bossCenter.y - 96.0f}, {std::max(kPlayerBaseX + 70.0f, bossCenter.x - 680.0f), bossCenter.y + 86.0f}, 0.0f, 104.0f, 0.88f, 34.0f + threat * 2.5f, D2D1::ColorF(0xD9FFF8));
+        return;
+    case EnemyUnit::Tide:
+        SetMessage(L"파도 보스: 심해 밀물.");
+        AddTelegraph(TelegraphKind::NeptuneTide, TelegraphShape::FullLane, {std::max(kPlayerBaseX + 90.0f, bossCenter.x - 620.0f), kLaneY + 28.0f}, {bossCenter.x + 120.0f, kLaneY + 28.0f}, 380.0f, 0.0f, 0.90f, 34.0f + threat * 2.4f, D2D1::ColorF(0x75A7FF));
+        return;
+    case EnemyUnit::Quake:
+        SetMessage(L"지진 보스: 공허 균열.");
+        AddTelegraph(TelegraphKind::PlutoVoid, TelegraphShape::Circle, {std::max(kPlayerBaseX + 420.0f, bossCenter.x - 260.0f), kLaneY}, bossCenter, 250.0f, 0.0f, 1.02f, 54.0f + threat * 3.2f, D2D1::ColorF(0xC8B7FF));
+        return;
+    case EnemyUnit::Boss:
+        SetMessage(L"태양 관문: 삼중 플레어.");
+        AddTelegraph(TelegraphKind::SolarFlare, TelegraphShape::Line, bossCenter, {std::max(kPlayerBaseX + 80.0f, bossCenter.x - 760.0f), bossCenter.y - 92.0f}, 0.0f, 94.0f, 0.88f, 72.0f + threat * 4.0f, D2D1::ColorF(0xFFB347));
+        AddTelegraph(TelegraphKind::SolarFlare, TelegraphShape::Line, {bossCenter.x, bossCenter.y + 50.0f}, {std::max(kPlayerBaseX + 80.0f, bossCenter.x - 720.0f), bossCenter.y + 96.0f}, 0.0f, 84.0f, 1.06f, 58.0f + threat * 3.3f, D2D1::ColorF(0xFFF4B8));
+        return;
+    default:
+        break;
+    }
+
     if (pattern == 0)
     {
-        SetMessage(L"Boss flare line.");
+        SetMessage(L"보스 플레어 라인.");
         const Vec2 end = {std::max(kPlayerBaseX + 70.0f, boss.pos.x - 620.0f), boss.pos.y + std::sin(m_stageTime * 1.7f) * 72.0f};
         AddTelegraph(TelegraphKind::BossFlareLine, TelegraphShape::Line, boss.pos, end, 0.0f, 82.0f, 1.18f, 72.0f + ThreatLevel() * 4.0f, D2D1::ColorF(0xFFB347));
     }
     else if (pattern == 1)
     {
-        SetMessage(L"Boss core pulse.");
+        SetMessage(L"보스 코어 펄스.");
         AddTelegraph(TelegraphKind::BossPulseCircle, TelegraphShape::Circle, boss.pos, boss.pos, 210.0f, 0.0f, 1.05f, 48.0f + ThreatLevel() * 3.0f, D2D1::ColorF(bossColor.r, bossColor.g, bossColor.b, 0.92f));
     }
     else
     {
-        SetMessage(L"Boss calls reinforcements.");
+        SetMessage(L"보스 지원군 호출.");
         const Vec2 gate = {std::max(kPlayerBaseX + 420.0f, boss.pos.x - 240.0f), RandomLaneY()};
         AddTelegraph(TelegraphKind::BossReinforce, TelegraphShape::Circle, gate, gate, 86.0f, 0.0f, 1.00f, 0.0f, D2D1::ColorF(0xFF9BA8));
     }
@@ -785,7 +840,7 @@ std::wstring PawlineGameImpl::GrowthRecommendation() const
         const PlayerUnit unit = static_cast<PlayerUnit>(i);
         if (!IsUnitUnlocked(unit) && m_lumen >= UnitUnlockCost(unit))
         {
-            return L"BUY " + GetPlayerStats(unit).name + L" READY";
+            return GetPlayerStats(unit).name + L" 구매 가능";
         }
     }
     for (int i = 0; i < kRosterCount; ++i)
@@ -793,10 +848,10 @@ std::wstring PawlineGameImpl::GrowthRecommendation() const
         const PlayerUnit unit = static_cast<PlayerUnit>(i);
         if (IsUnitUnlocked(unit) && UnitLevel(unit) < kMaxUnitLevel && m_lumen >= UnitUpgradeCost(unit))
         {
-            return L"UPGRADE " + GetPlayerStats(unit).name + L" READY";
+            return UnitLevel(unit) == kMaxUnitLevel - 1 ? GetPlayerStats(unit).name + L" 진화 가능" : GetPlayerStats(unit).name + L" 강화 가능";
         }
     }
-    return L"SAVE LUMEN FOR NEXT UNIT";
+    return L"다음 유닛을 위해 LUMEN을 모아줘";
 }
 
 void PawlineGameImpl::UpdateWalletPulse(float dt)
@@ -1058,21 +1113,43 @@ void PawlineGameImpl::BeginAttack(Unit& attacker, Vec2 targetPos)
     {
         switch (static_cast<PlayerUnit>(attacker.kind))
         {
+        case PlayerUnit::Paw:
+            duration = 0.32f;
+            break;
+        case PlayerUnit::Box:
+            duration = 0.52f;
+            break;
+        case PlayerUnit::Spark:
+            duration = 0.62f;
+            break;
         case PlayerUnit::Titan:
         case PlayerUnit::Solar:
+            duration = 0.72f;
+            break;
         case PlayerUnit::Drill:
-            duration = 0.46f;
+            duration = 0.58f;
             break;
         case PlayerUnit::Dash:
         case PlayerUnit::Comet:
-            duration = 0.30f;
+            duration = 0.24f;
+            break;
+        case PlayerUnit::Bell:
+        case PlayerUnit::Mint:
+            duration = 0.48f;
+            break;
+        case PlayerUnit::Orbit:
+            duration = 0.66f;
             break;
         case PlayerUnit::Prism:
         case PlayerUnit::Nebula:
-            duration = 0.50f;
+            duration = 0.76f;
             break;
         default:
             break;
+        }
+        if (IsUnitEvolved(static_cast<PlayerUnit>(attacker.kind)))
+        {
+            duration *= 0.92f;
         }
     }
     else
@@ -1080,20 +1157,43 @@ void PawlineGameImpl::BeginAttack(Unit& attacker, Vec2 targetPos)
         switch (static_cast<EnemyUnit>(attacker.kind))
         {
         case EnemyUnit::Boss:
+            duration = 0.78f;
+            break;
         case EnemyUnit::Quake:
+            duration = 0.70f;
+            break;
         case EnemyUnit::Storm:
-            duration = 0.50f;
+            duration = 0.66f;
+            break;
+        case EnemyUnit::Brute:
+            duration = 0.58f;
+            break;
+        case EnemyUnit::Sulfur:
+        case EnemyUnit::Spore:
+        case EnemyUnit::Ring:
+        case EnemyUnit::Tide:
+        case EnemyUnit::Void:
+            duration = 0.54f;
             break;
         case EnemyUnit::Comet:
         case EnemyUnit::Flare:
         case EnemyUnit::Skitter:
+            duration = 0.24f;
+            break;
+        case EnemyUnit::Frost:
             duration = 0.30f;
+            break;
+        case EnemyUnit::Rust:
+        case EnemyUnit::Mirror:
+            duration = 0.42f;
             break;
         default:
             break;
         }
     }
 
+    // 공격 딜레이보다 애니메이션이 길어지지 않게 막아, 빠른 유닛은 빠른 리듬을 유지한다.
+    duration = std::max(0.18f, std::min(duration, attacker.attackDelay * 0.86f));
     attacker.attackAnimMax = duration;
     attacker.attackAnim = attacker.attackAnimMax;
     SetUnitAnimState(attacker, UnitAnimState::Windup);
@@ -1594,7 +1694,7 @@ void PawlineGameImpl::TrySpawnPlayer(int index)
     PlayerUnit type = m_loadout[index];
     if (!IsUnitUnlocked(type))
     {
-        SetMessage(L"That unit is locked. Visit the shop.");
+        SetMessage(L"잠긴 유닛이야. 상점에서 먼저 구매해줘.");
         return;
     }
 
@@ -1602,19 +1702,19 @@ void PawlineGameImpl::TrySpawnPlayer(int index)
     const int cost = UnitEnergyCost(type);
     if (m_cardCooldowns[index] > 0.0f)
     {
-        SetMessage(stats.name + L" is recharging.");
+        SetMessage(stats.name + L" 재소환 대기 중.");
         return;
     }
     if (m_energy < static_cast<float>(cost))
     {
-        SetMessage(L"Not enough energy for " + stats.name + L".");
+        SetMessage(stats.name + L" 소환 에너지가 부족해.");
         return;
     }
 
     m_energy -= static_cast<float>(cost);
     m_cardCooldowns[index] = UnitCooldown(type);
     SpawnPlayer(type);
-    SetMessage(stats.name + L" deployed.");
+    SetMessage(stats.name + L" 출격.");
 }
 
 void PawlineGameImpl::TryUpgradeWallet()

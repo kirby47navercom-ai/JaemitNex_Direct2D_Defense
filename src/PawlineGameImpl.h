@@ -151,6 +151,7 @@ enum class GameScreen
     Title,
     Options,
     Menu,
+    Codex,
     Shop,
     Briefing,
     Playing,
@@ -187,7 +188,7 @@ enum class Difficulty
     Hard
 };
 
-// 행성 기믹과 보스 패턴이 바로 터지지 않고, 먼저 위험 범위를 보여주기 위한 종류 값.
+// 행성 기믹과 보스 패턴을 바로 터뜨리지 않고, 먼저 위험 범위를 보여주기 위한 종류 값이다.
 enum class TelegraphKind
 {
     MercuryHeat,
@@ -328,7 +329,7 @@ struct UiPulse
     D2D1_COLOR_F color = D2D1::ColorF(0xFFFFFF);
 };
 
-// 위험 예고 하나의 상태. life가 0이 되면 실제 피해/회복/지원군 효과가 실행된다.
+// 위험 예고 하나의 상태. life가 0이 되면 실제 피해, 회복, 지원군 효과가 실행된다.
 struct Telegraph
 {
     TelegraphKind kind = TelegraphKind::MarsMeteor;
@@ -377,7 +378,11 @@ private:
 
     int UnitLevel(PlayerUnit unit) const;
 
+    bool IsUnitEvolved(PlayerUnit unit) const;
+
     UnitStats PlayerStats(PlayerUnit unit) const;
+
+    std::wstring UnitDisplayName(PlayerUnit unit) const;
 
     int UnitUnlockCost(PlayerUnit unit) const;
 
@@ -390,6 +395,12 @@ private:
     float DifficultyRewardMultiplier() const;
 
     std::wstring DifficultyLabel() const;
+
+    bool IsStageUnlocked(int index) const;
+
+    int HighestUnlockedStage() const;
+
+    void SelectStage(int index);
 
     void GrantStageReward();
 
@@ -406,6 +417,12 @@ private:
     void ResetGame();
 
     void Update(float dt);
+
+    void UpdateDemoMode(float dt);
+
+    void TriggerDebugClear();
+
+    void TriggerDebugUnlockAll();
 
     void UpdateCamera(float dt);
 
@@ -627,6 +644,12 @@ private:
 
     D2D1_RECT_F MenuShopButtonRect() const;
 
+    D2D1_RECT_F MenuCodexButtonRect() const;
+
+    D2D1_RECT_F CodexBackButtonRect() const;
+
+    D2D1_RECT_F CodexTabRect(int index) const;
+
     D2D1_RECT_F BriefingStartButtonRect() const;
 
     D2D1_RECT_F BriefingBackButtonRect() const;
@@ -712,6 +735,8 @@ private:
     void DrawOptions();
 
     void DrawMenu();
+
+    void DrawCodex();
 
     void DrawBriefing();
 
@@ -805,6 +830,8 @@ private:
 
     void DrawShowcaseBadge();
 
+    void DrawDebugBadge();
+
     void DrawHeader();
 
     void DrawBattleLogo();
@@ -878,6 +905,7 @@ private:
     int m_selectedStage = 0;
     int m_selectedLoadoutSlot = 0;
     int m_shopSelectedUnit = 0;
+    int m_codexTab = 0;
     int m_nextUnitId = 1;
     int m_walletLevel = 1;
     int m_score = 0;
@@ -917,6 +945,8 @@ private:
     float m_enemyBaseShake = 0.0f;
     float m_resultTime = 0.0f;
     float m_showcaseTimer = 0.0f;
+    float m_demoSpawnTimer = 0.0f;
+    float m_demoWalletTimer = 0.0f;
     Difficulty m_difficulty = Difficulty::Normal;
     bool m_paused = false;
     bool m_gameOver = false;
@@ -926,6 +956,7 @@ private:
     bool m_pauseBeforeEscape = false;
     bool m_bossPhaseTwoTriggered = false;
     bool m_showcaseMode = false;
+    bool m_debugMode = false;
     std::wstring m_message;
     float m_messageTimer = 0.0f;
 };
