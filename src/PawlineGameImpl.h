@@ -176,6 +176,14 @@ enum class ParticleKind
     Bubble
 };
 
+enum class ImageVfxKind
+{
+    Slash,
+    EnemySlash,
+    Heal,
+    HealSoft
+};
+
 enum class Difficulty
 {
     Easy,
@@ -337,6 +345,20 @@ struct SparkLine
     float life = 0.22f;
     float maxLife = 0.22f;
     float width = 1.8f;
+    D2D1_COLOR_F color = D2D1::ColorF(0xFFFFFF);
+};
+
+// 외부 PNG 이펙트 시트를 짧게 재생하는 객체.
+// 선으로 긋는 임시 연출보다 완성된 빛 이미지가 전투 순간을 맡도록 한다.
+struct ImageVfx
+{
+    ImageVfxKind kind = ImageVfxKind::Slash;
+    Vec2 pos;
+    float size = 80.0f;
+    float life = 0.25f;
+    float maxLife = 0.25f;
+    float dir = 1.0f;
+    float frameOffset = 0.0f;
     D2D1_COLOR_F color = D2D1::ColorF(0xFFFFFF);
 };
 
@@ -674,6 +696,8 @@ private:
 
     void AddSparkLines(Vec2 pos, D2D1_COLOR_F color, int count);
 
+    void AddImageVfx(ImageVfxKind kind, Vec2 pos, float size, float life, D2D1_COLOR_F color, float dir = 1.0f);
+
     void AddBurst(Vec2 pos, D2D1_COLOR_F color, int count);
 
     void AddDustPuff(Vec2 pos, D2D1_COLOR_F color, int count);
@@ -926,6 +950,10 @@ private:
 
     void DrawUnitActionLines(const Unit& unit, Vec2 pos, D2D1_COLOR_F accent);
 
+    void DrawImageVfxFrame(ImageVfxKind kind, int frame, Vec2 center, float size, float opacity);
+
+    void DrawImageVfxSprites();
+
     void DrawUnitIdentityMark(const Unit& unit, Vec2 pos, D2D1_COLOR_F accent);
 
     void DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitStats& stats, float windup, float strike, float recoil);
@@ -1032,6 +1060,10 @@ private:
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_centerFormat;
     std::array<Microsoft::WRL::ComPtr<ID2D1Bitmap>, kStageCount> m_backgroundBitmaps;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_vfxAtlas;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_slashEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_enemySlashEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_healEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_healSoftEffectSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_uiAtlas;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_bossCutin;
     bool m_comInitialized = false;
@@ -1050,6 +1082,7 @@ private:
     std::vector<RingEffect> m_rings;
     std::vector<BeamEffect> m_beams;
     std::vector<SparkLine> m_sparkLines;
+    std::vector<ImageVfx> m_imageVfx;
     std::vector<FloatText> m_floatTexts;
     std::vector<UiPulse> m_uiPulses;
     std::vector<Telegraph> m_telegraphs;

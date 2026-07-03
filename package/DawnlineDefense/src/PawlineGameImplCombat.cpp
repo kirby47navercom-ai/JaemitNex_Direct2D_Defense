@@ -1102,11 +1102,15 @@ void PawlineGameImpl::TriggerWalletPulse(bool upgradeBurst)
         unit.hp = std::min(unit.maxHp, unit.hp + heal);
         unit.hitFlash = std::max(unit.hitFlash, 0.16f);
         AddRing(unit.pos, 32.0f + static_cast<float>(m_walletLevel) * 5.0f, 0.24f, D2D1::ColorF(0xB8FF89, 0.34f), 1.7f);
-        AddSparkLines(unit.pos, D2D1::ColorF(0xB8FF89, 0.72f), upgradeBurst ? 4 : 2);
+        AddImageVfx(upgradeBurst ? ImageVfxKind::Heal : ImageVfxKind::HealSoft, unit.pos + Vec2{0.0f, -8.0f},
+                    72.0f + static_cast<float>(m_walletLevel) * 5.0f, 0.42f, D2D1::ColorF(0xB8FF89, 0.86f), 1.0f);
+        AddParticleEx(unit.pos + Vec2{0.0f, -16.0f}, {0.0f, -28.0f}, 5.5f, 0.34f, D2D1::ColorF(0xB8FF89, 0.56f), ParticleKind::Glow, -4.0f, 0.92f, 14.0f);
     }
 
     AddFloatText({kPlayerBaseX + 92.0f, kLaneY - 116.0f}, L"+" + ToWideInt(static_cast<int>(std::round(energyGain))) + L" ENERGY", D2D1::ColorF(0xB8FF89), 0.95f);
     AddRing({kPlayerBaseX + 58.0f, kLaneY}, 92.0f + static_cast<float>(m_walletLevel) * 16.0f, 0.48f, D2D1::ColorF(0xB8FF89, upgradeBurst ? 0.56f : 0.36f), 3.0f);
+    AddImageVfx(upgradeBurst ? ImageVfxKind::Heal : ImageVfxKind::HealSoft, {kPlayerBaseX + 58.0f, kLaneY - 18.0f},
+                upgradeBurst ? 128.0f : 104.0f, 0.48f, D2D1::ColorF(0xB8FF89, 0.90f), 1.0f);
     AddBurst({kPlayerBaseX + 58.0f, kLaneY - 18.0f}, D2D1::ColorF(0xB8FF89), upgradeBurst ? 24 : 12);
 }
 
@@ -1138,6 +1142,7 @@ void PawlineGameImpl::SpawnPlayer(PlayerUnit type)
     if (m_walletLevel > 1)
     {
         AddRing(unit.pos, 52.0f + static_cast<float>(m_walletLevel) * 5.0f, 0.34f, D2D1::ColorF(0xB8FF89, 0.28f), 2.0f);
+        AddImageVfx(ImageVfxKind::HealSoft, unit.pos + Vec2{0.0f, -10.0f}, 72.0f, 0.36f, D2D1::ColorF(0xB8FF89, 0.76f), 1.0f);
         AddFloatText(unit.pos + Vec2{0.0f, -unit.radius - 34.0f}, L"Wallet +" + ToWideInt(static_cast<int>(std::round((walletBoost - 1.0f) * 100.0f))) + L"%", D2D1::ColorF(0xB8FF89), 0.82f);
     }
 }
@@ -1896,6 +1901,10 @@ void PawlineGameImpl::AddProjectileImpact(const Projectile& projectile)
 {
     const Vec2 pos = projectile.pos;
     AddBeam(projectile.lastPos, pos, projectile.radius * 1.6f, 0.13f, FadeColor(projectile.color, 0.88f));
+    const bool healingVisual = projectile.visual == ProjectileVisual::MintPulse;
+    AddImageVfx(healingVisual ? ImageVfxKind::Heal : (projectile.team == Team::Player ? ImageVfxKind::Slash : ImageVfxKind::EnemySlash),
+                pos, healingVisual ? 92.0f : (66.0f + projectile.radius * 3.0f),
+                healingVisual ? 0.38f : 0.22f, projectile.color, projectile.team == Team::Player ? 1.0f : -1.0f);
 
     switch (projectile.visual)
     {
@@ -1964,8 +1973,9 @@ void PawlineGameImpl::AddMeleeClashVfx(const Unit& attacker, Vec2 targetPos, D2D
     const float heavy = attacker.radius >= 23.0f ? 1.0f : 0.0f;
 
     AddRing(clash, 42.0f + attacker.radius * 1.2f + heavy * 22.0f, 0.24f + heavy * 0.08f, FadeColor(color, 0.46f), 2.4f + heavy * 1.4f);
-    AddBeam(clash - normal * (18.0f + attacker.radius * 0.45f), clash + normal * (18.0f + attacker.radius * 0.45f), 3.0f + heavy * 2.0f, 0.11f, FadeColor(color, 0.68f));
-    AddSparkLines(clash, FadeColor(color, 0.92f), attacker.radius >= 23.0f ? 14 : 8);
+    AddImageVfx(attacker.team == Team::Player ? ImageVfxKind::Slash : ImageVfxKind::EnemySlash,
+                clash, 82.0f + attacker.radius * 0.9f + heavy * 22.0f, 0.22f + heavy * 0.05f, FadeColor(color, 0.90f), attacker.attackDir);
+    AddParticleEx(clash, normal * 22.0f + Vec2{0.0f, -18.0f}, 6.0f + heavy * 2.0f, 0.26f, FadeColor(color, 0.70f), ParticleKind::Glow, -2.0f, 0.90f, 18.0f + heavy * 8.0f);
     AddDustPuff({clash.x, clash.y + 18.0f}, D2D1::ColorF(color.r, color.g, color.b, 0.24f), attacker.radius >= 23.0f ? 8 : 4);
     AddParticleEx(clash, dir * 28.0f + Vec2{0.0f, -22.0f}, 5.0f + heavy * 2.0f, 0.24f, FadeColor(color, 0.82f), ParticleKind::Glow, 0.0f, 0.88f, 16.0f + heavy * 8.0f);
 
@@ -2246,6 +2256,13 @@ void PawlineGameImpl::UpdateParticles(float dt)
         line.end = line.end + drift;
     }
 
+    for (ImageVfx& effect : m_imageVfx)
+    {
+        effect.life -= dt;
+        effect.pos.y -= dt * 5.0f;
+        effect.size += dt * 18.0f;
+    }
+
     for (FloatText& text : m_floatTexts)
     {
         text.life -= dt;
@@ -2297,6 +2314,12 @@ void PawlineGameImpl::CleanupEntities()
             return line.life <= 0.0f;
         }),
         m_sparkLines.end());
+
+    m_imageVfx.erase(
+        std::remove_if(m_imageVfx.begin(), m_imageVfx.end(), [](const ImageVfx& effect) {
+            return effect.life <= 0.0f;
+        }),
+        m_imageVfx.end());
 
         m_floatTexts.erase(
             std::remove_if(m_floatTexts.begin(), m_floatTexts.end(), [](const FloatText& text) {
@@ -2460,9 +2483,9 @@ void PawlineGameImpl::AddBeam(Vec2 start, Vec2 end, float width, float life, D2D
 void PawlineGameImpl::AddSparkLines(Vec2 pos, D2D1_COLOR_F color, int count)
 {
     std::uniform_real_distribution<float> angleDist(0.0f, kPi * 2.0f);
-    std::uniform_real_distribution<float> lengthDist(22.0f, 68.0f);
-    std::uniform_real_distribution<float> widthDist(1.0f, 3.0f);
-    std::uniform_real_distribution<float> lifeDist(0.12f, 0.28f);
+    std::uniform_real_distribution<float> lengthDist(10.0f, 34.0f);
+    std::uniform_real_distribution<float> widthDist(0.8f, 1.7f);
+    std::uniform_real_distribution<float> lifeDist(0.10f, 0.20f);
     for (int i = 0; i < count; ++i)
     {
         const float angle = angleDist(m_rng);
@@ -2476,6 +2499,25 @@ void PawlineGameImpl::AddSparkLines(Vec2 pos, D2D1_COLOR_F color, int count)
         line.maxLife = line.life;
         line.color = color;
         m_sparkLines.push_back(line);
+    }
+}
+
+void PawlineGameImpl::AddImageVfx(ImageVfxKind kind, Vec2 pos, float size, float life, D2D1_COLOR_F color, float dir)
+{
+    ImageVfx effect;
+    effect.kind = kind;
+    effect.pos = pos;
+    effect.size = size;
+    effect.life = life;
+    effect.maxLife = life;
+    effect.color = color;
+    effect.dir = dir >= 0.0f ? 1.0f : -1.0f;
+    effect.frameOffset = Hash01(pos.x, pos.y, m_stageTime) * 0.08f;
+    m_imageVfx.push_back(effect);
+
+    if (m_imageVfx.size() > 180)
+    {
+        m_imageVfx.erase(m_imageVfx.begin(), m_imageVfx.begin() + static_cast<std::ptrdiff_t>(m_imageVfx.size() - 180));
     }
 }
 
@@ -2529,8 +2571,8 @@ void PawlineGameImpl::AddDeathBurst(const Unit& unit)
 
 void PawlineGameImpl::AddHitEffects(Vec2 pos, D2D1_COLOR_F color)
 {
-    AddBurst(pos, color, 14);
-    AddSparkLines(pos, FadeColor(color, 0.9f), 8);
+    AddBurst(pos, color, 8);
+    AddImageVfx(ImageVfxKind::Slash, pos, 72.0f, 0.20f, FadeColor(color, 0.86f), 1.0f);
     AddRing(pos, 54.0f, 0.28f, D2D1::ColorF(color.r, color.g, color.b, 0.48f), 2.6f);
     AddDustPuff({pos.x, pos.y + 12.0f}, D2D1::ColorF(color.r, color.g, color.b, 0.28f), 4);
 }

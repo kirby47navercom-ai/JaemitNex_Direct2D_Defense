@@ -401,6 +401,10 @@ void PawlineGameImpl::LoadBitmapAssets()
     }
 
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\combat_vfx_atlas.png"), m_vfxAtlas.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\slash_effect_sheet.png"), m_slashEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\slash_gameboy_effect_sheet.png"), m_enemySlashEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\heal_effect_sheet.png"), m_healEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\heal_gameboy_effect_sheet.png"), m_healSoftEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\ui\\pawline_ui_atlas.png"), m_uiAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\cutins\\solar_gatekeeper_cutin.png"), m_bossCutin.ReleaseAndGetAddressOf());
 
@@ -417,6 +421,10 @@ void PawlineGameImpl::LoadBitmapAssets()
 void PawlineGameImpl::DiscardBitmapAssets()
 {
     m_vfxAtlas.Reset();
+    m_slashEffectSheet.Reset();
+    m_enemySlashEffectSheet.Reset();
+    m_healEffectSheet.Reset();
+    m_healSoftEffectSheet.Reset();
     m_uiAtlas.Reset();
     m_bossCutin.Reset();
     for (auto& bitmap : m_backgroundBitmaps)
@@ -839,6 +847,7 @@ void PawlineGameImpl::ResetToTitle()
     m_rings.clear();
     m_beams.clear();
     m_sparkLines.clear();
+    m_imageVfx.clear();
     m_floatTexts.clear();
     m_uiPulses.clear();
     m_telegraphs.clear();
@@ -867,6 +876,7 @@ void PawlineGameImpl::ResetToMenu()
     m_rings.clear();
     m_beams.clear();
     m_sparkLines.clear();
+    m_imageVfx.clear();
     m_floatTexts.clear();
     m_uiPulses.clear();
     m_telegraphs.clear();
@@ -896,6 +906,7 @@ void PawlineGameImpl::ResetGame()
     m_rings.clear();
     m_beams.clear();
     m_sparkLines.clear();
+    m_imageVfx.clear();
     m_floatTexts.clear();
     m_uiPulses.clear();
     m_telegraphs.clear();

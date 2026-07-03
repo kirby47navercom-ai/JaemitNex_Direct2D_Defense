@@ -257,6 +257,7 @@ void PawlineGameImpl::Render()
     DrawProjectiles();
     DrawBeams();
     DrawRings();
+    DrawImageVfxSprites();
     DrawSparkLines();
     DrawParticles();
     DrawFloatTexts();
@@ -505,6 +506,71 @@ void PawlineGameImpl::DrawVfxAtlasTile(int tileX, int tileY, Vec2 center, float 
     const D2D1_RECT_F destination = D2D1::RectF(center.x - size * 0.5f, center.y - size * 0.5f,
                                                 center.x + size * 0.5f, center.y + size * 0.5f);
     DrawBitmap(m_vfxAtlas.Get(), destination, opacity, &source);
+}
+
+void PawlineGameImpl::DrawImageVfxFrame(ImageVfxKind kind, int frame, Vec2 center, float size, float opacity)
+{
+    ID2D1Bitmap* sheet = nullptr;
+    int columns = 1;
+    int rows = 8;
+    float frameWidth = 64.0f;
+    float frameHeight = 64.0f;
+
+    switch (kind)
+    {
+    case ImageVfxKind::Slash:
+        sheet = m_slashEffectSheet.Get();
+        break;
+    case ImageVfxKind::EnemySlash:
+        sheet = m_enemySlashEffectSheet ? m_enemySlashEffectSheet.Get() : m_slashEffectSheet.Get();
+        break;
+    case ImageVfxKind::Heal:
+        sheet = m_healEffectSheet.Get();
+        columns = 4;
+        rows = 4;
+        frameWidth = 128.0f;
+        frameHeight = 128.0f;
+        break;
+    case ImageVfxKind::HealSoft:
+        sheet = m_healSoftEffectSheet ? m_healSoftEffectSheet.Get() : m_healEffectSheet.Get();
+        columns = 4;
+        rows = 4;
+        frameWidth = 128.0f;
+        frameHeight = 128.0f;
+        break;
+    }
+
+    if (!sheet)
+    {
+        return;
+    }
+
+    const int frameCount = columns * rows;
+    const int safeFrame = std::clamp(frame, 0, frameCount - 1);
+    const int x = safeFrame % columns;
+    const int y = safeFrame / columns;
+    const D2D1_RECT_F source = D2D1::RectF(static_cast<float>(x) * frameWidth, static_cast<float>(y) * frameHeight,
+                                           static_cast<float>(x + 1) * frameWidth, static_cast<float>(y + 1) * frameHeight);
+    const float aspect = frameWidth / frameHeight;
+    const D2D1_RECT_F destination = D2D1::RectF(center.x - size * aspect * 0.5f, center.y - size * 0.5f,
+                                                center.x + size * aspect * 0.5f, center.y + size * 0.5f);
+    DrawBitmap(sheet, destination, opacity, &source);
+}
+
+void PawlineGameImpl::DrawImageVfxSprites()
+{
+    for (const ImageVfx& effect : m_imageVfx)
+    {
+        const float alpha = Clamp01(effect.life / effect.maxLife);
+        const float progress = 1.0f - alpha;
+        const bool heal = effect.kind == ImageVfxKind::Heal || effect.kind == ImageVfxKind::HealSoft;
+        const int frameCount = heal ? 16 : 8;
+        const int frame = std::clamp(static_cast<int>((progress + effect.frameOffset) * static_cast<float>(frameCount)), 0, frameCount - 1);
+        const float pop = 1.0f + std::sin(progress * kPi) * (heal ? 0.10f : 0.18f);
+        FillEllipse(effect.pos, effect.size * (heal ? 0.44f : 0.50f) * pop, effect.size * (heal ? 0.32f : 0.28f) * pop,
+                    D2D1::ColorF(effect.color.r, effect.color.g, effect.color.b, effect.color.a * alpha * (heal ? 0.12f : 0.16f)));
+        DrawImageVfxFrame(effect.kind, frame, effect.pos, effect.size * pop, effect.color.a * alpha);
+    }
 }
 
 void PawlineGameImpl::DrawUiPanelAsset(D2D1_RECT_F rect, int tileIndex, float opacity)
@@ -1907,37 +1973,31 @@ void PawlineGameImpl::DrawUnitActionLines(const Unit& unit, Vec2 pos, D2D1_COLOR
     const float strike = AttackStrike(unit);
     const float recoil = AttackRecoil(unit);
     const float dir = unit.attackDir;
-    const D2D1_COLOR_F ink = D2D1::ColorF(0x061019, 0.72f);
 
     if (windup > 0.0f)
     {
-        const float alpha = windup * 0.42f;
-        StrokeEllipse({pos.x - dir * (unit.radius + 10.0f), pos.y + 2.0f}, unit.radius + 12.0f, unit.radius * 0.65f, D2D1::ColorF(accent.r, accent.g, accent.b, alpha), 2.2f);
-        DrawLine({pos.x - dir * 22.0f, pos.y - unit.radius - 18.0f}, {pos.x - dir * 44.0f, pos.y - unit.radius - 4.0f}, D2D1::ColorF(accent.r, accent.g, accent.b, alpha), 2.0f);
+        const float alpha = windup * 0.28f;
+        const Vec2 charge = {pos.x - dir * (unit.radius * 0.35f + 12.0f), pos.y - 2.0f};
+        FillEllipse(charge, unit.radius * 1.28f, unit.radius * 0.68f, D2D1::ColorF(accent.r, accent.g, accent.b, alpha * 0.44f));
+        StrokeEllipse(charge, unit.radius * (1.10f + windup * 0.22f), unit.radius * (0.55f + windup * 0.08f),
+                      D2D1::ColorF(accent.r, accent.g, accent.b, alpha), 1.8f);
     }
 
     if (strike > 0.0f)
     {
         const Vec2 front = {pos.x + dir * (unit.radius + 34.0f + strike * 28.0f), pos.y - 2.0f};
-        const float width = unit.ranged ? 2.4f : 3.4f;
-        for (int i = -1; i <= 1; ++i)
-        {
-            const float yy = static_cast<float>(i) * 15.0f;
-            Vec2 a = {front.x - dir * (18.0f + static_cast<float>(i + 1) * 4.0f), front.y + yy * 0.25f + 6.0f};
-            Vec2 b = {front.x + dir * (10.0f + static_cast<float>(i + 1) * 4.0f), front.y + yy * 0.45f};
-            DrawLine(a, b, ink, width + 2.8f);
-            DrawLine(a, b, D2D1::ColorF(accent.r, accent.g, accent.b, 0.58f * strike), width);
-        }
-        FillEllipse(front, 18.0f + strike * 14.0f, 9.0f + strike * 6.0f, D2D1::ColorF(accent.r, accent.g, accent.b, 0.12f * strike));
-        DrawVfxAtlasTile(unit.team == Team::Player ? 0 : 1, 1, front, 92.0f + strike * 44.0f, 0.24f * strike);
+        const ImageVfxKind kind = unit.team == Team::Player ? ImageVfxKind::Slash : ImageVfxKind::EnemySlash;
+        const int frame = std::clamp(static_cast<int>(AttackProgress(unit) * 8.0f), 0, 7);
+        FillEllipse(front, 32.0f + strike * 22.0f, 16.0f + strike * 11.0f, D2D1::ColorF(accent.r, accent.g, accent.b, 0.16f * strike));
+        DrawImageVfxFrame(kind, frame, front, 82.0f + strike * 52.0f, 0.60f * strike);
+        DrawVfxAtlasTile(unit.team == Team::Player ? 0 : 1, 1, front, 86.0f + strike * 36.0f, 0.16f * strike);
     }
 
     if (recoil > 0.0f)
     {
-        const float alpha = recoil * 0.22f;
-        DrawLine({pos.x + dir * (unit.radius + 8.0f), pos.y + unit.radius + 10.0f},
-                 {pos.x - dir * (unit.radius + 18.0f), pos.y + unit.radius + 15.0f},
-                 D2D1::ColorF(0xFFFFFF, alpha), 2.0f);
+        FillEllipse({pos.x - dir * (unit.radius + 12.0f), pos.y + unit.radius + 10.0f},
+                    unit.radius * (0.82f + recoil * 0.40f), 5.0f + recoil * 3.0f,
+                    D2D1::ColorF(0xFFFFFF, recoil * 0.055f));
     }
 }
 
@@ -1967,10 +2027,11 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
     case PlayerUnit::Paw:
         FillEllipse(front, 13.0f, 10.0f, ink);
         FillEllipse(front, 9.0f, 7.0f, white);
-        for (int i = -1; i <= 1; ++i)
+        FillEllipse({front.x + dir * (18.0f + strike * 12.0f), front.y}, 22.0f + strike * 18.0f, 12.0f + strike * 7.0f, D2D1::ColorF(0x65B8FF, 0.11f + strike * 0.12f));
+        if (strike > 0.0f)
         {
-            const float yy = static_cast<float>(i) * 7.0f;
-            drawStroke({front.x + dir * 7.0f, front.y + yy}, {front.x + dir * (22.0f + strike * 16.0f), front.y + yy - 2.0f}, D2D1::ColorF(0xEAF7FF), 2.0f);
+            DrawImageVfxFrame(ImageVfxKind::Slash, std::clamp(static_cast<int>(AttackProgress(unit) * 8.0f), 0, 7),
+                              {front.x + dir * 22.0f, front.y}, 66.0f + strike * 28.0f, 0.46f * strike);
         }
         break;
     case PlayerUnit::Box:
@@ -2974,8 +3035,10 @@ void PawlineGameImpl::DrawSparkLines()
     for (const SparkLine& line : m_sparkLines)
     {
         const float alpha = Clamp01(line.life / line.maxLife);
-        DrawLine(line.start, line.end, FadeColor(line.color, 0.16f * alpha), line.width * 3.3f);
-        DrawLine(line.start, line.end, FadeColor(line.color, 0.72f * alpha), line.width);
+        const Vec2 mid = (line.start + line.end) * 0.5f;
+        FillEllipse(mid, line.width * (3.8f + alpha * 2.0f), line.width * (2.0f + alpha), FadeColor(line.color, 0.18f * alpha));
+        FillEllipse(line.end, line.width * (2.0f + alpha * 2.2f), line.width * (1.4f + alpha * 1.2f), FadeColor(line.color, 0.42f * alpha));
+        DrawLine(line.start, line.end, FadeColor(line.color, 0.14f * alpha), std::max(1.0f, line.width * 1.4f));
     }
 }
 
