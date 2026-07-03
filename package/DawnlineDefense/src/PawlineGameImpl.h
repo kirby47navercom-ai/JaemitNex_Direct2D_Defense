@@ -180,6 +180,38 @@ enum class ParticleKind
     Bubble
 };
 
+enum class Difficulty
+{
+    Easy,
+    Normal,
+    Hard
+};
+
+// 행성 기믹과 보스 패턴이 바로 터지지 않고, 먼저 위험 범위를 보여주기 위한 종류 값.
+enum class TelegraphKind
+{
+    MercuryHeat,
+    VenusFog,
+    EarthBloom,
+    MarsMeteor,
+    JupiterGravity,
+    SaturnReinforce,
+    UranusIce,
+    NeptuneTide,
+    PlutoVoid,
+    SolarFlare,
+    BossFlareLine,
+    BossPulseCircle,
+    BossReinforce
+};
+
+enum class TelegraphShape
+{
+    Circle,
+    Line,
+    FullLane
+};
+
 
 // A live lane actor. Player and enemy units share one structure so combat code
 // can resolve target search, movement, attack timing, and hit feedback uniformly.
@@ -296,6 +328,21 @@ struct UiPulse
     D2D1_COLOR_F color = D2D1::ColorF(0xFFFFFF);
 };
 
+// 위험 예고 하나의 상태. life가 0이 되면 실제 피해/회복/지원군 효과가 실행된다.
+struct Telegraph
+{
+    TelegraphKind kind = TelegraphKind::MarsMeteor;
+    TelegraphShape shape = TelegraphShape::Circle;
+    Vec2 start;
+    Vec2 end;
+    float radius = 80.0f;
+    float width = 70.0f;
+    float life = 1.0f;
+    float maxLife = 1.0f;
+    float damage = 0.0f;
+    D2D1_COLOR_F color = D2D1::ColorF(0xFFFFFF);
+};
+
 
 class PawlineGameImpl
 {
@@ -338,6 +385,12 @@ private:
 
     int StageClearReward(bool firstClear) const;
 
+    float DifficultyThreatMultiplier() const;
+
+    float DifficultyRewardMultiplier() const;
+
+    std::wstring DifficultyLabel() const;
+
     void GrantStageReward();
 
     std::wstring ProgressPath() const;
@@ -372,6 +425,14 @@ private:
 
     float GimmickInterval() const;
 
+    Unit* FindBossUnit();
+
+    const Unit* FindBossUnit() const;
+
+    void UpdateBossPatterns(float dt);
+
+    void TriggerBossPattern(Unit& boss);
+
     float EffectiveUnitRange(const Unit& unit) const;
 
     float StageMoveSpeedModifier(const Unit& unit) const;
@@ -380,7 +441,15 @@ private:
 
     void TriggerStageGimmick();
 
+    void AddTelegraph(TelegraphKind kind, TelegraphShape shape, Vec2 start, Vec2 end, float radius, float width, float windup, float damage, D2D1_COLOR_F color);
+
+    void UpdateTelegraphs(float dt);
+
+    void ExecuteTelegraph(const Telegraph& telegraph);
+
     void ApplyAreaDamage(Vec2 center, float radius, float damage, D2D1_COLOR_F color);
+
+    void ApplyLineDamage(Vec2 start, Vec2 end, float width, float damage, D2D1_COLOR_F color);
 
     void SpawnStageReinforcement(EnemyUnit type, float forwardOffset, bool elite = false);
 
@@ -399,6 +468,20 @@ private:
     float UnitCooldown(PlayerUnit unit) const;
 
     float WalletPulseInterval() const;
+
+    bool HasLoadoutUnit(PlayerUnit unit) const;
+
+    float SynergyHpMultiplier(PlayerUnit unit) const;
+
+    float SynergyDamageMultiplier(PlayerUnit unit) const;
+
+    float SynergyRangeMultiplier(PlayerUnit unit) const;
+
+    float SynergySpeedMultiplier(PlayerUnit unit) const;
+
+    std::wstring SynergySummary() const;
+
+    std::wstring GrowthRecommendation() const;
 
     void UpdateWalletPulse(float dt);
 
@@ -549,6 +632,8 @@ private:
     D2D1_RECT_F BriefingBackButtonRect() const;
 
     D2D1_RECT_F BriefingShopButtonRect() const;
+
+    D2D1_RECT_F BriefingDifficultyRect(int index) const;
 
     D2D1_RECT_F ShopBackButtonRect() const;
 
@@ -706,11 +791,19 @@ private:
 
     void DrawUiPulses();
 
+    void DrawTelegraphs();
+
     void DrawStageGimmickOverlay();
 
     void DrawBossPresentation();
 
     void DrawTutorialTips();
+
+    void DrawSynergyPanel(D2D1_RECT_F rect);
+
+    void DrawShopUnitDetail();
+
+    void DrawShowcaseBadge();
 
     void DrawHeader();
 
@@ -765,6 +858,7 @@ private:
     std::vector<SparkLine> m_sparkLines;
     std::vector<FloatText> m_floatTexts;
     std::vector<UiPulse> m_uiPulses;
+    std::vector<Telegraph> m_telegraphs;
     std::array<float, kLoadoutSize> m_cardCooldowns = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     std::array<PlayerUnit, kLoadoutSize> m_loadout = {PlayerUnit::Paw, PlayerUnit::Box, PlayerUnit::Spark, PlayerUnit::Dash, PlayerUnit::Bell};
     std::array<bool, kRosterCount> m_unitUnlocked = {
@@ -783,6 +877,7 @@ private:
     GameScreen m_screen = GameScreen::Title;
     int m_selectedStage = 0;
     int m_selectedLoadoutSlot = 0;
+    int m_shopSelectedUnit = 0;
     int m_nextUnitId = 1;
     int m_walletLevel = 1;
     int m_score = 0;
@@ -807,6 +902,7 @@ private:
     float m_stageGimmickTimer = 0.0f;
     float m_stageGimmickPulse = 0.0f;
     float m_stageAmbientTimer = 0.0f;
+    float m_bossPatternTimer = 7.0f;
     float m_bossBannerTimer = 0.0f;
     float m_bossWarningTimer = 0.0f;
     float m_bossFocusX = 0.0f;
@@ -820,12 +916,16 @@ private:
     float m_playerBaseShake = 0.0f;
     float m_enemyBaseShake = 0.0f;
     float m_resultTime = 0.0f;
+    float m_showcaseTimer = 0.0f;
+    Difficulty m_difficulty = Difficulty::Normal;
     bool m_paused = false;
     bool m_gameOver = false;
     bool m_victory = false;
     bool m_hitShakeEnabled = true;
     bool m_escapeMenuOpen = false;
     bool m_pauseBeforeEscape = false;
+    bool m_bossPhaseTwoTriggered = false;
+    bool m_showcaseMode = false;
     std::wstring m_message;
     float m_messageTimer = 0.0f;
 };

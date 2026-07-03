@@ -197,6 +197,7 @@ void PawlineGameImpl::Render()
     SetViewTransform(m_cameraX, true);
     DrawArena();
     DrawBases();
+    DrawTelegraphs();
     DrawUnitLighting();
     DrawUnits();
     DrawProjectiles();
@@ -213,6 +214,7 @@ void PawlineGameImpl::Render()
     DrawCameraHud();
     DrawBossPresentation();
     DrawTutorialTips();
+    DrawShowcaseBadge();
     DrawCommandBar();
     DrawUiPulses();
     DrawMessage();
@@ -655,6 +657,15 @@ void PawlineGameImpl::DrawBriefing()
     DrawString(L"Boss First  " + ToWideInt(static_cast<int>(stage.bossFirstTime)) + L"s", D2D1::RectF(604.0f, 454.0f, 820.0f, 482.0f), m_bodyFormat, D2D1::ColorF(0xFFB347));
     DrawString(L"Event Every  " + ToWideInt(static_cast<int>(GimmickInterval())) + L"s", D2D1::RectF(836.0f, 454.0f, 1060.0f, 482.0f), m_bodyFormat, D2D1::ColorF(0xF6FF83));
 
+    DrawPixelText(L"DIFFICULTY", {604.0f, 500.0f}, 2.3f, D2D1::ColorF(0xEAF7FF));
+    const std::array<std::wstring, 3> labels = {L"EASY", L"NORMAL", L"HARD"};
+    for (int i = 0; i < 3; ++i)
+    {
+        const bool active = static_cast<int>(m_difficulty) == i;
+        DrawButton(BriefingDifficultyRect(i), labels[i], true, active ? D2D1::ColorF(0x283B27) : D2D1::ColorF(0x202833));
+    }
+    DrawSynergyPanel(D2D1::RectF(604.0f, 584.0f, 1196.0f, 666.0f));
+
     DrawButton(BriefingBackButtonRect(), L"Back", true, D2D1::ColorF(0x173C4B));
     DrawButton(BriefingShopButtonRect(), L"Shop", true, D2D1::ColorF(0x4B4321));
     DrawButton(BriefingStartButtonRect(), L"Launch", true, D2D1::ColorF(0x283B27));
@@ -681,6 +692,8 @@ void PawlineGameImpl::DrawShop()
     {
         DrawShopUnitCard(i);
     }
+
+    DrawShopUnitDetail();
 
     DrawButton(ShopBackButtonRect(), L"Back", true, D2D1::ColorF(0x173C4B));
     DrawString(L"Esc / M", D2D1::RectF(ShopBackButtonRect().right + 12.0f, ShopBackButtonRect().top + 14.0f, ShopBackButtonRect().right + 120.0f, ShopBackButtonRect().bottom), m_bodyFormat, D2D1::ColorF(0x8EA9B8));
@@ -713,6 +726,33 @@ void PawlineGameImpl::DrawShopUnitCard(int index)
         action += ToWideInt(cost);
     }
     DrawString(action, D2D1::RectF(rect.left + 92.0f, rect.bottom - 28.0f, rect.right - 12.0f, rect.bottom - 8.0f), m_smallFormat, maxed ? D2D1::ColorF(0xF6FF83) : (affordable ? D2D1::ColorF(0xF6FF83) : D2D1::ColorF(0x7E919C)));
+}
+
+void PawlineGameImpl::DrawSynergyPanel(D2D1_RECT_F rect)
+{
+    // 편성 조합에 따라 활성화된 보너스를 한눈에 보여주는 패널이다.
+    DrawCartoonPanel(rect, D2D1::ColorF(0x0F1A22, 0.96f), D2D1::ColorF(0xB8FF89));
+    DrawPixelText(L"SYNERGY", {rect.left + 14.0f, rect.top + 12.0f}, 2.4f, D2D1::ColorF(0xB8FF89));
+    DrawPixelTextCentered(SynergySummary(), D2D1::RectF(rect.left + 12.0f, rect.top + 38.0f, rect.right - 12.0f, rect.bottom - 10.0f), 1.55f, D2D1::ColorF(0xF3FBFF), 1.0f);
+}
+
+void PawlineGameImpl::DrawShopUnitDetail()
+{
+    const int index = std::max(0, std::min(kRosterCount - 1, m_shopSelectedUnit));
+    const PlayerUnit unit = static_cast<PlayerUnit>(index);
+    const UnitStats stats = PlayerStats(unit);
+    const UnitStats base = GetPlayerStats(unit);
+    const bool unlocked = IsUnitUnlocked(unit);
+    const D2D1_RECT_F panel = D2D1::RectF(784.0f, 82.0f, 1226.0f, 144.0f);
+
+    // 상점 카드만으로 부족한 수치를 보완하는 상세 정보 패널이다.
+    DrawCartoonPanel(panel, D2D1::ColorF(0x0F1A22, 0.97f), unlocked ? stats.accent : D2D1::ColorF(0x394955));
+    DrawPlayerIcon(unit, {panel.left + 34.0f, panel.top + 31.0f}, 0.50f, unlocked);
+    DrawPixelText(base.name, {panel.left + 72.0f, panel.top + 12.0f}, 1.8f, unlocked ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x9AA8B0));
+    DrawPixelText(unlocked ? L"LV." + ToWideInt(UnitLevel(unit)) : L"LOCKED", {panel.left + 72.0f, panel.top + 36.0f}, 1.55f, unlocked ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xFFB6C2));
+    DrawPixelText(L"HP " + ToWideInt(static_cast<int>(stats.hp)), {panel.left + 170.0f, panel.top + 36.0f}, 1.55f, D2D1::ColorF(0xC7D8FF));
+    DrawPixelText(L"DMG " + ToWideInt(static_cast<int>(stats.damage)), {panel.left + 254.0f, panel.top + 36.0f}, 1.55f, D2D1::ColorF(0xFFB6C2));
+    DrawPixelText(stats.ranged ? L"RANGED" : L"FRONT", {panel.left + 358.0f, panel.top + 36.0f}, 1.55f, D2D1::ColorF(0xEAF7FF));
 }
 
 void PawlineGameImpl::DrawStageCard(int index)
@@ -2206,6 +2246,40 @@ void PawlineGameImpl::DrawUiPulses()
     }
 }
 
+void PawlineGameImpl::DrawTelegraphs()
+{
+    // 위험 예고는 전장 좌표에서 먼저 그린다. 남은 시간이 짧을수록
+    // 더 밝게 깜빡여서 플레이어가 대응 타이밍을 읽을 수 있게 한다.
+    for (const Telegraph& telegraph : m_telegraphs)
+    {
+        const float pct = 1.0f - Clamp01(telegraph.life / std::max(0.01f, telegraph.maxLife));
+        const float blink = 0.45f + 0.55f * std::abs(std::sin((m_stageTime + m_uiTime) * (8.0f + pct * 20.0f)));
+        const float alpha = 0.12f + pct * 0.22f + blink * 0.08f;
+        const D2D1_COLOR_F fill = D2D1::ColorF(telegraph.color.r, telegraph.color.g, telegraph.color.b, alpha);
+        const D2D1_COLOR_F stroke = D2D1::ColorF(telegraph.color.r, telegraph.color.g, telegraph.color.b, 0.48f + pct * 0.32f);
+
+        if (telegraph.shape == TelegraphShape::Circle)
+        {
+            FillEllipse(telegraph.start, telegraph.radius, telegraph.radius * 0.58f, fill);
+            StrokeEllipse(telegraph.start, telegraph.radius, telegraph.radius * 0.58f, stroke, 2.4f + pct * 3.0f);
+            StrokeEllipse(telegraph.start, telegraph.radius * (0.42f + pct * 0.20f), telegraph.radius * (0.25f + pct * 0.10f), D2D1::ColorF(0xFFFFFF, 0.16f + pct * 0.22f), 1.4f);
+        }
+        else if (telegraph.shape == TelegraphShape::Line)
+        {
+            DrawLine(telegraph.start, telegraph.end, D2D1::ColorF(telegraph.color.r, telegraph.color.g, telegraph.color.b, alpha * 0.46f), telegraph.width);
+            DrawLine(telegraph.start, telegraph.end, stroke, 3.0f + pct * 4.0f);
+            DrawLine(telegraph.start, telegraph.end, D2D1::ColorF(0xFFFFFF, 0.20f + pct * 0.22f), 1.2f + pct * 1.4f);
+        }
+        else
+        {
+            FillRoundRect(D2D1::RectF(kPlayerBaseX + 28.0f, kLaneY - kLaneHalfHeight - 18.0f, kEnemyBaseX - 28.0f, kLaneY + kLaneHalfHeight + 18.0f), 18.0f, fill);
+            StrokeRoundRect(D2D1::RectF(kPlayerBaseX + 28.0f, kLaneY - kLaneHalfHeight - 18.0f, kEnemyBaseX - 28.0f, kLaneY + kLaneHalfHeight + 18.0f), 18.0f, stroke, 2.0f + pct * 2.6f);
+        }
+
+        DrawPixelTextCentered(L"WARNING", D2D1::RectF(telegraph.start.x - 72.0f, telegraph.start.y - telegraph.radius * 0.62f - 32.0f, telegraph.start.x + 72.0f, telegraph.start.y - telegraph.radius * 0.62f - 8.0f), 1.8f, D2D1::ColorF(0xF3FBFF), 0.70f + pct * 0.30f);
+    }
+}
+
 void PawlineGameImpl::DrawStageGimmickOverlay()
 {
     if (m_screen != GameScreen::Playing && m_screen != GameScreen::Result)
@@ -2317,6 +2391,18 @@ void PawlineGameImpl::DrawTutorialTips()
         tip(D2D1::RectF(884.0f, 512.0f, 1194.0f, 584.0f), L"MOONBEAM", L"SPACE FIRES WHEN FULL", D2D1::ColorF(0xF6FF83, alpha));
         DrawLine({918.0f, 584.0f}, {740.0f, 708.0f}, D2D1::ColorF(0xF6FF83, 0.38f * alpha), 2.4f);
     }
+}
+
+void PawlineGameImpl::DrawShowcaseBadge()
+{
+    if (!m_showcaseMode || m_screen != GameScreen::Playing)
+    {
+        return;
+    }
+
+    const D2D1_RECT_F badge = D2D1::RectF(1010.0f, 112.0f, 1238.0f, 148.0f);
+    DrawCartoonPanel(badge, D2D1::ColorF(0x0F1A22, 0.92f), D2D1::ColorF(0xF6FF83), true);
+    DrawPixelTextCentered(L"SHOWCASE CAMERA", badge, 2.2f, D2D1::ColorF(0xF6FF83), 1.0f);
 }
 
 void PawlineGameImpl::DrawBattleLogo()
@@ -2651,7 +2737,7 @@ void PawlineGameImpl::DrawResultScreen()
     DrawString(L"Time  " + ToWideTime(m_resultTime), D2D1::RectF(panel.left + 94.0f, panel.top + 190.0f, panel.left + 280.0f, panel.top + 218.0f), m_bodyFormat, D2D1::ColorF(0xC7D8FF));
     DrawString(L"Score  " + ToWideInt(m_resultScore), D2D1::RectF(panel.left + 320.0f, panel.top + 190.0f, panel.right - 94.0f, panel.top + 218.0f), m_bodyFormat, D2D1::ColorF(0xF6FF83));
     DrawString(L"Wallet Lv." + ToWideInt(m_walletLevel), D2D1::RectF(panel.left + 94.0f, panel.top + 224.0f, panel.left + 280.0f, panel.top + 252.0f), m_bodyFormat, D2D1::ColorF(0xB8FF89));
-    DrawString(L"Units left  " + ToWideInt(static_cast<int>(m_units.size())), D2D1::RectF(panel.left + 320.0f, panel.top + 224.0f, panel.right - 94.0f, panel.top + 252.0f), m_bodyFormat, D2D1::ColorF(0xD9E5F2));
+    DrawString(L"Difficulty  " + DifficultyLabel(), D2D1::RectF(panel.left + 320.0f, panel.top + 224.0f, panel.right - 94.0f, panel.top + 252.0f), m_bodyFormat, D2D1::ColorF(0xD9E5F2));
     DrawString(m_victory ? L"LUMEN +" + ToWideInt(m_lastReward) + L"   Total " + ToWideInt(m_lumen) : L"LUMEN +0   Total " + ToWideInt(m_lumen),
                D2D1::RectF(panel.left + 94.0f, panel.top + 268.0f, panel.right - 94.0f, panel.top + 296.0f),
                m_bodyFormat,
@@ -2681,6 +2767,11 @@ void PawlineGameImpl::DrawResultScreen()
                           D2D1::RectF(panel.left + 532.0f, panel.top + 316.0f, panel.right - 52.0f, panel.top + 352.0f),
                           2.2f,
                           m_victory ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0x8EA9B8),
+                          1.0f);
+    DrawPixelTextCentered(GrowthRecommendation(),
+                          D2D1::RectF(panel.left + 64.0f, panel.top + 374.0f, panel.right - 64.0f, panel.top + 408.0f),
+                          2.1f,
+                          D2D1::ColorF(0xF6FF83),
                           1.0f);
 
     DrawButton(ResultRetryButtonRect(), L"Retry", true, D2D1::ColorF(0x173C4B));

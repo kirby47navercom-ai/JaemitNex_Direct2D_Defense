@@ -307,8 +307,10 @@ UnitStats PawlineGameImpl::PlayerStats(PlayerUnit unit) const
     const float hpScale = 1.0f + static_cast<float>(level - 1) * 0.22f;
     const float damageScale = 1.0f + static_cast<float>(level - 1) * 0.18f;
     const float cooldownScale = std::max(0.74f, 1.0f - static_cast<float>(level - 1) * 0.045f);
-    stats.hp *= hpScale;
-    stats.damage *= damageScale;
+    stats.hp *= hpScale * SynergyHpMultiplier(unit);
+    stats.damage *= damageScale * SynergyDamageMultiplier(unit);
+    stats.range *= SynergyRangeMultiplier(unit);
+    stats.speed *= SynergySpeedMultiplier(unit);
     stats.cooldown *= cooldownScale;
     stats.cost += (level - 1) * 10;
     return stats;
@@ -341,7 +343,46 @@ int PawlineGameImpl::StageClearReward(bool firstClear) const
     const int scoreBonus = std::min(260, m_score / 45);
     const int timeBonus = std::max(0, 150 - static_cast<int>(m_stageTime * 1.2f));
     const int firstBonus = firstClear ? 280 + m_selectedStage * 80 : 0;
-    return stageBonus + scoreBonus + timeBonus + firstBonus;
+    return static_cast<int>(std::round(static_cast<float>(stageBonus + scoreBonus + timeBonus + firstBonus) * DifficultyRewardMultiplier()));
+}
+
+float PawlineGameImpl::DifficultyThreatMultiplier() const
+{
+    switch (m_difficulty)
+    {
+    case Difficulty::Easy:
+        return 0.84f;
+    case Difficulty::Hard:
+        return 1.22f;
+    default:
+        return 1.0f;
+    }
+}
+
+float PawlineGameImpl::DifficultyRewardMultiplier() const
+{
+    switch (m_difficulty)
+    {
+    case Difficulty::Easy:
+        return 0.88f;
+    case Difficulty::Hard:
+        return 1.28f;
+    default:
+        return 1.0f;
+    }
+}
+
+std::wstring PawlineGameImpl::DifficultyLabel() const
+{
+    switch (m_difficulty)
+    {
+    case Difficulty::Easy:
+        return L"EASY";
+    case Difficulty::Hard:
+        return L"HARD";
+    default:
+        return L"NORMAL";
+    }
 }
 
 void PawlineGameImpl::GrantStageReward()
@@ -448,6 +489,7 @@ void PawlineGameImpl::ResetToTitle()
     m_sparkLines.clear();
     m_floatTexts.clear();
     m_uiPulses.clear();
+    m_telegraphs.clear();
     m_screenFlash = 0.0f;
     m_paused = false;
     m_escapeMenuOpen = false;
@@ -469,6 +511,7 @@ void PawlineGameImpl::ResetToMenu()
     m_sparkLines.clear();
     m_floatTexts.clear();
     m_uiPulses.clear();
+    m_telegraphs.clear();
     m_screenFlash = 0.0f;
     m_paused = false;
     m_escapeMenuOpen = false;
@@ -491,17 +534,20 @@ void PawlineGameImpl::ResetGame()
     m_sparkLines.clear();
     m_floatTexts.clear();
     m_uiPulses.clear();
+    m_telegraphs.clear();
 
     m_cardCooldowns.fill(0.0f);
     m_walletLevel = 1;
     m_energy = stage.startEnergy;
-    m_playerBaseHp = stage.playerHp;
-    m_enemyBaseHp = stage.enemyHp;
+    const float playerScale = m_difficulty == Difficulty::Easy ? 1.16f : (m_difficulty == Difficulty::Hard ? 0.92f : 1.0f);
+    const float enemyScale = m_difficulty == Difficulty::Easy ? 0.88f : (m_difficulty == Difficulty::Hard ? 1.18f : 1.0f);
+    m_playerBaseHp = stage.playerHp * playerScale;
+    m_enemyBaseHp = stage.enemyHp * enemyScale;
     m_playerBaseMaxHp = m_playerBaseHp;
     m_enemyBaseMaxHp = m_enemyBaseHp;
     m_stageTime = 0.0f;
     m_gameSpeed = m_defaultGameSpeed;
-    m_enemyTimer = stage.enemyInterval;
+    m_enemyTimer = stage.enemyInterval * (m_difficulty == Difficulty::Easy ? 1.15f : (m_difficulty == Difficulty::Hard ? 0.86f : 1.0f));
     m_nextBossTime = stage.bossFirstTime;
     m_cannonCharge = 35.0f;
     m_cannonFlash = 0.0f;
@@ -510,6 +556,7 @@ void PawlineGameImpl::ResetGame()
     m_stageGimmickTimer = 7.0f + static_cast<float>(m_selectedStage % 3) * 1.8f;
     m_stageGimmickPulse = 0.0f;
     m_stageAmbientTimer = 0.0f;
+    m_bossPatternTimer = std::max(5.0f, 8.4f - static_cast<float>(m_selectedStage) * 0.26f);
     m_bossBannerTimer = 0.0f;
     m_bossWarningTimer = 0.0f;
     m_bossFocusX = 0.0f;
@@ -526,6 +573,7 @@ void PawlineGameImpl::ResetGame()
     m_pauseBeforeEscape = false;
     m_gameOver = false;
     m_victory = false;
+    m_bossPhaseTwoTriggered = false;
     SetMessage(stage.name + L": summon units and break the enemy base.");
 }
 
@@ -570,6 +618,10 @@ void PawlineGameImpl::Update(float dt)
     {
         m_cameraTrauma = std::max(0.0f, m_cameraTrauma - dt * 1.35f);
     }
+    if (m_showcaseMode)
+    {
+        m_showcaseTimer += dt;
+    }
 
     if (m_screen == GameScreen::Title || m_screen == GameScreen::Options || m_screen == GameScreen::Menu || m_screen == GameScreen::Shop || m_screen == GameScreen::Briefing || m_screen == GameScreen::Result)
     {
@@ -577,6 +629,7 @@ void PawlineGameImpl::Update(float dt)
         {
             UpdateCamera(dt);
         }
+        UpdateTelegraphs(dt);
         UpdateParticles(dt);
         CleanupEntities();
         return;
@@ -584,6 +637,7 @@ void PawlineGameImpl::Update(float dt)
 
     if (m_paused || m_gameOver || m_victory)
     {
+        UpdateTelegraphs(dt);
         UpdateParticles(dt);
         CleanupEntities();
         return;
@@ -594,9 +648,11 @@ void PawlineGameImpl::Update(float dt)
     m_stageTime += gameDt;
     UpdateCamera(gameDt);
     m_energy = std::min(MaxEnergy(), m_energy + EnergyRegen() * gameDt);
-    m_cannonCharge = std::min(100.0f, m_cannonCharge + (6.8f + static_cast<float>(m_walletLevel) * 1.1f) * gameDt);
+    const float cannonSynergy = HasLoadoutUnit(PlayerUnit::Solar) && HasLoadoutUnit(PlayerUnit::Bell) ? 1.12f : 1.0f;
+    m_cannonCharge = std::min(100.0f, m_cannonCharge + (6.8f + static_cast<float>(m_walletLevel) * 1.1f) * cannonSynergy * gameDt);
     UpdateWalletPulse(gameDt);
     UpdateStageGimmicks(gameDt);
+    UpdateBossPatterns(gameDt);
 
     for (float& cooldown : m_cardCooldowns)
     {
@@ -606,6 +662,7 @@ void PawlineGameImpl::Update(float dt)
     UpdateEnemyDirector(gameDt);
     UpdateUnits(gameDt);
     UpdateProjectiles(gameDt);
+    UpdateTelegraphs(gameDt);
     UpdateParticles(gameDt);
     CleanupEntities();
 
@@ -699,6 +756,18 @@ void PawlineGameImpl::UpdateCamera(float dt)
         if (m_screen == GameScreen::Playing && m_units.empty() && m_stageTime < 2.0f)
         {
             m_cameraTargetX = 0.0f;
+        }
+        if (m_showcaseMode && m_bossBannerTimer <= 0.0f)
+        {
+            const float wave = (std::sin(m_showcaseTimer * 0.34f) + 1.0f) * 0.5f;
+            m_cameraTargetX = Lerp(0.0f, kCameraMaxX, wave);
+            if (const Unit* boss = FindBossUnit())
+            {
+                if (std::fmod(m_showcaseTimer, 18.0f) > 12.0f)
+                {
+                    m_cameraTargetX = std::max(0.0f, std::min(kCameraMaxX, boss->pos.x - kWidth * 0.58f));
+                }
+            }
         }
         if (m_bossBannerTimer > 0.0f)
         {

@@ -98,6 +98,17 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
         return;
     }
 
+    const D2D1_RECT_F cameraRail = D2D1::RectF(40.0f, 80.0f, 1240.0f, 106.0f);
+    if (Contains(cameraRail, pos))
+    {
+        // 상단 미니맵 레일을 클릭하면 해당 월드 위치로 카메라를 이동한다.
+        const float pct = Clamp01((pos.x - cameraRail.left) / (cameraRail.right - cameraRail.left));
+        m_cameraTargetX = std::max(0.0f, std::min(kCameraMaxX, pct * kWorldWidth - kWidth * 0.5f));
+        m_cameraX = Lerp(m_cameraX, m_cameraTargetX, 0.45f);
+        SetMessage(L"Camera jumped.");
+        return;
+    }
+
     for (int i = 0; i < kLoadoutSize; ++i)
     {
         if (Contains(CardRect(i), pos))
@@ -209,6 +220,16 @@ void PawlineGameImpl::OnBriefingClick(Vec2 pos)
             return;
         }
     }
+
+    for (int i = 0; i < 3; ++i)
+    {
+        if (Contains(BriefingDifficultyRect(i), pos))
+        {
+            m_difficulty = static_cast<Difficulty>(i);
+            SetMessage(std::wstring(L"Difficulty ") + DifficultyLabel());
+            return;
+        }
+    }
 }
 
 void PawlineGameImpl::OnShopClick(Vec2 pos)
@@ -223,6 +244,7 @@ void PawlineGameImpl::OnShopClick(Vec2 pos)
     {
         if (Contains(ShopUnitRect(i), pos))
         {
+            m_shopSelectedUnit = i;
             TryBuyOrUpgradeUnit(static_cast<PlayerUnit>(i));
             return;
         }
@@ -452,6 +474,21 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         {
             m_screen = GameScreen::Shop;
         }
+        else if (key == 'E')
+        {
+            m_difficulty = Difficulty::Easy;
+            SetMessage(L"Difficulty EASY");
+        }
+        else if (key == 'N')
+        {
+            m_difficulty = Difficulty::Normal;
+            SetMessage(L"Difficulty NORMAL");
+        }
+        else if (key == 'H')
+        {
+            m_difficulty = Difficulty::Hard;
+            SetMessage(L"Difficulty HARD");
+        }
         return;
     }
 
@@ -559,6 +596,14 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
             ++m_selectedStage;
             ResetGame();
         }
+        return;
+    }
+
+    if (key == VK_F1 && m_screen == GameScreen::Playing)
+    {
+        m_showcaseMode = !m_showcaseMode;
+        m_showcaseTimer = 0.0f;
+        SetMessage(m_showcaseMode ? L"Showcase camera on." : L"Showcase camera off.");
         return;
     }
 

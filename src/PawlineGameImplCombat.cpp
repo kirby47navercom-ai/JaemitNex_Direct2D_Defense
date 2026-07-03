@@ -38,7 +38,8 @@ void PawlineGameImpl::UpdateEnemyDirector(float dt)
     const EnemyUnit type = PickStageEnemy(value, phase);
 
     SpawnEnemy(type);
-    const float interval = std::max(0.56f, stage.enemyInterval - threat * 0.11f);
+    const float difficultyInterval = m_difficulty == Difficulty::Easy ? 1.15f : (m_difficulty == Difficulty::Hard ? 0.86f : 1.0f);
+    const float interval = std::max(0.48f, (stage.enemyInterval - threat * 0.11f) * difficultyInterval);
     m_enemyTimer += interval;
 }
 
@@ -204,6 +205,91 @@ float PawlineGameImpl::GimmickInterval() const
     }
 }
 
+Unit* PawlineGameImpl::FindBossUnit()
+{
+    Unit* boss = nullptr;
+    for (Unit& unit : m_units)
+    {
+        if (unit.team == Team::Enemy && unit.alive && (unit.elite || static_cast<EnemyUnit>(unit.kind) == EnemyUnit::Boss))
+        {
+            if (!boss || unit.maxHp > boss->maxHp)
+            {
+                boss = &unit;
+            }
+        }
+    }
+    return boss;
+}
+
+const Unit* PawlineGameImpl::FindBossUnit() const
+{
+    const Unit* boss = nullptr;
+    for (const Unit& unit : m_units)
+    {
+        if (unit.team == Team::Enemy && unit.alive && (unit.elite || static_cast<EnemyUnit>(unit.kind) == EnemyUnit::Boss))
+        {
+            if (!boss || unit.maxHp > boss->maxHp)
+            {
+                boss = &unit;
+            }
+        }
+    }
+    return boss;
+}
+
+void PawlineGameImpl::UpdateBossPatterns(float dt)
+{
+    Unit* boss = FindBossUnit();
+    if (!boss)
+    {
+        m_bossPatternTimer = std::max(4.5f, 8.0f - static_cast<float>(m_selectedStage) * 0.25f);
+        return;
+    }
+
+    if (!m_bossPhaseTwoTriggered && boss->hp < boss->maxHp * 0.50f)
+    {
+        m_bossPhaseTwoTriggered = true;
+        m_bossPatternTimer = 1.2f;
+        SetMessage(L"Boss phase two.");
+        AddRing(boss->pos, 180.0f, 0.70f, D2D1::ColorF(0xFFB347, 0.48f), 5.0f);
+        AddCameraTrauma(0.58f);
+        SpawnStageReinforcement(m_selectedStage == 9 ? EnemyUnit::Flare : StageBossType(), 360.0f, false);
+    }
+
+    m_bossPatternTimer -= dt;
+    if (m_bossPatternTimer > 0.0f)
+    {
+        return;
+    }
+
+    TriggerBossPattern(*boss);
+    const float baseDelay = m_bossPhaseTwoTriggered ? 5.8f : 7.4f;
+    m_bossPatternTimer = std::max(3.6f, baseDelay - ThreatLevel() * 0.22f);
+}
+
+void PawlineGameImpl::TriggerBossPattern(Unit& boss)
+{
+    const int pattern = static_cast<int>(std::fmod(m_stageTime * 10.0f + static_cast<float>(boss.id * 7), 3.0f));
+    const D2D1_COLOR_F bossColor = GetEnemyStats(static_cast<EnemyUnit>(boss.kind), ThreatLevel()).accent;
+    if (pattern == 0)
+    {
+        SetMessage(L"Boss flare line.");
+        const Vec2 end = {std::max(kPlayerBaseX + 70.0f, boss.pos.x - 620.0f), boss.pos.y + std::sin(m_stageTime * 1.7f) * 72.0f};
+        AddTelegraph(TelegraphKind::BossFlareLine, TelegraphShape::Line, boss.pos, end, 0.0f, 82.0f, 1.18f, 72.0f + ThreatLevel() * 4.0f, D2D1::ColorF(0xFFB347));
+    }
+    else if (pattern == 1)
+    {
+        SetMessage(L"Boss core pulse.");
+        AddTelegraph(TelegraphKind::BossPulseCircle, TelegraphShape::Circle, boss.pos, boss.pos, 210.0f, 0.0f, 1.05f, 48.0f + ThreatLevel() * 3.0f, D2D1::ColorF(bossColor.r, bossColor.g, bossColor.b, 0.92f));
+    }
+    else
+    {
+        SetMessage(L"Boss calls reinforcements.");
+        const Vec2 gate = {std::max(kPlayerBaseX + 420.0f, boss.pos.x - 240.0f), RandomLaneY()};
+        AddTelegraph(TelegraphKind::BossReinforce, TelegraphShape::Circle, gate, gate, 86.0f, 0.0f, 1.00f, 0.0f, D2D1::ColorF(0xFF9BA8));
+    }
+}
+
 float PawlineGameImpl::EffectiveUnitRange(const Unit& unit) const
 {
     float range = unit.range;
@@ -293,27 +379,111 @@ void PawlineGameImpl::TriggerStageGimmick()
     std::uniform_real_distribution<float> xDist(kPlayerBaseX + 260.0f, kEnemyBaseX - 260.0f);
     std::uniform_real_distribution<float> yDist(kLaneY - 70.0f, kLaneY + 70.0f);
 
+    // 행성 기믹은 바로 터뜨리지 않고 먼저 예고 장판을 만든다.
+    // 예고가 끝나면 ExecuteTelegraph()에서 실제 피해/회복/지원군을 처리한다.
     switch (m_selectedStage)
     {
     case 0:
         SetMessage(L"Mercury heat wave.");
-        AddBeam({kPlayerBaseX + 40.0f, kLaneY - 86.0f}, {kEnemyBaseX - 30.0f, kLaneY + 68.0f}, 10.0f, 0.30f, D2D1::ColorF(0xCFA27B, 0.52f));
-        ApplyAreaDamage({(kPlayerBaseX + kEnemyBaseX) * 0.5f, kLaneY}, kWorldWidth, 12.0f + ThreatLevel() * 1.6f, D2D1::ColorF(0xCFA27B));
-        AddCameraTrauma(0.20f);
+        AddTelegraph(TelegraphKind::MercuryHeat, TelegraphShape::FullLane, {kPlayerBaseX + 40.0f, kLaneY - 86.0f}, {kEnemyBaseX - 30.0f, kLaneY + 68.0f}, kWorldWidth, 92.0f, 0.90f, 12.0f + ThreatLevel() * 1.6f, D2D1::ColorF(0xCFA27B));
         break;
     case 1:
         SetMessage(L"Venus acid fog: ranged units lose range.");
+        AddTelegraph(TelegraphKind::VenusFog, TelegraphShape::FullLane, {m_cameraX + 64.0f, kLaneY}, {m_cameraX + kWidth - 64.0f, kLaneY}, 280.0f, 0.0f, 0.85f, 8.0f + ThreatLevel(), D2D1::ColorF(0xE0B16D));
+        break;
+    case 2:
+        SetMessage(L"Earth supply bloom.");
+        AddTelegraph(TelegraphKind::EarthBloom, TelegraphShape::Circle, {kPlayerBaseX + 72.0f, kLaneY}, {kPlayerBaseX + 72.0f, kLaneY}, 150.0f, 0.0f, 0.70f, 0.0f, D2D1::ColorF(0xB8FF89));
+        break;
+    case 3:
+    {
+        SetMessage(L"Mars meteor impact.");
+        const Vec2 impact = {xDist(m_rng), yDist(m_rng)};
+        AddTelegraph(TelegraphKind::MarsMeteor, TelegraphShape::Circle, impact, impact, 154.0f, 0.0f, 1.10f, 64.0f + ThreatLevel() * 4.0f, D2D1::ColorF(0xFF8B60));
+        break;
+    }
+    case 4:
+        SetMessage(L"Jupiter gravity surge.");
+        AddTelegraph(TelegraphKind::JupiterGravity, TelegraphShape::Circle, {m_cameraX + 640.0f, kLaneY}, {m_cameraX + 640.0f, kLaneY}, 340.0f, 0.0f, 0.95f, 0.0f, D2D1::ColorF(0xD8A66A));
+        break;
+    case 5:
+        SetMessage(L"Saturn ring reinforcement.");
+        AddTelegraph(TelegraphKind::SaturnReinforce, TelegraphShape::Circle, {kEnemyBaseX - 330.0f, kLaneY}, {kEnemyBaseX - 330.0f, kLaneY}, 124.0f, 0.0f, 0.95f, 0.0f, D2D1::ColorF(0xE6D392));
+        break;
+    case 6:
+        SetMessage(L"Uranus ice gust.");
+        AddTelegraph(TelegraphKind::UranusIce, TelegraphShape::Line, {m_cameraX + 58.0f, kLaneY - 92.0f}, {m_cameraX + 1210.0f, kLaneY + 76.0f}, 0.0f, 94.0f, 0.85f, 0.0f, D2D1::ColorF(0xD9FFF8));
+        break;
+    case 7:
+        SetMessage(L"Neptune tide surge.");
+        AddTelegraph(TelegraphKind::NeptuneTide, TelegraphShape::FullLane, {m_cameraX + 64.0f, kLaneY + 32.0f}, {m_cameraX + kWidth - 64.0f, kLaneY + 32.0f}, 320.0f, 0.0f, 0.80f, 0.0f, D2D1::ColorF(0x75A7FF));
+        break;
+    case 8:
+        SetMessage(L"Pluto void eclipse.");
+        AddTelegraph(TelegraphKind::PlutoVoid, TelegraphShape::Circle, {m_cameraX + 640.0f, kLaneY}, {m_cameraX + 640.0f, kLaneY}, 230.0f, 0.0f, 0.95f, 34.0f + ThreatLevel() * 2.2f, D2D1::ColorF(0xC8B7FF));
+        break;
+    default:
+        SetMessage(L"Solar flare.");
+        AddTelegraph(TelegraphKind::SolarFlare, TelegraphShape::Line, {m_cameraX + 20.0f, kBattleTop + 44.0f}, {m_cameraX + kWidth - 20.0f, kBattleBottom - 58.0f}, 330.0f, 128.0f, 1.05f, 52.0f + ThreatLevel() * 3.0f, D2D1::ColorF(0xFFB347));
+        break;
+    }
+}
+
+void PawlineGameImpl::AddTelegraph(TelegraphKind kind, TelegraphShape shape, Vec2 start, Vec2 end, float radius, float width, float windup, float damage, D2D1_COLOR_F color)
+{
+    Telegraph telegraph;
+    telegraph.kind = kind;
+    telegraph.shape = shape;
+    telegraph.start = start;
+    telegraph.end = end;
+    telegraph.radius = radius;
+    telegraph.width = width;
+    telegraph.life = windup;
+    telegraph.maxLife = windup;
+    telegraph.damage = damage;
+    telegraph.color = color;
+    m_telegraphs.push_back(telegraph);
+}
+
+void PawlineGameImpl::UpdateTelegraphs(float dt)
+{
+    for (Telegraph& telegraph : m_telegraphs)
+    {
+        telegraph.life -= dt;
+        if (telegraph.life <= 0.0f)
+        {
+            ExecuteTelegraph(telegraph);
+        }
+    }
+
+    m_telegraphs.erase(
+        std::remove_if(m_telegraphs.begin(), m_telegraphs.end(), [](const Telegraph& telegraph) {
+            return telegraph.life <= 0.0f;
+        }),
+        m_telegraphs.end());
+}
+
+void PawlineGameImpl::ExecuteTelegraph(const Telegraph& telegraph)
+{
+    // 예고가 끝나는 순간 실제 스테이지 효과와 보스 패턴을 처리한다.
+    switch (telegraph.kind)
+    {
+    case TelegraphKind::MercuryHeat:
+        AddBeam(telegraph.start, telegraph.end, 10.0f, 0.30f, D2D1::ColorF(0xCFA27B, 0.52f));
+        ApplyAreaDamage({(kPlayerBaseX + kEnemyBaseX) * 0.5f, kLaneY}, kWorldWidth, telegraph.damage, D2D1::ColorF(0xCFA27B));
+        AddCameraTrauma(0.20f);
+        break;
+    case TelegraphKind::VenusFog:
         for (Unit& unit : m_units)
         {
             if (unit.alive && unit.ranged)
             {
-                DamageUnit(unit, 8.0f + ThreatLevel(), unit.team == Team::Player ? Team::Enemy : Team::Player);
+                DamageUnit(unit, telegraph.damage, unit.team == Team::Player ? Team::Enemy : Team::Player);
             }
         }
         AddRing({m_cameraX + 640.0f, kLaneY}, 280.0f, 0.60f, D2D1::ColorF(0xE0B16D, 0.38f), 3.2f);
         break;
-    case 2:
-        SetMessage(L"Earth supply bloom.");
+    case TelegraphKind::EarthBloom:
         m_energy = std::min(MaxEnergy(), m_energy + 76.0f);
         m_playerBaseHp = std::min(m_playerBaseMaxHp, m_playerBaseHp + 42.0f);
         for (Unit& unit : m_units)
@@ -324,20 +494,15 @@ void PawlineGameImpl::TriggerStageGimmick()
                 AddParticleEx(unit.pos, {0.0f, -22.0f}, 7.0f, 0.42f, D2D1::ColorF(0xB8FF89, 0.46f), ParticleKind::Glow, 0.0f, 0.92f, 18.0f);
             }
         }
-        AddRing({kPlayerBaseX + 72.0f, kLaneY}, 150.0f, 0.48f, D2D1::ColorF(0xB8FF89, 0.44f), 3.0f);
+        AddRing(telegraph.start, 150.0f, 0.48f, D2D1::ColorF(0xB8FF89, 0.44f), 3.0f);
         break;
-    case 3:
-    {
-        SetMessage(L"Mars meteor impact.");
-        const Vec2 impact = {xDist(m_rng), yDist(m_rng)};
-        AddBeam({impact.x + 260.0f, kBattleTop + 8.0f}, impact, 11.0f, 0.22f, D2D1::ColorF(0xFF8B60, 0.72f));
-        ApplyAreaDamage(impact, 154.0f, 64.0f + ThreatLevel() * 4.0f, D2D1::ColorF(0xFF8B60));
-        AddDustPuff({impact.x, impact.y + 18.0f}, D2D1::ColorF(0xDD7666, 0.42f), 22);
+    case TelegraphKind::MarsMeteor:
+        AddBeam({telegraph.start.x + 260.0f, kBattleTop + 8.0f}, telegraph.start, 11.0f, 0.22f, D2D1::ColorF(0xFF8B60, 0.72f));
+        ApplyAreaDamage(telegraph.start, telegraph.radius, telegraph.damage, D2D1::ColorF(0xFF8B60));
+        AddDustPuff({telegraph.start.x, telegraph.start.y + 18.0f}, D2D1::ColorF(0xDD7666, 0.42f), 22);
         AddCameraTrauma(0.48f);
         break;
-    }
-    case 4:
-        SetMessage(L"Jupiter gravity surge.");
+    case TelegraphKind::JupiterGravity:
         for (Unit& unit : m_units)
         {
             if (unit.alive)
@@ -347,20 +512,18 @@ void PawlineGameImpl::TriggerStageGimmick()
                 ShakeUnit(unit, 0.14f);
             }
         }
-        AddRing({m_cameraX + 640.0f, kLaneY}, 340.0f, 0.64f, D2D1::ColorF(0xD8A66A, 0.42f), 4.0f);
+        AddRing(telegraph.start, 340.0f, 0.64f, D2D1::ColorF(0xD8A66A, 0.42f), 4.0f);
         AddCameraTrauma(0.30f);
         break;
-    case 5:
-        SetMessage(L"Saturn ring reinforcement.");
+    case TelegraphKind::SaturnReinforce:
         SpawnStageReinforcement(EnemyUnit::Ring, 330.0f);
         if (ThreatLevel() > 2.0f)
         {
             SpawnStageReinforcement(EnemyUnit::Skitter, 410.0f);
         }
-        AddRing({kEnemyBaseX - 330.0f, kLaneY}, 124.0f, 0.52f, D2D1::ColorF(0xE6D392, 0.48f), 3.0f);
+        AddRing(telegraph.start, 124.0f, 0.52f, D2D1::ColorF(0xE6D392, 0.48f), 3.0f);
         break;
-    case 6:
-        SetMessage(L"Uranus ice gust.");
+    case TelegraphKind::UranusIce:
         for (Unit& unit : m_units)
         {
             if (unit.alive)
@@ -369,11 +532,10 @@ void PawlineGameImpl::TriggerStageGimmick()
                 unit.hitFlash = std::max(unit.hitFlash, 0.10f);
             }
         }
-        AddBeam({m_cameraX + 58.0f, kLaneY - 92.0f}, {m_cameraX + 1210.0f, kLaneY + 76.0f}, 12.0f, 0.28f, D2D1::ColorF(0xD9FFF8, 0.46f));
+        AddBeam(telegraph.start, telegraph.end, 12.0f, 0.28f, D2D1::ColorF(0xD9FFF8, 0.46f));
         AddCameraTrauma(0.22f);
         break;
-    case 7:
-        SetMessage(L"Neptune tide surge.");
+    case TelegraphKind::NeptuneTide:
         for (Unit& unit : m_units)
         {
             if (unit.alive)
@@ -381,20 +543,32 @@ void PawlineGameImpl::TriggerStageGimmick()
                 unit.pos.x += unit.team == Team::Player ? 18.0f : -18.0f;
             }
         }
-        AddRing({m_cameraX + 640.0f, kLaneY + 32.0f}, 320.0f, 0.66f, D2D1::ColorF(0x75A7FF, 0.40f), 4.0f);
+        AddRing(telegraph.start, 320.0f, 0.66f, D2D1::ColorF(0x75A7FF, 0.40f), 4.0f);
         break;
-    case 8:
-        SetMessage(L"Pluto void eclipse.");
+    case TelegraphKind::PlutoVoid:
         m_energy = std::max(0.0f, m_energy - 38.0f);
-        ApplyAreaDamage({m_cameraX + 640.0f, kLaneY}, 230.0f, 34.0f + ThreatLevel() * 2.2f, D2D1::ColorF(0xC8B7FF));
-        AddRing({m_cameraX + 640.0f, kLaneY}, 230.0f, 0.58f, D2D1::ColorF(0xC8B7FF, 0.42f), 3.4f);
+        ApplyAreaDamage(telegraph.start, telegraph.radius, telegraph.damage, D2D1::ColorF(0xC8B7FF));
+        AddRing(telegraph.start, 230.0f, 0.58f, D2D1::ColorF(0xC8B7FF, 0.42f), 3.4f);
         break;
-    default:
-        SetMessage(L"Solar flare.");
-        AddBeam({m_cameraX + 20.0f, kBattleTop + 44.0f}, {m_cameraX + kWidth - 20.0f, kBattleBottom - 58.0f}, 15.0f, 0.28f, D2D1::ColorF(0xFFB347, 0.62f));
-        ApplyAreaDamage({m_cameraX + 640.0f, kLaneY}, 330.0f, 52.0f + ThreatLevel() * 3.0f, D2D1::ColorF(0xFFB347));
+    case TelegraphKind::SolarFlare:
+        AddBeam(telegraph.start, telegraph.end, 15.0f, 0.28f, D2D1::ColorF(0xFFB347, 0.62f));
+        ApplyLineDamage(telegraph.start, telegraph.end, telegraph.width, telegraph.damage, D2D1::ColorF(0xFFB347));
         SpawnStageReinforcement(EnemyUnit::Flare, 250.0f);
         AddCameraTrauma(0.44f);
+        break;
+    case TelegraphKind::BossFlareLine:
+        AddBeam(telegraph.start, telegraph.end, 13.0f, 0.24f, D2D1::ColorF(0xFFB347, 0.72f));
+        ApplyLineDamage(telegraph.start, telegraph.end, telegraph.width, telegraph.damage, D2D1::ColorF(0xFFB347));
+        AddCameraTrauma(0.36f);
+        break;
+    case TelegraphKind::BossPulseCircle:
+        ApplyAreaDamage(telegraph.start, telegraph.radius, telegraph.damage, telegraph.color);
+        AddRing(telegraph.start, telegraph.radius, 0.52f, D2D1::ColorF(telegraph.color.r, telegraph.color.g, telegraph.color.b, 0.48f), 4.0f);
+        AddCameraTrauma(0.42f);
+        break;
+    case TelegraphKind::BossReinforce:
+        SpawnStageReinforcement(m_selectedStage == 9 ? EnemyUnit::Comet : StageBossType(), kEnemyBaseX - telegraph.start.x, false);
+        AddRing(telegraph.start, telegraph.radius, 0.42f, D2D1::ColorF(0xFF9BA8, 0.48f), 3.0f);
         break;
     }
 }
@@ -413,6 +587,29 @@ void PawlineGameImpl::ApplyAreaDamage(Vec2 center, float radius, float damage, D
     AddRing(center, std::min(radius, 360.0f), 0.45f, D2D1::ColorF(color.r, color.g, color.b, 0.34f), 3.0f);
 }
 
+void PawlineGameImpl::ApplyLineDamage(Vec2 start, Vec2 end, float width, float damage, D2D1_COLOR_F color)
+{
+    // 직선형 경고는 선분과 유닛 사이의 최단거리로 판정한다.
+    const Vec2 line = end - start;
+    const float lengthSq = std::max(1.0f, line.x * line.x + line.y * line.y);
+    for (Unit& unit : m_units)
+    {
+        if (!unit.alive)
+        {
+            continue;
+        }
+
+        const Vec2 fromStart = unit.pos - start;
+        const float t = Clamp01((fromStart.x * line.x + fromStart.y * line.y) / lengthSq);
+        const Vec2 closest = start + line * t;
+        if (Distance(unit.pos, closest) <= width * 0.5f + unit.radius)
+        {
+            DamageUnit(unit, damage, unit.team == Team::Player ? Team::Enemy : Team::Player);
+            AddParticleEx(unit.pos, {0.0f, -26.0f}, 8.0f, 0.34f, D2D1::ColorF(color.r, color.g, color.b, 0.42f), ParticleKind::Glow, 0.0f, 0.90f, 22.0f);
+        }
+    }
+}
+
 void PawlineGameImpl::SpawnStageReinforcement(EnemyUnit type, float forwardOffset, bool elite)
 {
     SpawnEnemy(type, elite);
@@ -429,7 +626,7 @@ void PawlineGameImpl::SpawnStageReinforcement(EnemyUnit type, float forwardOffse
 
 float PawlineGameImpl::ThreatLevel() const
 {
-    return (1.0f + m_stageTime / 34.0f) * CurrentStage().threatScale;
+    return (1.0f + m_stageTime / 34.0f) * CurrentStage().threatScale * DifficultyThreatMultiplier();
 }
 
 float PawlineGameImpl::MaxEnergy() const
@@ -439,7 +636,8 @@ float PawlineGameImpl::MaxEnergy() const
 
 float PawlineGameImpl::EnergyRegen() const
 {
-    return 34.0f + static_cast<float>(m_walletLevel - 1) * 15.0f;
+    const float medicBoost = HasLoadoutUnit(PlayerUnit::Mint) ? 4.0f : 0.0f;
+    return 34.0f + static_cast<float>(m_walletLevel - 1) * 15.0f + medicBoost;
 }
 
 int PawlineGameImpl::WalletUpgradeCost() const
@@ -475,6 +673,132 @@ float PawlineGameImpl::WalletPulseInterval() const
     return std::max(8.0f, 18.0f - static_cast<float>(m_walletLevel - 1) * 2.2f);
 }
 
+bool PawlineGameImpl::HasLoadoutUnit(PlayerUnit unit) const
+{
+    for (PlayerUnit item : m_loadout)
+    {
+        if (item == unit)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+float PawlineGameImpl::SynergyHpMultiplier(PlayerUnit unit) const
+{
+    // 방어 조합: Box + Frost가 있으면 전열 유닛이 더 오래 버틴다.
+    const bool guardWall = HasLoadoutUnit(PlayerUnit::Box) && HasLoadoutUnit(PlayerUnit::Frost);
+    if (guardWall && (unit == PlayerUnit::Box || unit == PlayerUnit::Frost || unit == PlayerUnit::Titan))
+    {
+        return 1.10f;
+    }
+    return 1.0f;
+}
+
+float PawlineGameImpl::SynergyDamageMultiplier(PlayerUnit unit) const
+{
+    // 원거리 조합: Spark + Prism은 빔/저격 계열 피해를 올린다.
+    const bool arcFocus = HasLoadoutUnit(PlayerUnit::Spark) && HasLoadoutUnit(PlayerUnit::Prism);
+    if (arcFocus && (unit == PlayerUnit::Spark || unit == PlayerUnit::Prism || unit == PlayerUnit::Orbit || unit == PlayerUnit::Nebula))
+    {
+        return 1.08f;
+    }
+
+    // 돌격 조합: Dash + Comet은 빠른 근접 유닛의 공격력을 올린다.
+    const bool rushPack = HasLoadoutUnit(PlayerUnit::Dash) && HasLoadoutUnit(PlayerUnit::Comet);
+    if (rushPack && (unit == PlayerUnit::Dash || unit == PlayerUnit::Comet || unit == PlayerUnit::Drill))
+    {
+        return 1.07f;
+    }
+    return 1.0f;
+}
+
+float PawlineGameImpl::SynergyRangeMultiplier(PlayerUnit unit) const
+{
+    const bool orbitScope = HasLoadoutUnit(PlayerUnit::Orbit) && HasLoadoutUnit(PlayerUnit::Nebula);
+    if (orbitScope && GetPlayerStats(unit).ranged)
+    {
+        return 1.06f;
+    }
+    return 1.0f;
+}
+
+float PawlineGameImpl::SynergySpeedMultiplier(PlayerUnit unit) const
+{
+    const bool rushPack = HasLoadoutUnit(PlayerUnit::Dash) && HasLoadoutUnit(PlayerUnit::Comet);
+    if (rushPack && (unit == PlayerUnit::Dash || unit == PlayerUnit::Comet))
+    {
+        return 1.07f;
+    }
+    return 1.0f;
+}
+
+std::wstring PawlineGameImpl::SynergySummary() const
+{
+    std::vector<std::wstring> lines;
+    if (HasLoadoutUnit(PlayerUnit::Box) && HasLoadoutUnit(PlayerUnit::Frost))
+    {
+        lines.push_back(L"GUARD WALL  FRONT HP +10%");
+    }
+    if (HasLoadoutUnit(PlayerUnit::Spark) && HasLoadoutUnit(PlayerUnit::Prism))
+    {
+        lines.push_back(L"ARC FOCUS  RANGED DMG +8%");
+    }
+    if (HasLoadoutUnit(PlayerUnit::Dash) && HasLoadoutUnit(PlayerUnit::Comet))
+    {
+        lines.push_back(L"RUSH PACK  SPEED/DMG +7%");
+    }
+    if (HasLoadoutUnit(PlayerUnit::Orbit) && HasLoadoutUnit(PlayerUnit::Nebula))
+    {
+        lines.push_back(L"STAR SCOPE  RANGE +6%");
+    }
+    if (HasLoadoutUnit(PlayerUnit::Mint))
+    {
+        lines.push_back(L"MINT SUPPLY  ENERGY REGEN +4");
+    }
+    if (HasLoadoutUnit(PlayerUnit::Solar) && HasLoadoutUnit(PlayerUnit::Bell))
+    {
+        lines.push_back(L"SUN CHIME  CANNON CHARGE +12%");
+    }
+    if (lines.empty())
+    {
+        return L"NO ACTIVE SYNERGY";
+    }
+
+    std::wstring text;
+    for (int i = 0; i < static_cast<int>(lines.size()); ++i)
+    {
+        if (i > 0)
+        {
+            text += L" / ";
+        }
+        text += lines[i];
+    }
+    return text;
+}
+
+std::wstring PawlineGameImpl::GrowthRecommendation() const
+{
+    for (int i = 0; i < kRosterCount; ++i)
+    {
+        const PlayerUnit unit = static_cast<PlayerUnit>(i);
+        if (!IsUnitUnlocked(unit) && m_lumen >= UnitUnlockCost(unit))
+        {
+            return L"BUY " + GetPlayerStats(unit).name + L" READY";
+        }
+    }
+    for (int i = 0; i < kRosterCount; ++i)
+    {
+        const PlayerUnit unit = static_cast<PlayerUnit>(i);
+        if (IsUnitUnlocked(unit) && UnitLevel(unit) < kMaxUnitLevel && m_lumen >= UnitUpgradeCost(unit))
+        {
+            return L"UPGRADE " + GetPlayerStats(unit).name + L" READY";
+        }
+    }
+    return L"SAVE LUMEN FOR NEXT UNIT";
+}
+
 void PawlineGameImpl::UpdateWalletPulse(float dt)
 {
     m_walletPulseTimer -= dt;
@@ -490,7 +814,7 @@ void PawlineGameImpl::UpdateWalletPulse(float dt)
 void PawlineGameImpl::TriggerWalletPulse(bool upgradeBurst)
 {
     const float energyGain = (upgradeBurst ? 72.0f : 34.0f) + static_cast<float>(m_walletLevel) * (upgradeBurst ? 18.0f : 14.0f);
-    const float heal = (upgradeBurst ? 14.0f : 5.0f) + static_cast<float>(m_walletLevel) * 6.0f;
+    const float heal = ((upgradeBurst ? 14.0f : 5.0f) + static_cast<float>(m_walletLevel) * 6.0f) * (HasLoadoutUnit(PlayerUnit::Mint) ? 1.18f : 1.0f);
     m_energy = std::min(MaxEnergy(), m_energy + energyGain);
     m_cannonCharge = std::min(100.0f, m_cannonCharge + 3.0f + static_cast<float>(m_walletLevel) * 1.4f);
 

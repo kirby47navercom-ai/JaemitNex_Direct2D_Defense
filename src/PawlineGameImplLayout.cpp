@@ -106,6 +106,12 @@ D2D1_RECT_F PawlineGameImpl::BriefingShopButtonRect() const
     return D2D1::RectF(316.0f, 690.0f, 534.0f, 754.0f);
 }
 
+D2D1_RECT_F PawlineGameImpl::BriefingDifficultyRect(int index) const
+{
+    const float x = 604.0f + static_cast<float>(index) * 128.0f;
+    return D2D1::RectF(x, 520.0f, x + 112.0f, 568.0f);
+}
+
 D2D1_RECT_F PawlineGameImpl::ShopBackButtonRect() const
 {
     return D2D1::RectF(58.0f, 716.0f, 244.0f, 768.0f);

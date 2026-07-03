@@ -23,3 +23,22 @@ This document mirrors the runtime values in `src/GameData.cpp` so the stage curv
 - `Threat` scales enemy stats and boss cadence.
 - `First Boss` gets earlier in later stages to make the final planets feel more urgent.
 - Gimmicks are implemented in `UpdateStageGimmicks()` and `TriggerStageGimmick()` in `src/PawlineGameImplCombat.cpp`.
+
+## Difficulty
+
+| Difficulty | Player Base | Enemy Base | Threat | Spawn Interval | Reward |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Easy | 116% | 88% | 84% | 115% | 88% |
+| Normal | 100% | 100% | 100% | 100% | 100% |
+| Hard | 92% | 118% | 122% | 86% | 128% |
+
+## Loadout Synergy
+
+| Synergy | Required Units | Effect |
+| --- | --- | --- |
+| Guard Wall | Box Guard + Frost Guard | Front-line HP +10% |
+| Arc Focus | Spark Nya + Prism Snipe | Ranged damage +8% |
+| Rush Pack | Dash Kit + Comet Ace | Rush speed/damage +7% |
+| Star Scope | Orbit Mage + Nebula Queen | Ranged range +6% |
+| Mint Supply | Mint Medic | Energy regen +4 and stronger wallet healing |
+| Sun Chime | Solar Brave + Bell Oracle | Cannon charge +12% |
