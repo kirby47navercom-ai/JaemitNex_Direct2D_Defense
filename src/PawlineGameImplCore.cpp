@@ -400,8 +400,6 @@ void PawlineGameImpl::LoadBitmapAssets()
         return;
     }
 
-    LoadBitmapFromFile(AssetPath(L"assets\\sprites\\player_units.png"), m_playerSpriteSheet.ReleaseAndGetAddressOf());
-    LoadBitmapFromFile(AssetPath(L"assets\\sprites\\enemy_units.png"), m_enemySpriteSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\combat_vfx_atlas.png"), m_vfxAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\ui\\pawline_ui_atlas.png"), m_uiAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\cutins\\solar_gatekeeper_cutin.png"), m_bossCutin.ReleaseAndGetAddressOf());
@@ -418,8 +416,6 @@ void PawlineGameImpl::LoadBitmapAssets()
 
 void PawlineGameImpl::DiscardBitmapAssets()
 {
-    m_playerSpriteSheet.Reset();
-    m_enemySpriteSheet.Reset();
     m_vfxAtlas.Reset();
     m_uiAtlas.Reset();
     m_bossCutin.Reset();

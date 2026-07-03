@@ -93,6 +93,36 @@ bool PixelHasInk(wchar_t c)
     }
     return false;
 }
+
+float Smooth01(float t)
+{
+    t = Clamp01(t);
+    return t * t * (3.0f - 2.0f * t);
+}
+
+float UnitMoveStride(const Unit& unit)
+{
+    return unit.animState == UnitAnimState::Move ? std::sin(unit.walkCycle + unit.shakePhase * 0.15f) : 0.0f;
+}
+
+float UnitMoveStep(const Unit& unit)
+{
+    return std::abs(UnitMoveStride(unit));
+}
+
+float UnitHitPose(const Unit& unit)
+{
+    return std::max(Clamp01(unit.hitFlash / 0.12f), Clamp01(unit.knockbackTimer / 0.34f));
+}
+
+float UnitDeathPose(const Unit& unit)
+{
+    if (unit.animState != UnitAnimState::Death && unit.alive)
+    {
+        return 0.0f;
+    }
+    return Smooth01(unit.stateTime / 0.55f);
+}
 }
 
 // Direct2D drawing, including the shader-style procedural VFX pass.
@@ -462,43 +492,6 @@ Vec2 PawlineGameImpl::WorldToScreen(Vec2 pos) const
 D2D1_RECT_F PawlineGameImpl::WorldRect(float left, float top, float right, float bottom) const
 {
     return D2D1::RectF(left - m_cameraX, top, right - m_cameraX, bottom);
-}
-
-void PawlineGameImpl::DrawUnitSprite(const Unit& unit, Vec2 pos, float opacity)
-{
-    ID2D1Bitmap* sheet = unit.team == Team::Player ? m_playerSpriteSheet.Get() : m_enemySpriteSheet.Get();
-    if (!sheet)
-    {
-        return;
-    }
-
-    int frame = 0;
-    if (unit.attackAnim > 0.0f)
-    {
-        frame = std::min(3, static_cast<int>(AttackProgress(unit) * 5.0f));
-    }
-    else if (unit.animState == UnitAnimState::Move)
-    {
-        frame = static_cast<int>(std::floor(unit.walkCycle * 1.15f)) & 3;
-    }
-    else if (unit.animState == UnitAnimState::Hit || unit.knockbackTimer > 0.0f)
-    {
-        frame = 3;
-    }
-    else
-    {
-        frame = static_cast<int>(std::floor((m_stageTime + static_cast<float>(unit.id) * 0.17f) * 2.2f)) & 3;
-    }
-
-    const int maxKind = unit.team == Team::Player ? kRosterCount - 1 : kEnemyCount - 1;
-    const int kind = std::clamp(unit.kind, 0, maxKind);
-    const D2D1_RECT_F source = D2D1::RectF(static_cast<float>(kind * 96), static_cast<float>(frame * 96),
-                                           static_cast<float>(kind * 96 + 96), static_cast<float>(frame * 96 + 96));
-    const float scale = unit.boss ? 2.18f : (unit.elite ? 1.70f : 1.46f);
-    const float size = std::max(54.0f, unit.radius * scale * 2.0f);
-    const D2D1_RECT_F destination = D2D1::RectF(pos.x - size * 0.50f, pos.y - size * 0.62f,
-                                                pos.x + size * 0.50f, pos.y + size * 0.38f);
-    DrawBitmap(sheet, destination, opacity, &source);
 }
 
 void PawlineGameImpl::DrawVfxAtlasTile(int tileX, int tileY, Vec2 center, float size, float opacity)
@@ -2349,22 +2342,43 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
 {
     const PlayerUnit playerType = static_cast<PlayerUnit>(unit.kind);
     const UnitStats stats = PlayerStats(playerType);
-    const Vec2 pos = UnitRenderPos(unit);
+    Vec2 pos = UnitRenderPos(unit);
     const float attack = AttackIntensity(unit);
     const float windup = AttackWindup(unit);
     const float strike = AttackStrike(unit);
     const float recoil = AttackRecoil(unit);
     const float dir = unit.attackDir;
     const float flash = unit.hitFlash > 0.0f ? 1.0f : 0.0f;
+    const float stride = UnitMoveStride(unit);
+    const float step = UnitMoveStep(unit);
+    const float hitPose = UnitHitPose(unit);
+    const float deathPose = UnitDeathPose(unit);
+    const float idleBreath = unit.animState == UnitAnimState::Idle ? std::sin(unit.stateTime * 3.0f + unit.shakePhase) : 0.0f;
+    const float manualLean = strike * 8.0f - windup * 6.5f - recoil * 3.0f - hitPose * 5.0f;
+    pos.x += dir * manualLean;
+    pos.y += deathPose * 15.0f - step * 2.2f + idleBreath * 0.7f;
     const D2D1_COLOR_F ink = D2D1::ColorF(0x061019, 0.96f);
     D2D1_COLOR_F body = stats.color;
     body.r = std::min(1.0f, body.r + flash * 0.25f);
     body.g = std::min(1.0f, body.g + flash * 0.25f);
     body.b = std::min(1.0f, body.b + flash * 0.25f);
-    const float bodyRx = unit.radius * (1.0f + strike * 0.22f - windup * 0.08f + recoil * 0.05f);
-    const float bodyRy = unit.radius * (1.0f - strike * 0.14f + windup * 0.08f + recoil * 0.03f);
+    const float bodyRx = unit.radius * (1.0f + strike * 0.30f - windup * 0.10f + recoil * 0.07f + step * 0.05f + deathPose * 0.34f);
+    const float bodyRy = unit.radius * (1.0f - strike * 0.18f + windup * 0.10f + recoil * 0.04f - step * 0.04f - deathPose * 0.42f);
+    const float trailAlpha = Clamp01(strike * 0.55f + windup * 0.18f + step * 0.12f + hitPose * 0.24f);
 
-    FillEllipse({pos.x, pos.y + unit.radius + 9.0f}, unit.radius * 1.25f, 7.0f, D2D1::ColorF(0x000000, 0.28f));
+    if (trailAlpha > 0.02f)
+    {
+        // 시트 프레임 대신 잔상으로 걷기/공격 방향을 직접 보여준다.
+        for (int i = 1; i <= 3; ++i)
+        {
+            const float t = static_cast<float>(i);
+            const Vec2 ghost = {pos.x - dir * (t * (8.0f + strike * 9.0f)), pos.y + t * 1.6f + stride * t * 0.8f};
+            FillEllipse(ghost, bodyRx * (1.0f - t * 0.13f), bodyRy * (1.0f - t * 0.10f),
+                        D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, trailAlpha * (0.13f - t * 0.025f)));
+        }
+    }
+
+    FillEllipse({pos.x, pos.y + unit.radius + 9.0f + deathPose * 3.0f}, unit.radius * (1.25f + deathPose * 0.35f), 7.0f + deathPose * 1.5f, D2D1::ColorF(0x000000, 0.28f));
     FillEllipse({pos.x - unit.radius * 0.52f, pos.y - unit.radius * 0.72f}, unit.radius * 0.46f, unit.radius * 0.46f, ink);
     FillEllipse({pos.x + unit.radius * 0.52f, pos.y - unit.radius * 0.72f}, unit.radius * 0.46f, unit.radius * 0.46f, ink);
     FillEllipse(pos, bodyRx + 3.4f, bodyRy + 3.4f, ink);
@@ -2374,7 +2388,17 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
     FillEllipse({pos.x - unit.radius * 0.24f, pos.y - unit.radius * 0.46f}, unit.radius * 0.30f, unit.radius * 0.18f, D2D1::ColorF(0xFFFFFF, 0.18f));
     StrokeEllipse(pos, bodyRx, bodyRy, stats.accent, 2.4f);
     DrawUnitIdentityMark(unit, pos, stats.accent);
-    DrawUnitSprite(unit, pos, unit.hitFlash > 0.0f ? 0.92f : 0.82f);
+    const float pawReach = strike * 17.0f - windup * 9.0f - recoil * 5.0f;
+    const Vec2 frontPaw = {pos.x + dir * (unit.radius * 0.62f + pawReach), pos.y + unit.radius * 0.22f - strike * 7.0f + stride * 2.2f};
+    const Vec2 backPaw = {pos.x - dir * (unit.radius * 0.55f + windup * 5.0f - recoil * 3.0f), pos.y + unit.radius * 0.28f - stride * 2.0f + deathPose * 4.0f};
+    DrawLine({pos.x + dir * unit.radius * 0.25f, pos.y + unit.radius * 0.08f}, frontPaw, ink, 7.4f);
+    DrawLine({pos.x + dir * unit.radius * 0.25f, pos.y + unit.radius * 0.08f}, frontPaw, D2D1::ColorF(0xFFF7D6), 4.4f);
+    DrawLine({pos.x - dir * unit.radius * 0.24f, pos.y + unit.radius * 0.15f}, backPaw, ink, 6.6f);
+    DrawLine({pos.x - dir * unit.radius * 0.24f, pos.y + unit.radius * 0.15f}, backPaw, body, 3.8f);
+    FillEllipse(frontPaw, 7.6f + strike * 2.0f, 6.0f + strike * 1.5f, ink);
+    FillEllipse(frontPaw, 5.2f + strike * 1.6f, 4.0f + strike * 1.0f, D2D1::ColorF(0xFFF7D6));
+    FillEllipse(backPaw, 6.6f, 4.6f, ink);
+    FillEllipse(backPaw, 4.5f, 3.2f, body);
     if (IsUnitEvolved(playerType))
     {
         // 진화한 유닛은 머리 위의 작은 빛 장식과 공격 잔광으로 일반 유닛과 구분한다.
@@ -2545,12 +2569,19 @@ void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
 {
     const EnemyUnit type = static_cast<EnemyUnit>(unit.kind);
     const UnitStats stats = GetEnemyStats(type, ThreatLevel());
-    const Vec2 pos = UnitRenderPos(unit);
+    Vec2 pos = UnitRenderPos(unit);
     const float attack = AttackIntensity(unit);
     const float windup = AttackWindup(unit);
     const float strike = AttackStrike(unit);
     const float recoil = AttackRecoil(unit);
     const float dir = unit.attackDir;
+    const float stride = UnitMoveStride(unit);
+    const float step = UnitMoveStep(unit);
+    const float hitPose = UnitHitPose(unit);
+    const float deathPose = UnitDeathPose(unit);
+    const float idleBreath = unit.animState == UnitAnimState::Idle ? std::sin(unit.stateTime * 2.7f + unit.shakePhase) : 0.0f;
+    pos.x += dir * (strike * 8.5f - windup * 6.0f - recoil * 3.0f - hitPose * 5.5f);
+    pos.y += deathPose * 16.0f - step * 1.8f + idleBreath * 0.6f;
     const D2D1_COLOR_F ink = D2D1::ColorF(0x08080F, 0.96f);
     D2D1_COLOR_F body = stats.color;
     if (unit.hitFlash > 0.0f)
@@ -2560,15 +2591,41 @@ void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
         body.b = std::min(1.0f, body.b + 0.18f);
     }
 
-    FillEllipse({pos.x, pos.y + unit.radius + 9.0f}, unit.radius * 1.25f, 7.0f, D2D1::ColorF(0x000000, 0.30f));
-    const float bodyRx = unit.radius * (1.08f + strike * 0.24f - windup * 0.07f + recoil * 0.04f);
-    const float bodyRy = unit.radius * (1.0f - strike * 0.13f + windup * 0.07f);
+    const float bodyRx = unit.radius * (1.08f + strike * 0.30f - windup * 0.09f + recoil * 0.05f + step * 0.04f + deathPose * 0.30f);
+    const float bodyRy = unit.radius * (1.0f - strike * 0.17f + windup * 0.09f - step * 0.03f - deathPose * 0.40f);
+    const float trailAlpha = Clamp01(strike * 0.52f + windup * 0.16f + step * 0.10f + hitPose * 0.24f);
+
+    if (trailAlpha > 0.02f)
+    {
+        // 적도 같은 수동 포즈 규칙을 쓰지만, 더 거칠고 어두운 잔상으로 위협감을 준다.
+        for (int i = 1; i <= 3; ++i)
+        {
+            const float t = static_cast<float>(i);
+            const Vec2 ghost = {pos.x - dir * (t * (7.0f + strike * 10.0f)), pos.y + t * 1.8f - stride * t * 0.6f};
+            FillEllipse(ghost, bodyRx * (1.0f - t * 0.12f), bodyRy * (1.0f - t * 0.11f),
+                        D2D1::ColorF(stats.accent.r, stats.accent.g * 0.75f, stats.accent.b * 0.75f, trailAlpha * (0.12f - t * 0.024f)));
+        }
+    }
+
+    FillEllipse({pos.x, pos.y + unit.radius + 9.0f + deathPose * 3.0f}, unit.radius * (1.25f + deathPose * 0.38f), 7.0f + deathPose * 1.5f, D2D1::ColorF(0x000000, 0.30f));
     FillEllipse(pos, bodyRx + 3.2f, bodyRy + 3.2f, ink);
     FillEllipse(pos, bodyRx, bodyRy, body);
     FillEllipse({pos.x - unit.radius * 0.18f, pos.y - unit.radius * 0.42f}, unit.radius * 0.28f, unit.radius * 0.15f, D2D1::ColorF(0xFFFFFF, 0.12f));
     StrokeEllipse(pos, bodyRx, bodyRy, stats.accent, 2.2f);
     DrawUnitIdentityMark(unit, pos, stats.accent);
-    DrawUnitSprite(unit, pos, unit.boss ? 0.84f : (unit.hitFlash > 0.0f ? 0.88f : 0.76f));
+    const float clawReach = strike * 16.0f - windup * 8.0f - recoil * 4.0f;
+    const Vec2 frontClaw = {pos.x + dir * (unit.radius * 0.68f + clawReach), pos.y + unit.radius * 0.20f - strike * 5.5f + stride * 1.8f};
+    const Vec2 rearClaw = {pos.x - dir * (unit.radius * 0.58f + windup * 4.0f), pos.y + unit.radius * 0.28f - stride * 1.8f + deathPose * 4.5f};
+    DrawLine({pos.x + dir * unit.radius * 0.24f, pos.y + unit.radius * 0.10f}, frontClaw, ink, 7.0f);
+    DrawLine({pos.x + dir * unit.radius * 0.24f, pos.y + unit.radius * 0.10f}, frontClaw, stats.accent, 3.8f);
+    DrawLine({pos.x - dir * unit.radius * 0.22f, pos.y + unit.radius * 0.15f}, rearClaw, ink, 6.2f);
+    DrawLine({pos.x - dir * unit.radius * 0.22f, pos.y + unit.radius * 0.15f}, rearClaw, body, 3.5f);
+    for (int i = -1; i <= 1; ++i)
+    {
+        const Vec2 tip = {frontClaw.x + dir * (7.0f + strike * 5.0f), frontClaw.y + static_cast<float>(i) * 4.0f};
+        DrawLine(frontClaw, tip, ink, 3.0f);
+        DrawLine(frontClaw, tip, D2D1::ColorF(0xFFE3E8), 1.4f);
+    }
     DrawEnemyWeapon(unit, pos, stats, windup, strike, recoil);
     DrawUnitActionLines(unit, pos, stats.accent);
     FillEllipse({pos.x - unit.radius * 0.32f, pos.y - unit.radius * 0.12f}, 3.0f, 4.6f, stats.accent);

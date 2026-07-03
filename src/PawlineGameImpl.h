@@ -852,8 +852,6 @@ private:
 
     D2D1_RECT_F WorldRect(float left, float top, float right, float bottom) const;
 
-    void DrawUnitSprite(const Unit& unit, Vec2 pos, float opacity);
-
     void DrawVfxAtlasTile(int tileX, int tileY, Vec2 center, float size, float opacity);
 
     void DrawUiPanelAsset(D2D1_RECT_F rect, int tileIndex, float opacity);
@@ -1033,8 +1031,6 @@ private:
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_buttonFormat;
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_centerFormat;
     std::array<Microsoft::WRL::ComPtr<ID2D1Bitmap>, kStageCount> m_backgroundBitmaps;
-    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_playerSpriteSheet;
-    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_enemySpriteSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_vfxAtlas;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_uiAtlas;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_bossCutin;
