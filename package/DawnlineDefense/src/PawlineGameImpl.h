@@ -37,6 +37,7 @@ constexpr float kEnemyBaseX = kWorldWidth - 112.0f;
 constexpr float kCameraMaxX = kWorldWidth - kWidth;
 constexpr float kPi = 3.14159265358979323846f;
 constexpr int kMaxUnitLevel = 5;
+constexpr int kSaveSlotCount = 3;
 
 struct Vec2
 {
@@ -434,9 +435,21 @@ private:
 
     std::wstring ProgressPath() const;
 
+    std::wstring ProgressPath(int slot) const;
+
+    std::wstring LegacyProgressPath() const;
+
+    std::wstring SaveSlotLabel() const;
+
     void LoadProgress();
 
-    void SaveProgress() const;
+    void LoadProgress(int slot);
+
+    void SaveProgress();
+
+    void SaveProgressToSlot(int slot) const;
+
+    void SelectSaveSlot(int slot);
 
     void ResetProgressData();
 
@@ -612,6 +625,8 @@ private:
 
     void DamageUnit(Unit& target, float damage, Team sourceTeam);
 
+    void ApplyImpactReaction(Unit& target, Team sourceTeam, float damage, D2D1_COLOR_F color);
+
     void DamageBase(Team baseTeam, float damage, Vec2 source);
 
     void ShakeUnit(Unit& unit, float duration);
@@ -707,6 +722,8 @@ private:
     D2D1_RECT_F OptionsViewUpButtonRect() const;
 
     D2D1_RECT_F OptionsViewResetButtonRect() const;
+
+    D2D1_RECT_F OptionsSaveSlotButtonRect(int index) const;
 
     D2D1_RECT_F OptionsSaveProgressButtonRect() const;
 
@@ -1023,6 +1040,7 @@ private:
     int m_resultScore = 0;
     int m_lumen = 0;
     int m_lastReward = 0;
+    int m_saveSlot = 0;
 
     // 전투 자원, 기지 체력, 시간 배율 상태.
     float m_energy = 0.0f;
@@ -1076,6 +1094,7 @@ private:
     float m_demoSpawnTimer = 0.0f;
     float m_demoWalletTimer = 0.0f;
     float m_resetConfirmTimer = 0.0f;
+    float m_autoSaveNoticeTimer = 0.0f;
 
     // 게임 전체 플래그. 일시정지, 결과, 접근성, 디버그 상태를 구분한다.
     Difficulty m_difficulty = Difficulty::Normal;
@@ -1093,5 +1112,6 @@ private:
     bool m_debugMode = false;
     int m_bossPhaseBannerLevel = 0;
     std::wstring m_message;
+    std::wstring m_autoSaveNotice;
     float m_messageTimer = 0.0f;
 };

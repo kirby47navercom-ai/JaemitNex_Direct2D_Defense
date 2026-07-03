@@ -126,6 +126,7 @@ void PawlineGameImpl::Render()
     {
         DrawOptions();
         DrawUiPulses();
+        DrawMessage();
         if (m_escapeMenuOpen)
         {
             DrawEscapeMenuClean();
@@ -686,6 +687,11 @@ void PawlineGameImpl::DrawOptions()
 
     DrawString(L"옵션", D2D1::RectF(250.0f, 132.0f, 1030.0f, 188.0f), m_titleFormat, D2D1::ColorF(0xF3FBFF));
     DrawString(L"전투 감각, 기본 속도, 화면 안전 여백을 조정합니다.", D2D1::RectF(250.0f, 192.0f, 1030.0f, 222.0f), m_centerFormat, D2D1::ColorF(0xBFD1DB));
+    for (int i = 0; i < kSaveSlotCount; ++i)
+    {
+        const bool active = i == m_saveSlot;
+        DrawButton(OptionsSaveSlotButtonRect(i), L"슬롯 " + ToWideInt(i + 1), true, active ? D2D1::ColorF(0x3F4A22) : D2D1::ColorF(0x202833));
+    }
 
     DrawButton(OptionsShakeButtonRect(), m_hitShakeEnabled ? L"피격 흔들림 켜짐" : L"피격 흔들림 꺼짐", true, m_hitShakeEnabled ? D2D1::ColorF(0x173C4B) : D2D1::ColorF(0x302735));
     DrawString(L"H", D2D1::RectF(OptionsShakeButtonRect().right + 16.0f, OptionsShakeButtonRect().top + 14.0f, OptionsShakeButtonRect().right + 56.0f, OptionsShakeButtonRect().bottom), m_centerFormat, D2D1::ColorF(0x8EA9B8));
@@ -3414,6 +3420,14 @@ void PawlineGameImpl::DrawButton(D2D1_RECT_F rect, const std::wstring& label, bo
 
 void PawlineGameImpl::DrawMessage()
 {
+    if (m_autoSaveNoticeTimer > 0.0f && !m_autoSaveNotice.empty())
+    {
+        const float saveAlpha = Clamp01(m_autoSaveNoticeTimer / 0.42f);
+        const D2D1_RECT_F saveRect = D2D1::RectF(944.0f, 102.0f, 1220.0f, 134.0f);
+        DrawCartoonPanel(saveRect, D2D1::ColorF(0x071017, 0.78f * saveAlpha), D2D1::ColorF(0xB8FF89, saveAlpha));
+        DrawPixelTextCentered(m_autoSaveNotice, D2D1::RectF(saveRect.left + 10.0f, saveRect.top + 7.0f, saveRect.right - 10.0f, saveRect.bottom - 5.0f), 1.8f, D2D1::ColorF(0xDFFFCE, saveAlpha), saveAlpha);
+    }
+
     if (m_messageTimer <= 0.0f || m_message.empty())
     {
         return;

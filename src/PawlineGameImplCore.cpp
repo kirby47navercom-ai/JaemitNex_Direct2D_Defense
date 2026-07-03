@@ -448,7 +448,27 @@ void PawlineGameImpl::GrantStageReward()
 
 std::wstring PawlineGameImpl::ProgressPath() const
 {
+    return ProgressPath(m_saveSlot);
+}
+
+std::wstring PawlineGameImpl::ProgressPath(int slot) const
+{
     // 실행 파일과 같은 폴더에 저장해서 ZIP 제출본을 다른 PC로 옮겨도 진행 파일 위치를 찾기 쉽다.
+    wchar_t path[MAX_PATH] = {};
+    GetModuleFileNameW(nullptr, path, MAX_PATH);
+    std::wstring fullPath = path;
+    const size_t slash = fullPath.find_last_of(L"\\/");
+    const int safeSlot = std::clamp(slot, 0, kSaveSlotCount - 1);
+    const std::wstring fileName = L"pawline_progress_slot" + ToWideInt(safeSlot + 1) + L".txt";
+    if (slash == std::wstring::npos)
+    {
+        return fileName;
+    }
+    return fullPath.substr(0, slash + 1) + fileName;
+}
+
+std::wstring PawlineGameImpl::LegacyProgressPath() const
+{
     wchar_t path[MAX_PATH] = {};
     GetModuleFileNameW(nullptr, path, MAX_PATH);
     std::wstring fullPath = path;
@@ -460,12 +480,29 @@ std::wstring PawlineGameImpl::ProgressPath() const
     return fullPath.substr(0, slash + 1) + L"pawline_progress.txt";
 }
 
+std::wstring PawlineGameImpl::SaveSlotLabel() const
+{
+    return L"슬롯 " + ToWideInt(m_saveSlot + 1);
+}
+
 void PawlineGameImpl::LoadProgress()
 {
+    LoadProgress(m_saveSlot);
+}
+
+void PawlineGameImpl::LoadProgress(int slot)
+{
+    m_saveSlot = std::clamp(slot, 0, kSaveSlotCount - 1);
     // 진행 데이터, 편성, 옵션을 불러온다. 파일이 없으면 기본값 그대로 시작한다.
     std::wifstream file(ProgressPath());
+    if (!file && m_saveSlot == 0)
+    {
+        file.clear();
+        file.open(LegacyProgressPath());
+    }
     if (!file)
     {
+        SetMessage(SaveSlotLabel() + L"에 저장 데이터가 아직 없어.");
         return;
     }
 
@@ -549,10 +586,17 @@ void PawlineGameImpl::LoadProgress()
     }
 }
 
-void PawlineGameImpl::SaveProgress() const
+void PawlineGameImpl::SaveProgress()
+{
+    SaveProgressToSlot(m_saveSlot);
+    m_autoSaveNotice = L"자동 저장됨  " + SaveSlotLabel();
+    m_autoSaveNoticeTimer = 1.85f;
+}
+
+void PawlineGameImpl::SaveProgressToSlot(int slot) const
 {
     // v2 저장 파일은 성장 상태뿐 아니라 편성/옵션까지 같이 기록한다.
-    std::wofstream file(ProgressPath());
+    std::wofstream file(ProgressPath(slot));
     if (!file)
     {
         return;
@@ -583,6 +627,28 @@ void PawlineGameImpl::SaveProgress() const
     file << m_selectedStage << L" " << m_selectedLoadoutSlot << L"\n";
     file << m_defaultGameSpeed << L" " << m_userViewScale << L" "
          << (m_hitShakeEnabled ? 1 : 0) << L" " << (m_reduceFlashes ? 1 : 0) << L"\n";
+}
+
+void PawlineGameImpl::SelectSaveSlot(int slot)
+{
+    const int safeSlot = std::clamp(slot, 0, kSaveSlotCount - 1);
+    if (m_saveSlot == safeSlot)
+    {
+        SetMessage(SaveSlotLabel() + L" 선택 중.");
+        return;
+    }
+
+    m_saveSlot = safeSlot;
+    std::wifstream check(ProgressPath(m_saveSlot));
+    if (!check && m_saveSlot == 0)
+    {
+        check.clear();
+        check.open(LegacyProgressPath());
+    }
+    const bool hasSave = static_cast<bool>(check);
+    LoadProgress(m_saveSlot);
+    UpdateViewMetrics();
+    SetMessage(hasSave ? SaveSlotLabel() + L" 불러오기 완료." : SaveSlotLabel() + L"은 아직 비어 있어.");
 }
 
 void PawlineGameImpl::ResetProgressData()
@@ -742,6 +808,10 @@ void PawlineGameImpl::Update(float dt)
     if (m_messageTimer > 0.0f)
     {
         m_messageTimer -= dt;
+    }
+    if (m_autoSaveNoticeTimer > 0.0f)
+    {
+        m_autoSaveNoticeTimer = std::max(0.0f, m_autoSaveNoticeTimer - dt);
     }
     if (m_playerBaseShake > 0.0f)
     {

@@ -5,6 +5,7 @@
 
 constexpr int kLoadoutSize = 5;
 constexpr int kRosterCount = 14;
+constexpr int kEnemyCount = 17;
 constexpr int kStageCount = 10;
 
 enum class PlayerUnit

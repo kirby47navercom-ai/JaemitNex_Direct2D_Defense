@@ -62,6 +62,12 @@ D2D1_RECT_F PawlineGameImpl::OptionsViewResetButtonRect() const
     return D2D1::RectF(552.0f, 598.0f, 728.0f, 640.0f);
 }
 
+D2D1_RECT_F PawlineGameImpl::OptionsSaveSlotButtonRect(int index) const
+{
+    const float x = 490.0f + static_cast<float>(index) * 102.0f;
+    return D2D1::RectF(x, 230.0f, x + 96.0f, 266.0f);
+}
+
 D2D1_RECT_F PawlineGameImpl::OptionsSaveProgressButtonRect() const
 {
     return D2D1::RectF(490.0f, 654.0f, 638.0f, 700.0f);

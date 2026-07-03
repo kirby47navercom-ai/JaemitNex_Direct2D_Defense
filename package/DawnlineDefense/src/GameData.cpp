@@ -1,456 +1,450 @@
-﻿#include "GameData.h"
+#include "GameData.h"
+
+#include <windows.h>
 
 #include <algorithm>
 #include <array>
+#include <cwchar>
+#include <fstream>
+#include <locale>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+
+namespace
+{
+struct EnemyBalance
+{
+    UnitStats stats;
+    float rewardThreat = 0.0f;
+    float hpThreat = 0.0f;
+    float damageThreat = 0.0f;
+    float speedThreat = 0.0f;
+};
+
+struct BalanceTables
+{
+    std::array<StageDefinition, kStageCount> stages;
+    std::array<UnitStats, kRosterCount> players;
+    std::array<EnemyBalance, kEnemyCount> enemies;
+};
+
+int ClampIndex(int index, int count)
+{
+    return std::max(0, std::min(count - 1, index));
+}
+
+D2D1_COLOR_F ColorFromHex(unsigned int rgb)
+{
+    return D2D1::ColorF(rgb);
+}
+
+UnitStats MakePlayer(std::wstring name, int cost, float cooldown, float hp, float damage, float range,
+                     float attackDelay, float speed, float radius, bool ranged, unsigned int color, unsigned int accent)
+{
+    UnitStats stats;
+    stats.name = std::move(name);
+    stats.cost = cost;
+    stats.cooldown = cooldown;
+    stats.hp = hp;
+    stats.damage = damage;
+    stats.range = range;
+    stats.attackDelay = attackDelay;
+    stats.speed = speed;
+    stats.radius = radius;
+    stats.ranged = ranged;
+    stats.color = ColorFromHex(color);
+    stats.accent = ColorFromHex(accent);
+    return stats;
+}
+
+EnemyBalance MakeEnemy(std::wstring name, int reward, float rewardThreat, float hp, float hpThreat,
+                       float damage, float damageThreat, float range, float attackDelay,
+                       float speed, float speedThreat, float radius, bool ranged,
+                       unsigned int color, unsigned int accent)
+{
+    EnemyBalance balance;
+    balance.stats.name = std::move(name);
+    balance.stats.reward = reward;
+    balance.stats.hp = hp;
+    balance.stats.damage = damage;
+    balance.stats.range = range;
+    balance.stats.attackDelay = attackDelay;
+    balance.stats.speed = speed;
+    balance.stats.radius = radius;
+    balance.stats.ranged = ranged;
+    balance.stats.color = ColorFromHex(color);
+    balance.stats.accent = ColorFromHex(accent);
+    balance.rewardThreat = rewardThreat;
+    balance.hpThreat = hpThreat;
+    balance.damageThreat = damageThreat;
+    balance.speedThreat = speedThreat;
+    return balance;
+}
+
+std::array<StageDefinition, kStageCount> MakeDefaultStages()
+{
+    return {{
+        {L"수성", L"가까운 첫 궤도", L"먼지형과 침형 적",
+         2200.0f, 2500.0f, 190.0f, 2.36f, 0.96f, 42.0f,
+         ColorFromHex(0x101B22), ColorFromHex(0x1C3037), ColorFromHex(0x13262D), ColorFromHex(0x8A9EA8)},
+        {L"금성", L"짙은 대기권", L"산성사수 원거리 적",
+         2250.0f, 2850.0f, 205.0f, 2.18f, 1.05f, 39.0f,
+         ColorFromHex(0x191722), ColorFromHex(0x332936), ColorFromHex(0x241E2B), ColorFromHex(0xE0B16D)},
+        {L"지구", L"푸른 방어선", L"포자병 균형 웨이브",
+         2350.0f, 3200.0f, 220.0f, 2.05f, 1.14f, 36.0f,
+         ColorFromHex(0x0E1D29), ColorFromHex(0x14303A), ColorFromHex(0x102731), ColorFromHex(0x56A7B7)},
+        {L"화성", L"붉은 모래 전선", L"녹슨 장갑형 압박",
+         2400.0f, 3550.0f, 230.0f, 1.98f, 1.24f, 33.0f,
+         ColorFromHex(0x1D1718), ColorFromHex(0x3A2528), ColorFromHex(0x291D20), ColorFromHex(0xDD7666)},
+        {L"목성", L"거대한 폭풍권", L"중력방패 중심",
+         2600.0f, 4200.0f, 250.0f, 1.90f, 1.36f, 30.0f,
+         ColorFromHex(0x1E1B16), ColorFromHex(0x3A3127), ColorFromHex(0x2B261F), ColorFromHex(0xD8A66A)},
+        {L"토성", L"고리 위 방어전", L"고리사수 원거리전",
+         2650.0f, 4650.0f, 260.0f, 1.78f, 1.48f, 28.0f,
+         ColorFromHex(0x171B20), ColorFromHex(0x2D3037), ColorFromHex(0x222731), ColorFromHex(0xCDBB83)},
+        {L"천왕성", L"기울어진 얼음 궤도", L"얼음러너 압박",
+         2750.0f, 5200.0f, 275.0f, 1.68f, 1.62f, 25.0f,
+         ColorFromHex(0x101D22), ColorFromHex(0x19353A), ColorFromHex(0x122B31), ColorFromHex(0x80E5D4)},
+        {L"해왕성", L"먼 푸른 심해", L"해류사수 원거리 러시",
+         2850.0f, 5850.0f, 290.0f, 1.56f, 1.78f, 23.0f,
+         ColorFromHex(0x101928), ColorFromHex(0x182C48), ColorFromHex(0x13243C), ColorFromHex(0x75A7FF)},
+        {L"명왕성", L"가장 먼 어둠", L"공허 중장갑과 빠른 보스",
+         3000.0f, 6600.0f, 310.0f, 1.50f, 1.96f, 18.0f,
+         ColorFromHex(0x15171F), ColorFromHex(0x292637), ColorFromHex(0x211F2E), ColorFromHex(0xC8B7FF)},
+        {L"태양", L"마지막 항성 전선", L"플레어 돌격과 최종 보스",
+         3300.0f, 7600.0f, 350.0f, 1.38f, 2.22f, 15.0f,
+         ColorFromHex(0x241613), ColorFromHex(0x4A2A1F), ColorFromHex(0x351F18), ColorFromHex(0xFFB347)}
+    }};
+}
+
+std::array<UnitStats, kRosterCount> MakeDefaultPlayers()
+{
+    std::array<UnitStats, kRosterCount> table = {};
+    table[static_cast<int>(PlayerUnit::Paw)] = MakePlayer(L"기본냥", 75, 1.35f, 130.0f, 22.0f, 30.0f, 0.72f, 68.0f, 16.0f, false, 0xF4FBFF, 0x65B8FF);
+    table[static_cast<int>(PlayerUnit::Box)] = MakePlayer(L"방패냥", 145, 4.3f, 460.0f, 14.0f, 28.0f, 1.08f, 38.0f, 21.0f, false, 0xF8F0D6, 0xDCA85B);
+    table[static_cast<int>(PlayerUnit::Spark)] = MakePlayer(L"전기냥", 265, 6.4f, 96.0f, 68.0f, 158.0f, 1.78f, 47.0f, 15.0f, true, 0xE8D7FF, 0xBA7BFF);
+    table[static_cast<int>(PlayerUnit::Dash)] = MakePlayer(L"질주냥", 115, 2.05f, 86.0f, 18.0f, 26.0f, 0.36f, 118.0f, 13.0f, false, 0xD9FFE6, 0x62DD88);
+    table[static_cast<int>(PlayerUnit::Bell)] = MakePlayer(L"종냥", 220, 5.15f, 118.0f, 42.0f, 118.0f, 1.06f, 45.0f, 15.0f, true, 0xFFF8C7, 0xF2C94C);
+    table[static_cast<int>(PlayerUnit::Titan)] = MakePlayer(L"거대냥", 390, 9.2f, 760.0f, 88.0f, 39.0f, 1.66f, 24.0f, 27.0f, false, 0xFFE0EF, 0xFF83B7);
+    table[static_cast<int>(PlayerUnit::Frost)] = MakePlayer(L"얼음방패냥", 185, 4.85f, 330.0f, 29.0f, 48.0f, 1.02f, 34.0f, 20.0f, false, 0xDDFBFF, 0x74E8FF);
+    table[static_cast<int>(PlayerUnit::Comet)] = MakePlayer(L"혜성냥", 155, 3.05f, 104.0f, 34.0f, 34.0f, 0.54f, 136.0f, 14.0f, false, 0xFFF0D8, 0xFF9F4A);
+    table[static_cast<int>(PlayerUnit::Orbit)] = MakePlayer(L"궤도냥", 330, 7.2f, 112.0f, 84.0f, 190.0f, 2.05f, 35.0f, 16.0f, true, 0xDBE6FF, 0x88A8FF);
+    table[static_cast<int>(PlayerUnit::Solar)] = MakePlayer(L"태양검냥", 480, 10.6f, 520.0f, 126.0f, 58.0f, 1.48f, 42.0f, 24.0f, false, 0xFFE7B5, 0xFFB347);
+    table[static_cast<int>(PlayerUnit::Mint)] = MakePlayer(L"지원냥", 245, 5.7f, 170.0f, 36.0f, 126.0f, 0.98f, 43.0f, 16.0f, true, 0xD8FFF3, 0x61E6B0);
+    table[static_cast<int>(PlayerUnit::Drill)] = MakePlayer(L"드릴냥", 315, 6.8f, 420.0f, 72.0f, 34.0f, 1.18f, 54.0f, 20.0f, false, 0xE8E0D2, 0xCDAA72);
+    table[static_cast<int>(PlayerUnit::Prism)] = MakePlayer(L"프리즘냥", 430, 8.9f, 92.0f, 118.0f, 230.0f, 2.35f, 31.0f, 15.0f, true, 0xF2E8FF, 0xE19BFF);
+    table[static_cast<int>(PlayerUnit::Nebula)] = MakePlayer(L"성운포냥", 620, 13.4f, 420.0f, 152.0f, 168.0f, 1.86f, 28.0f, 26.0f, true, 0xE5D9FF, 0x9D83FF);
+    return table;
+}
+
+std::array<EnemyBalance, kEnemyCount> MakeDefaultEnemies()
+{
+    std::array<EnemyBalance, kEnemyCount> table = {};
+    table[static_cast<int>(EnemyUnit::Dust)] = MakeEnemy(L"먼지졸병", 34, 3.0f, 88.0f, 24.0f, 18.0f, 2.5f, 29.0f, 0.95f, 46.0f, 1.7f, 15.0f, false, 0x3A5163, 0x8FA8B8);
+    table[static_cast<int>(EnemyUnit::Brute)] = MakeEnemy(L"철갑병", 78, 5.0f, 310.0f, 78.0f, 31.0f, 4.0f, 34.0f, 1.32f, 31.0f, 0.0f, 22.0f, false, 0x684C75, 0xD5A8EA);
+    table[static_cast<int>(EnemyUnit::Skitter)] = MakeEnemy(L"가시러너", 45, 4.0f, 66.0f, 20.0f, 16.0f, 2.0f, 27.0f, 0.62f, 82.0f, 2.0f, 12.0f, false, 0x756D3B, 0xFFE76A);
+    table[static_cast<int>(EnemyUnit::Sulfur)] = MakeEnemy(L"산성사수", 50, 4.0f, 94.0f, 25.0f, 19.0f, 2.4f, 88.0f, 1.14f, 42.0f, 1.2f, 15.0f, true, 0xB8794F, 0xFFD27A);
+    table[static_cast<int>(EnemyUnit::Moss)] = MakeEnemy(L"포자병", 58, 4.0f, 145.0f, 36.0f, 22.0f, 2.8f, 31.0f, 0.92f, 43.0f, 1.0f, 17.0f, false, 0x385C42, 0x7BDB88);
+    table[static_cast<int>(EnemyUnit::Rust)] = MakeEnemy(L"녹슨망치", 86, 6.0f, 390.0f, 88.0f, 36.0f, 4.5f, 36.0f, 1.36f, 28.0f, 0.7f, 24.0f, false, 0x7D3A2D, 0xFF8B60);
+    table[static_cast<int>(EnemyUnit::Storm)] = MakeEnemy(L"중력방패", 106, 7.0f, 520.0f, 108.0f, 32.0f, 4.0f, 42.0f, 1.18f, 25.0f, 0.6f, 27.0f, false, 0x8A6846, 0xF1D09A);
+    table[static_cast<int>(EnemyUnit::Ring)] = MakeEnemy(L"고리사수", 72, 5.0f, 160.0f, 42.0f, 34.0f, 3.8f, 118.0f, 1.38f, 47.0f, 1.2f, 16.0f, true, 0x736C55, 0xE6D392);
+    table[static_cast<int>(EnemyUnit::Frost)] = MakeEnemy(L"얼음러너", 62, 5.0f, 118.0f, 30.0f, 21.0f, 2.7f, 33.0f, 0.74f, 96.0f, 2.4f, 14.0f, false, 0x4E8F95, 0xB9FFF5);
+    table[static_cast<int>(EnemyUnit::Tide)] = MakeEnemy(L"해류사수", 76, 6.0f, 132.0f, 35.0f, 28.0f, 3.5f, 132.0f, 1.08f, 70.0f, 1.8f, 17.0f, true, 0x2F5C97, 0x75A7FF);
+    table[static_cast<int>(EnemyUnit::Void)] = MakeEnemy(L"공허장갑", 122, 8.0f, 650.0f, 128.0f, 48.0f, 5.4f, 46.0f, 1.28f, 24.0f, 0.5f, 28.0f, false, 0x332B4A, 0xC8B7FF);
+    table[static_cast<int>(EnemyUnit::Flare)] = MakeEnemy(L"화염러너", 92, 7.0f, 190.0f, 48.0f, 38.0f, 4.6f, 38.0f, 0.68f, 112.0f, 2.6f, 16.0f, false, 0x9E3F2D, 0xFFB347);
+    table[static_cast<int>(EnemyUnit::Spore)] = MakeEnemy(L"포자포병", 82, 6.0f, 210.0f, 54.0f, 31.0f, 3.6f, 112.0f, 1.24f, 36.0f, 1.0f, 18.0f, true, 0x625083, 0xF0A8FF);
+    table[static_cast<int>(EnemyUnit::Quake)] = MakeEnemy(L"지진돌격", 145, 9.0f, 820.0f, 150.0f, 58.0f, 6.2f, 48.0f, 1.62f, 19.0f, 0.4f, 32.0f, false, 0x57463D, 0xD6B08C);
+    table[static_cast<int>(EnemyUnit::Mirror)] = MakeEnemy(L"거울사수", 88, 7.0f, 165.0f, 44.0f, 35.0f, 4.1f, 152.0f, 1.02f, 62.0f, 1.7f, 15.0f, true, 0xDDEAFF, 0x9CEBFF);
+    table[static_cast<int>(EnemyUnit::Comet)] = MakeEnemy(L"혜성추격", 96, 7.0f, 150.0f, 40.0f, 42.0f, 4.8f, 32.0f, 0.54f, 132.0f, 3.0f, 15.0f, false, 0xB7543B, 0xFFDB7A);
+    table[static_cast<int>(EnemyUnit::Boss)] = MakeEnemy(L"태양문지기", 240, 12.0f, 1180.0f, 180.0f, 74.0f, 7.0f, 42.0f, 1.45f, 25.0f, 0.0f, 31.0f, false, 0x71323A, 0xFF9BA8);
+    return table;
+}
+
+std::wstring Trim(std::wstring value)
+{
+    const wchar_t* spaces = L" \t\r\n";
+    const size_t start = value.find_first_not_of(spaces);
+    if (start == std::wstring::npos)
+    {
+        return L"";
+    }
+    const size_t end = value.find_last_not_of(spaces);
+    return value.substr(start, end - start + 1);
+}
+
+std::wstring LowerAscii(std::wstring value)
+{
+    for (wchar_t& ch : value)
+    {
+        if (ch >= L'A' && ch <= L'Z')
+        {
+            ch = static_cast<wchar_t>(ch - L'A' + L'a');
+        }
+    }
+    return value;
+}
+
+std::vector<std::wstring> SplitCsvLine(const std::wstring& line)
+{
+    std::vector<std::wstring> fields;
+    std::wstring current;
+    std::wistringstream stream(line);
+    while (std::getline(stream, current, L','))
+    {
+        fields.push_back(Trim(current));
+    }
+    return fields;
+}
+
+int ToInt(const std::wstring& value, int fallback)
+{
+    try
+    {
+        return std::stoi(value);
+    }
+    catch (...)
+    {
+        return fallback;
+    }
+}
+
+float ToFloat(const std::wstring& value, float fallback)
+{
+    try
+    {
+        return std::stof(value);
+    }
+    catch (...)
+    {
+        return fallback;
+    }
+}
+
+bool ToBool(const std::wstring& value, bool fallback)
+{
+    const std::wstring lower = LowerAscii(value);
+    if (lower == L"1" || lower == L"true" || lower == L"yes")
+    {
+        return true;
+    }
+    if (lower == L"0" || lower == L"false" || lower == L"no")
+    {
+        return false;
+    }
+    return fallback;
+}
+
+unsigned int ToHexColor(std::wstring value, unsigned int fallback)
+{
+    value = Trim(value);
+    if (!value.empty() && value.front() == L'#')
+    {
+        value.erase(value.begin());
+    }
+    if (value.empty())
+    {
+        return fallback;
+    }
+
+    wchar_t* end = nullptr;
+    const unsigned long parsed = std::wcstoul(value.c_str(), &end, 16);
+    if (end == value.c_str())
+    {
+        return fallback;
+    }
+    return static_cast<unsigned int>(parsed & 0xFFFFFFul);
+}
+
+std::wstring ExecutableDir()
+{
+    wchar_t path[MAX_PATH] = {};
+    GetModuleFileNameW(nullptr, path, MAX_PATH);
+    std::wstring fullPath = path;
+    const size_t slash = fullPath.find_last_of(L"\\/");
+    if (slash == std::wstring::npos)
+    {
+        return L".\\";
+    }
+    return fullPath.substr(0, slash + 1);
+}
+
+std::wstring BalancePath(const wchar_t* fileName)
+{
+    return ExecutableDir() + L"data\\" + fileName;
+}
+
+std::wifstream OpenUtf8Csv(const std::wstring& path)
+{
+    std::wifstream file;
+    try
+    {
+        file.imbue(std::locale(".UTF-8"));
+    }
+    catch (...)
+    {
+        // UTF-8 로캘을 만들 수 없는 환경에서는 기본 로캘로 읽고, 코드 기본값으로 안전하게 보정한다.
+    }
+    file.open(path);
+    return file;
+}
+
+void LoadUnitBalance(BalanceTables& tables)
+{
+    std::wifstream file = OpenUtf8Csv(BalancePath(L"balance_units.csv"));
+    if (!file)
+    {
+        return;
+    }
+
+    std::wstring line;
+    while (std::getline(file, line))
+    {
+        if (!line.empty() && line.front() == 0xFEFF)
+        {
+            line.erase(line.begin());
+        }
+        const std::wstring trimmed = Trim(line);
+        if (trimmed.empty() || trimmed.front() == L'#')
+        {
+            continue;
+        }
+
+        const std::vector<std::wstring> fields = SplitCsvLine(trimmed);
+        if (fields.size() < 19 || LowerAscii(fields[0]) == L"type")
+        {
+            continue;
+        }
+
+        const std::wstring type = LowerAscii(fields[0]);
+        const int index = ToInt(fields[1], -1);
+        if (type == L"player" && index >= 0 && index < kRosterCount)
+        {
+            UnitStats stats = tables.players[index];
+            stats.name = fields[2];
+            stats.cost = ToInt(fields[3], stats.cost);
+            stats.reward = ToInt(fields[4], stats.reward);
+            stats.cooldown = ToFloat(fields[5], stats.cooldown);
+            stats.hp = ToFloat(fields[6], stats.hp);
+            stats.damage = ToFloat(fields[7], stats.damage);
+            stats.range = ToFloat(fields[8], stats.range);
+            stats.attackDelay = ToFloat(fields[9], stats.attackDelay);
+            stats.speed = ToFloat(fields[10], stats.speed);
+            stats.radius = ToFloat(fields[11], stats.radius);
+            stats.ranged = ToBool(fields[12], stats.ranged);
+            stats.color = ColorFromHex(ToHexColor(fields[13], 0xFFFFFF));
+            stats.accent = ColorFromHex(ToHexColor(fields[14], 0xFFFFFF));
+            tables.players[index] = stats;
+        }
+        else if (type == L"enemy" && index >= 0 && index < kEnemyCount)
+        {
+            EnemyBalance balance = tables.enemies[index];
+            balance.stats.name = fields[2];
+            balance.stats.cost = ToInt(fields[3], balance.stats.cost);
+            balance.stats.reward = ToInt(fields[4], balance.stats.reward);
+            balance.stats.cooldown = ToFloat(fields[5], balance.stats.cooldown);
+            balance.stats.hp = ToFloat(fields[6], balance.stats.hp);
+            balance.stats.damage = ToFloat(fields[7], balance.stats.damage);
+            balance.stats.range = ToFloat(fields[8], balance.stats.range);
+            balance.stats.attackDelay = ToFloat(fields[9], balance.stats.attackDelay);
+            balance.stats.speed = ToFloat(fields[10], balance.stats.speed);
+            balance.stats.radius = ToFloat(fields[11], balance.stats.radius);
+            balance.stats.ranged = ToBool(fields[12], balance.stats.ranged);
+            balance.stats.color = ColorFromHex(ToHexColor(fields[13], 0xFFFFFF));
+            balance.stats.accent = ColorFromHex(ToHexColor(fields[14], 0xFFFFFF));
+            balance.hpThreat = ToFloat(fields[15], balance.hpThreat);
+            balance.damageThreat = ToFloat(fields[16], balance.damageThreat);
+            balance.rewardThreat = ToFloat(fields[17], balance.rewardThreat);
+            balance.speedThreat = ToFloat(fields[18], balance.speedThreat);
+            tables.enemies[index] = balance;
+        }
+    }
+}
+
+void LoadStageBalance(BalanceTables& tables)
+{
+    std::wifstream file = OpenUtf8Csv(BalancePath(L"balance_stages.csv"));
+    if (!file)
+    {
+        return;
+    }
+
+    std::wstring line;
+    while (std::getline(file, line))
+    {
+        if (!line.empty() && line.front() == 0xFEFF)
+        {
+            line.erase(line.begin());
+        }
+        const std::wstring trimmed = Trim(line);
+        if (trimmed.empty() || trimmed.front() == L'#')
+        {
+            continue;
+        }
+
+        const std::vector<std::wstring> fields = SplitCsvLine(trimmed);
+        if (fields.size() < 14 || LowerAscii(fields[0]) == L"index")
+        {
+            continue;
+        }
+
+        const int index = ToInt(fields[0], -1);
+        if (index < 0 || index >= kStageCount)
+        {
+            continue;
+        }
+
+        StageDefinition stage = tables.stages[index];
+        stage.name = fields[1];
+        stage.subtitle = fields[2];
+        stage.gimmick = fields[3];
+        stage.playerHp = ToFloat(fields[4], stage.playerHp);
+        stage.enemyHp = ToFloat(fields[5], stage.enemyHp);
+        stage.startEnergy = ToFloat(fields[6], stage.startEnergy);
+        stage.enemyInterval = ToFloat(fields[7], stage.enemyInterval);
+        stage.threatScale = ToFloat(fields[8], stage.threatScale);
+        stage.bossFirstTime = ToFloat(fields[9], stage.bossFirstTime);
+        stage.backColor = ColorFromHex(ToHexColor(fields[10], 0x0D1B23));
+        stage.laneColor = ColorFromHex(ToHexColor(fields[11], 0x142935));
+        stage.laneInnerColor = ColorFromHex(ToHexColor(fields[12], 0x10212D));
+        stage.lineColor = ColorFromHex(ToHexColor(fields[13], 0x4A6272));
+        tables.stages[index] = stage;
+    }
+}
+
+BalanceTables MakeBalanceTables()
+{
+    BalanceTables tables{MakeDefaultStages(), MakeDefaultPlayers(), MakeDefaultEnemies()};
+    LoadStageBalance(tables);
+    LoadUnitBalance(tables);
+    return tables;
+}
+
+const BalanceTables& Tables()
+{
+    static const BalanceTables tables = MakeBalanceTables();
+    return tables;
+}
+}
 
 StageDefinition GetStageDefinition(int index)
 {
-    static const std::array<StageDefinition, kStageCount> kStageTable = {{
-        {L"수성", L"가까운 첫 궤도", L"먼지형과 침형 적",
-         2200.0f, 2500.0f, 190.0f, 2.36f, 0.96f, 42.0f,
-         D2D1::ColorF(0x101B22), D2D1::ColorF(0x1C3037), D2D1::ColorF(0x13262D), D2D1::ColorF(0x8A9EA8)},
-        {L"금성", L"짙은 대기권", L"산성사수 원거리 적",
-         2250.0f, 2850.0f, 205.0f, 2.18f, 1.05f, 39.0f,
-         D2D1::ColorF(0x191722), D2D1::ColorF(0x332936), D2D1::ColorF(0x241E2B), D2D1::ColorF(0xE0B16D)},
-        {L"지구", L"푸른 방어선", L"포자병 균형 웨이브",
-         2350.0f, 3200.0f, 220.0f, 2.05f, 1.14f, 36.0f,
-         D2D1::ColorF(0x0E1D29), D2D1::ColorF(0x14303A), D2D1::ColorF(0x102731), D2D1::ColorF(0x56A7B7)},
-        {L"화성", L"붉은 모래 전선", L"녹슨 장갑형 압박",
-         2400.0f, 3550.0f, 230.0f, 1.98f, 1.24f, 33.0f,
-         D2D1::ColorF(0x1D1718), D2D1::ColorF(0x3A2528), D2D1::ColorF(0x291D20), D2D1::ColorF(0xDD7666)},
-        {L"목성", L"거대한 폭풍권", L"중력방패 중심",
-         2600.0f, 4200.0f, 250.0f, 1.90f, 1.36f, 30.0f,
-         D2D1::ColorF(0x1E1B16), D2D1::ColorF(0x3A3127), D2D1::ColorF(0x2B261F), D2D1::ColorF(0xD8A66A)},
-        {L"토성", L"고리 위 방어전", L"고리사수 원거리전",
-         2650.0f, 4650.0f, 260.0f, 1.78f, 1.48f, 28.0f,
-         D2D1::ColorF(0x171B20), D2D1::ColorF(0x2D3037), D2D1::ColorF(0x222731), D2D1::ColorF(0xCDBB83)},
-        {L"천왕성", L"기울어진 얼음 궤도", L"얼음러너 압박",
-         2750.0f, 5200.0f, 275.0f, 1.68f, 1.62f, 25.0f,
-         D2D1::ColorF(0x101D22), D2D1::ColorF(0x19353A), D2D1::ColorF(0x122B31), D2D1::ColorF(0x80E5D4)},
-        {L"해왕성", L"먼 푸른 심해", L"해류사수 원거리 러시",
-         2850.0f, 5850.0f, 290.0f, 1.56f, 1.78f, 23.0f,
-         D2D1::ColorF(0x101928), D2D1::ColorF(0x182C48), D2D1::ColorF(0x13243C), D2D1::ColorF(0x75A7FF)},
-        {L"명왕성", L"가장 먼 어둠", L"공허 중장갑과 빠른 보스",
-         3000.0f, 6600.0f, 310.0f, 1.50f, 1.96f, 18.0f,
-         D2D1::ColorF(0x15171F), D2D1::ColorF(0x292637), D2D1::ColorF(0x211F2E), D2D1::ColorF(0xC8B7FF)},
-        {L"태양", L"마지막 항성 전선", L"플레어 돌격과 최종 보스",
-         3300.0f, 7600.0f, 350.0f, 1.38f, 2.22f, 15.0f,
-         D2D1::ColorF(0x241613), D2D1::ColorF(0x4A2A1F), D2D1::ColorF(0x351F18), D2D1::ColorF(0xFFB347)}
-    }};
-    return kStageTable[std::max(0, std::min(kStageCount - 1, index))];
+    return Tables().stages[ClampIndex(index, kStageCount)];
 }
 
 UnitStats GetPlayerStats(PlayerUnit unit)
 {
-    UnitStats stats;
-    switch (unit)
-    {
-    case PlayerUnit::Paw:
-        stats.name = L"기본냥";
-        stats.cost = 75;
-        stats.cooldown = 1.35f;
-        stats.hp = 130.0f;
-        stats.damage = 22.0f;
-        stats.range = 30.0f;
-        stats.attackDelay = 0.72f;
-        stats.speed = 68.0f;
-        stats.radius = 16.0f;
-        stats.color = D2D1::ColorF(0xF4FBFF);
-        stats.accent = D2D1::ColorF(0x65B8FF);
-        break;
-    case PlayerUnit::Box:
-        stats.name = L"방패냥";
-        stats.cost = 145;
-        stats.cooldown = 4.3f;
-        stats.hp = 460.0f;
-        stats.damage = 14.0f;
-        stats.range = 28.0f;
-        stats.attackDelay = 1.08f;
-        stats.speed = 38.0f;
-        stats.radius = 21.0f;
-        stats.color = D2D1::ColorF(0xF8F0D6);
-        stats.accent = D2D1::ColorF(0xDCA85B);
-        break;
-    case PlayerUnit::Spark:
-        stats.name = L"전기냥";
-        stats.cost = 265;
-        stats.cooldown = 6.4f;
-        stats.hp = 96.0f;
-        stats.damage = 68.0f;
-        stats.range = 158.0f;
-        stats.attackDelay = 1.78f;
-        stats.speed = 47.0f;
-        stats.radius = 15.0f;
-        stats.ranged = true;
-        stats.color = D2D1::ColorF(0xE8D7FF);
-        stats.accent = D2D1::ColorF(0xBA7BFF);
-        break;
-    case PlayerUnit::Dash:
-        stats.name = L"질주냥";
-        stats.cost = 115;
-        stats.cooldown = 2.05f;
-        stats.hp = 86.0f;
-        stats.damage = 18.0f;
-        stats.range = 26.0f;
-        stats.attackDelay = 0.36f;
-        stats.speed = 118.0f;
-        stats.radius = 13.0f;
-        stats.color = D2D1::ColorF(0xD9FFE6);
-        stats.accent = D2D1::ColorF(0x62DD88);
-        break;
-    case PlayerUnit::Bell:
-        stats.name = L"종냥";
-        stats.cost = 220;
-        stats.cooldown = 5.15f;
-        stats.hp = 118.0f;
-        stats.damage = 42.0f;
-        stats.range = 118.0f;
-        stats.attackDelay = 1.06f;
-        stats.speed = 45.0f;
-        stats.radius = 15.0f;
-        stats.ranged = true;
-        stats.color = D2D1::ColorF(0xFFF8C7);
-        stats.accent = D2D1::ColorF(0xF2C94C);
-        break;
-    case PlayerUnit::Titan:
-        stats.name = L"거대냥";
-        stats.cost = 390;
-        stats.cooldown = 9.2f;
-        stats.hp = 760.0f;
-        stats.damage = 88.0f;
-        stats.range = 39.0f;
-        stats.attackDelay = 1.66f;
-        stats.speed = 24.0f;
-        stats.radius = 27.0f;
-        stats.color = D2D1::ColorF(0xFFE0EF);
-        stats.accent = D2D1::ColorF(0xFF83B7);
-        break;
-    case PlayerUnit::Frost:
-        stats.name = L"얼음방패냥";
-        stats.cost = 185;
-        stats.cooldown = 4.85f;
-        stats.hp = 330.0f;
-        stats.damage = 29.0f;
-        stats.range = 48.0f;
-        stats.attackDelay = 1.02f;
-        stats.speed = 34.0f;
-        stats.radius = 20.0f;
-        stats.color = D2D1::ColorF(0xDDFBFF);
-        stats.accent = D2D1::ColorF(0x74E8FF);
-        break;
-    case PlayerUnit::Comet:
-        stats.name = L"혜성냥";
-        stats.cost = 155;
-        stats.cooldown = 3.05f;
-        stats.hp = 104.0f;
-        stats.damage = 34.0f;
-        stats.range = 34.0f;
-        stats.attackDelay = 0.54f;
-        stats.speed = 136.0f;
-        stats.radius = 14.0f;
-        stats.color = D2D1::ColorF(0xFFF0D8);
-        stats.accent = D2D1::ColorF(0xFF9F4A);
-        break;
-    case PlayerUnit::Orbit:
-        stats.name = L"궤도냥";
-        stats.cost = 330;
-        stats.cooldown = 7.2f;
-        stats.hp = 112.0f;
-        stats.damage = 84.0f;
-        stats.range = 190.0f;
-        stats.attackDelay = 2.05f;
-        stats.speed = 35.0f;
-        stats.radius = 16.0f;
-        stats.ranged = true;
-        stats.color = D2D1::ColorF(0xDBE6FF);
-        stats.accent = D2D1::ColorF(0x88A8FF);
-        break;
-    case PlayerUnit::Solar:
-        stats.name = L"태양검냥";
-        stats.cost = 480;
-        stats.cooldown = 10.6f;
-        stats.hp = 520.0f;
-        stats.damage = 126.0f;
-        stats.range = 58.0f;
-        stats.attackDelay = 1.48f;
-        stats.speed = 42.0f;
-        stats.radius = 24.0f;
-        stats.color = D2D1::ColorF(0xFFE7B5);
-        stats.accent = D2D1::ColorF(0xFFB347);
-        break;
-    case PlayerUnit::Mint:
-        stats.name = L"지원냥";
-        stats.cost = 245;
-        stats.cooldown = 5.7f;
-        stats.hp = 170.0f;
-        stats.damage = 36.0f;
-        stats.range = 126.0f;
-        stats.attackDelay = 0.98f;
-        stats.speed = 43.0f;
-        stats.radius = 16.0f;
-        stats.ranged = true;
-        stats.color = D2D1::ColorF(0xD8FFF3);
-        stats.accent = D2D1::ColorF(0x61E6B0);
-        break;
-    case PlayerUnit::Drill:
-        stats.name = L"드릴냥";
-        stats.cost = 315;
-        stats.cooldown = 6.8f;
-        stats.hp = 420.0f;
-        stats.damage = 72.0f;
-        stats.range = 34.0f;
-        stats.attackDelay = 1.18f;
-        stats.speed = 54.0f;
-        stats.radius = 20.0f;
-        stats.color = D2D1::ColorF(0xE8E0D2);
-        stats.accent = D2D1::ColorF(0xCDAA72);
-        break;
-    case PlayerUnit::Prism:
-        stats.name = L"프리즘냥";
-        stats.cost = 430;
-        stats.cooldown = 8.9f;
-        stats.hp = 92.0f;
-        stats.damage = 118.0f;
-        stats.range = 230.0f;
-        stats.attackDelay = 2.35f;
-        stats.speed = 31.0f;
-        stats.radius = 15.0f;
-        stats.ranged = true;
-        stats.color = D2D1::ColorF(0xF2E8FF);
-        stats.accent = D2D1::ColorF(0xE19BFF);
-        break;
-    case PlayerUnit::Nebula:
-        stats.name = L"성운포냥";
-        stats.cost = 620;
-        stats.cooldown = 13.4f;
-        stats.hp = 420.0f;
-        stats.damage = 152.0f;
-        stats.range = 168.0f;
-        stats.attackDelay = 1.86f;
-        stats.speed = 28.0f;
-        stats.radius = 26.0f;
-        stats.ranged = true;
-        stats.color = D2D1::ColorF(0xE5D9FF);
-        stats.accent = D2D1::ColorF(0x9D83FF);
-        break;
-    }
-    return stats;
+    return Tables().players[ClampIndex(static_cast<int>(unit), kRosterCount)];
 }
 
 UnitStats GetEnemyStats(EnemyUnit unit, float threat)
 {
-    UnitStats stats;
-    switch (unit)
-    {
-    case EnemyUnit::Dust:
-        stats.name = L"먼지졸병";
-        stats.reward = 34 + static_cast<int>(threat * 3.0f);
-        stats.hp = 88.0f + threat * 24.0f;
-        stats.damage = 18.0f + threat * 2.5f;
-        stats.range = 29.0f;
-        stats.attackDelay = 0.95f;
-        stats.speed = 46.0f + threat * 1.7f;
-        stats.radius = 15.0f;
-        stats.color = D2D1::ColorF(0x3A5163);
-        stats.accent = D2D1::ColorF(0x8FA8B8);
-        break;
-    case EnemyUnit::Brute:
-        stats.name = L"철갑병";
-        stats.reward = 78 + static_cast<int>(threat * 5.0f);
-        stats.hp = 310.0f + threat * 78.0f;
-        stats.damage = 31.0f + threat * 4.0f;
-        stats.range = 34.0f;
-        stats.attackDelay = 1.32f;
-        stats.speed = 31.0f;
-        stats.radius = 22.0f;
-        stats.color = D2D1::ColorF(0x684C75);
-        stats.accent = D2D1::ColorF(0xD5A8EA);
-        break;
-    case EnemyUnit::Skitter:
-        stats.name = L"가시러너";
-        stats.reward = 45 + static_cast<int>(threat * 4.0f);
-        stats.hp = 66.0f + threat * 20.0f;
-        stats.damage = 16.0f + threat * 2.0f;
-        stats.range = 27.0f;
-        stats.attackDelay = 0.62f;
-        stats.speed = 82.0f + threat * 2.0f;
-        stats.radius = 12.0f;
-        stats.color = D2D1::ColorF(0x756D3B);
-        stats.accent = D2D1::ColorF(0xFFE76A);
-        break;
-    case EnemyUnit::Sulfur:
-        stats.name = L"산성사수";
-        stats.reward = 50 + static_cast<int>(threat * 4.0f);
-        stats.hp = 94.0f + threat * 25.0f;
-        stats.damage = 19.0f + threat * 2.4f;
-        stats.range = 88.0f;
-        stats.attackDelay = 1.14f;
-        stats.speed = 42.0f + threat * 1.2f;
-        stats.radius = 15.0f;
-        stats.ranged = true;
-        stats.color = D2D1::ColorF(0xB8794F);
-        stats.accent = D2D1::ColorF(0xFFD27A);
-        break;
-    case EnemyUnit::Moss:
-        stats.name = L"포자병";
-        stats.reward = 58 + static_cast<int>(threat * 4.0f);
-        stats.hp = 145.0f + threat * 36.0f;
-        stats.damage = 22.0f + threat * 2.8f;
-        stats.range = 31.0f;
-        stats.attackDelay = 0.92f;
-        stats.speed = 43.0f + threat * 1.0f;
-        stats.radius = 17.0f;
-        stats.color = D2D1::ColorF(0x385C42);
-        stats.accent = D2D1::ColorF(0x7BDB88);
-        break;
-    case EnemyUnit::Rust:
-        stats.name = L"녹슨망치";
-        stats.reward = 86 + static_cast<int>(threat * 6.0f);
-        stats.hp = 390.0f + threat * 88.0f;
-        stats.damage = 36.0f + threat * 4.5f;
-        stats.range = 36.0f;
-        stats.attackDelay = 1.36f;
-        stats.speed = 28.0f + threat * 0.7f;
-        stats.radius = 24.0f;
-        stats.color = D2D1::ColorF(0x7D3A2D);
-        stats.accent = D2D1::ColorF(0xFF8B60);
-        break;
-    case EnemyUnit::Storm:
-        stats.name = L"중력방패";
-        stats.reward = 106 + static_cast<int>(threat * 7.0f);
-        stats.hp = 520.0f + threat * 108.0f;
-        stats.damage = 32.0f + threat * 4.0f;
-        stats.range = 42.0f;
-        stats.attackDelay = 1.18f;
-        stats.speed = 25.0f + threat * 0.6f;
-        stats.radius = 27.0f;
-        stats.color = D2D1::ColorF(0x8A6846);
-        stats.accent = D2D1::ColorF(0xF1D09A);
-        break;
-    case EnemyUnit::Ring:
-        stats.name = L"고리사수";
-        stats.reward = 72 + static_cast<int>(threat * 5.0f);
-        stats.hp = 160.0f + threat * 42.0f;
-        stats.damage = 34.0f + threat * 3.8f;
-        stats.range = 118.0f;
-        stats.attackDelay = 1.38f;
-        stats.speed = 47.0f + threat * 1.2f;
-        stats.radius = 16.0f;
-        stats.ranged = true;
-        stats.color = D2D1::ColorF(0x736C55);
-        stats.accent = D2D1::ColorF(0xE6D392);
-        break;
-    case EnemyUnit::Frost:
-        stats.name = L"얼음러너";
-        stats.reward = 62 + static_cast<int>(threat * 5.0f);
-        stats.hp = 118.0f + threat * 30.0f;
-        stats.damage = 21.0f + threat * 2.7f;
-        stats.range = 33.0f;
-        stats.attackDelay = 0.74f;
-        stats.speed = 96.0f + threat * 2.4f;
-        stats.radius = 14.0f;
-        stats.color = D2D1::ColorF(0x4E8F95);
-        stats.accent = D2D1::ColorF(0xB9FFF5);
-        break;
-    case EnemyUnit::Tide:
-        stats.name = L"해류사수";
-        stats.reward = 76 + static_cast<int>(threat * 6.0f);
-        stats.hp = 132.0f + threat * 35.0f;
-        stats.damage = 28.0f + threat * 3.5f;
-        stats.range = 132.0f;
-        stats.attackDelay = 1.08f;
-        stats.speed = 70.0f + threat * 1.8f;
-        stats.radius = 17.0f;
-        stats.ranged = true;
-        stats.color = D2D1::ColorF(0x2F5C97);
-        stats.accent = D2D1::ColorF(0x75A7FF);
-        break;
-    case EnemyUnit::Void:
-        stats.name = L"공허장갑";
-        stats.reward = 122 + static_cast<int>(threat * 8.0f);
-        stats.hp = 650.0f + threat * 128.0f;
-        stats.damage = 48.0f + threat * 5.4f;
-        stats.range = 46.0f;
-        stats.attackDelay = 1.28f;
-        stats.speed = 24.0f + threat * 0.5f;
-        stats.radius = 28.0f;
-        stats.color = D2D1::ColorF(0x332B4A);
-        stats.accent = D2D1::ColorF(0xC8B7FF);
-        break;
-    case EnemyUnit::Flare:
-        stats.name = L"화염러너";
-        stats.reward = 92 + static_cast<int>(threat * 7.0f);
-        stats.hp = 190.0f + threat * 48.0f;
-        stats.damage = 38.0f + threat * 4.6f;
-        stats.range = 38.0f;
-        stats.attackDelay = 0.68f;
-        stats.speed = 112.0f + threat * 2.6f;
-        stats.radius = 16.0f;
-        stats.color = D2D1::ColorF(0x9E3F2D);
-        stats.accent = D2D1::ColorF(0xFFB347);
-        break;
-    case EnemyUnit::Spore:
-        stats.name = L"포자포병";
-        stats.reward = 82 + static_cast<int>(threat * 6.0f);
-        stats.hp = 210.0f + threat * 54.0f;
-        stats.damage = 31.0f + threat * 3.6f;
-        stats.range = 112.0f;
-        stats.attackDelay = 1.24f;
-        stats.speed = 36.0f + threat * 1.0f;
-        stats.radius = 18.0f;
-        stats.ranged = true;
-        stats.color = D2D1::ColorF(0x625083);
-        stats.accent = D2D1::ColorF(0xF0A8FF);
-        break;
-    case EnemyUnit::Quake:
-        stats.name = L"지진돌격";
-        stats.reward = 145 + static_cast<int>(threat * 9.0f);
-        stats.hp = 820.0f + threat * 150.0f;
-        stats.damage = 58.0f + threat * 6.2f;
-        stats.range = 48.0f;
-        stats.attackDelay = 1.62f;
-        stats.speed = 19.0f + threat * 0.4f;
-        stats.radius = 32.0f;
-        stats.color = D2D1::ColorF(0x57463D);
-        stats.accent = D2D1::ColorF(0xD6B08C);
-        break;
-    case EnemyUnit::Mirror:
-        stats.name = L"거울사수";
-        stats.reward = 88 + static_cast<int>(threat * 7.0f);
-        stats.hp = 165.0f + threat * 44.0f;
-        stats.damage = 35.0f + threat * 4.1f;
-        stats.range = 152.0f;
-        stats.attackDelay = 1.02f;
-        stats.speed = 62.0f + threat * 1.7f;
-        stats.radius = 15.0f;
-        stats.ranged = true;
-        stats.color = D2D1::ColorF(0xDDEAFF);
-        stats.accent = D2D1::ColorF(0x9CEBFF);
-        break;
-    case EnemyUnit::Comet:
-        stats.name = L"혜성추격";
-        stats.reward = 96 + static_cast<int>(threat * 7.0f);
-        stats.hp = 150.0f + threat * 40.0f;
-        stats.damage = 42.0f + threat * 4.8f;
-        stats.range = 32.0f;
-        stats.attackDelay = 0.54f;
-        stats.speed = 132.0f + threat * 3.0f;
-        stats.radius = 15.0f;
-        stats.color = D2D1::ColorF(0xB7543B);
-        stats.accent = D2D1::ColorF(0xFFDB7A);
-        break;
-    case EnemyUnit::Boss:
-        stats.name = L"태양문지기";
-        stats.reward = 240 + static_cast<int>(threat * 12.0f);
-        stats.hp = 1180.0f + threat * 180.0f;
-        stats.damage = 74.0f + threat * 7.0f;
-        stats.range = 42.0f;
-        stats.attackDelay = 1.45f;
-        stats.speed = 25.0f;
-        stats.radius = 31.0f;
-        stats.color = D2D1::ColorF(0x71323A);
-        stats.accent = D2D1::ColorF(0xFF9BA8);
-        break;
-    }
+    const EnemyBalance& balance = Tables().enemies[ClampIndex(static_cast<int>(unit), kEnemyCount)];
+    UnitStats stats = balance.stats;
+    stats.reward += static_cast<int>(threat * balance.rewardThreat);
+    stats.hp += threat * balance.hpThreat;
+    stats.damage += threat * balance.damageThreat;
+    stats.speed += threat * balance.speedThreat;
     return stats;
 }

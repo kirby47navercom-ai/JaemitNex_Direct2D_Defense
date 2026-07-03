@@ -285,6 +285,14 @@ void PawlineGameImpl::OnShopClick(Vec2 pos)
 
 void PawlineGameImpl::OnOptionsClick(Vec2 pos)
 {
+    for (int i = 0; i < kSaveSlotCount; ++i)
+    {
+        if (Contains(OptionsSaveSlotButtonRect(i), pos))
+        {
+            SelectSaveSlot(i);
+            return;
+        }
+    }
     if (Contains(OptionsShakeButtonRect(), pos))
     {
         m_hitShakeEnabled = !m_hitShakeEnabled;
@@ -327,14 +335,14 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
     if (Contains(OptionsSaveProgressButtonRect(), pos))
     {
         SaveProgress();
-        SetMessage(L"진행 데이터와 옵션을 저장했어.");
+        SetMessage(SaveSlotLabel() + L"에 저장했어.");
         return;
     }
     if (Contains(OptionsLoadProgressButtonRect(), pos))
     {
         LoadProgress();
         UpdateViewMetrics();
-        SetMessage(L"저장된 진행 데이터와 옵션을 불러왔어.");
+        SetMessage(SaveSlotLabel() + L"에서 불러왔어.");
         return;
     }
     if (Contains(OptionsResetProgressButtonRect(), pos))
@@ -656,16 +664,20 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
             m_userViewScale = 0.96f;
             UpdateViewMetrics();
         }
+        else if (key >= '1' && key <= '3')
+        {
+            SelectSaveSlot(static_cast<int>(key - '1'));
+        }
         else if (key == 'S')
         {
             SaveProgress();
-            SetMessage(L"진행 데이터와 옵션을 저장했어.");
+            SetMessage(SaveSlotLabel() + L"에 저장했어.");
         }
         else if (key == 'L')
         {
             LoadProgress();
             UpdateViewMetrics();
-            SetMessage(L"저장된 진행 데이터와 옵션을 불러왔어.");
+            SetMessage(SaveSlotLabel() + L"에서 불러왔어.");
         }
         else if (key == 'X')
         {

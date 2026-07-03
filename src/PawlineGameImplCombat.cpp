@@ -2004,6 +2004,28 @@ std::optional<std::reference_wrapper<Unit>> PawlineGameImpl::FindUnitById(int id
     return std::nullopt;
 }
 
+void PawlineGameImpl::ApplyImpactReaction(Unit& target, Team sourceTeam, float damage, D2D1_COLOR_F color)
+{
+    // 큰 넉백 문턱 사이에서도 타격감이 보이도록 아주 짧은 반동과 바닥 먼지를 준다.
+    const float damageRatio = target.maxHp > 0.0f ? Clamp01(damage / std::max(1.0f, target.maxHp * 0.18f)) : 0.0f;
+    const float armor = target.boss ? 0.34f : (target.elite ? 0.55f : 1.0f);
+    const float dir = sourceTeam == Team::Player ? 1.0f : -1.0f;
+    const float impulse = (18.0f + damageRatio * 56.0f) * armor;
+    target.knockbackVelocity = dir * std::max(std::abs(target.knockbackVelocity), impulse);
+    target.knockbackTimer = std::max(target.knockbackTimer, 0.055f + damageRatio * 0.055f);
+    if (damageRatio > 0.42f && !target.boss)
+    {
+        target.stunTimer = std::max(target.stunTimer, 0.035f + damageRatio * 0.055f);
+    }
+
+    const Vec2 ground = {target.pos.x - dir * target.radius * 0.34f, target.pos.y + target.radius * 0.72f};
+    AddDustPuff(ground, D2D1::ColorF(color.r, color.g, color.b, 0.18f + damageRatio * 0.16f), damageRatio > 0.55f ? 7 : 4);
+    if (damageRatio > 0.58f)
+    {
+        AddRing(target.pos, target.radius * (2.0f + damageRatio * 1.4f), 0.18f, FadeColor(color, 0.32f), 2.2f);
+    }
+}
+
 void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
 {
     if (!target.alive)
@@ -2017,6 +2039,7 @@ void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
     ShakeUnit(target, 0.18f);
     AddFloatText(target.pos + Vec2{0.0f, -target.radius - 22.0f}, ToWideInt(static_cast<int>(std::round(damage))),
                  sourceTeam == Team::Player ? D2D1::ColorF(0xBBD7FF) : D2D1::ColorF(0xFFB6C2), 0.58f);
+    ApplyImpactReaction(target, sourceTeam, damage, sourceTeam == Team::Player ? D2D1::ColorF(0xBBD7FF) : D2D1::ColorF(0xFFB6C2));
 
     if (target.hp <= 0.0f)
     {
@@ -2053,6 +2076,8 @@ void PawlineGameImpl::DamageBase(Team baseTeam, float damage, Vec2 source)
         AddCameraTrauma(0.28f);
         AddFloatText({kEnemyBaseX - 46.0f, kLaneY - 92.0f}, ToWideInt(static_cast<int>(std::round(damage))), D2D1::ColorF(0xBBD7FF), 0.65f);
         AddHitEffects({kEnemyBaseX - 44.0f, source.y}, D2D1::ColorF(0x65B8FF));
+        AddDustPuff({kEnemyBaseX - 46.0f, kLaneY + 42.0f}, D2D1::ColorF(0x65B8FF, 0.22f), 7);
+        AddRing({kEnemyBaseX - 52.0f, source.y}, 82.0f, 0.22f, D2D1::ColorF(0x65B8FF, 0.30f), 3.2f);
     }
     else
     {
@@ -2064,6 +2089,8 @@ void PawlineGameImpl::DamageBase(Team baseTeam, float damage, Vec2 source)
         AddCameraTrauma(0.28f);
         AddFloatText({kPlayerBaseX + 46.0f, kLaneY - 92.0f}, ToWideInt(static_cast<int>(std::round(damage))), D2D1::ColorF(0xFFB6C2), 0.65f);
         AddHitEffects({kPlayerBaseX + 44.0f, source.y}, D2D1::ColorF(0xFF9BA8));
+        AddDustPuff({kPlayerBaseX + 46.0f, kLaneY + 42.0f}, D2D1::ColorF(0xFF9BA8, 0.22f), 7);
+        AddRing({kPlayerBaseX + 52.0f, source.y}, 82.0f, 0.22f, D2D1::ColorF(0xFF9BA8, 0.30f), 3.2f);
     }
 }
 
