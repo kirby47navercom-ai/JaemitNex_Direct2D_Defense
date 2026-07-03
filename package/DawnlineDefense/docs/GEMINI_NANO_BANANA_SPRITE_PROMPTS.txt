@@ -1,0 +1,182 @@
+Gemini Nano Banana 스프라이트 애니메이션 프롬프트
+작성 기준: Dawnline Defense 캐릭터 스프라이트 시트 제작용
+
+공통 출력 규칙
+- 캐릭터마다 PNG 1장을 만든다.
+- 크기는 384x96px, 가로 4프레임, 각 프레임은 96x96px로 동일하게 나눈다.
+- 프레임 순서는 1 idle, 2 walk or move, 3 attack, 4 hit or knockback recovery.
+- 배경은 완전 투명이어야 한다.
+- 글자, 숫자, UI, 말풍선, 워터마크는 넣지 않는다.
+- 캐릭터는 96px에서도 실루엣이 읽히도록 굵은 외곽선, 간결한 셀 셰이딩, 작은 림라이트를 사용한다.
+- 탑뷰 기반의 약한 3/4 시점, 우주 디펜스 게임에 어울리는 카툰 스타일을 유지한다.
+- 모든 프레임에서 발 위치와 몸 크기는 크게 흔들리지 않게 맞춘다.
+- 프레임마다 6px 이상 여백을 남기고, 귀나 무기나 이펙트가 잘리지 않게 한다.
+- 아군 유닛은 오른쪽을 바라본다.
+- 적 유닛은 왼쪽을 바라본다.
+
+공통 네거티브 프롬프트
+text, letters, numbers, UI panel, speech bubble, watermark, signature, logo, cropped body, cut off weapon, realistic photo, blurry, noisy, messy background, extra frames, wrong canvas size, inconsistent character, too much detail for 96px
+
+사용법
+- 아래 항목의 Prompt 문장을 그대로 넣고, 필요하면 마지막에 Common negative prompt를 같이 붙인다.
+- 이미지가 4분할이 흐트러지면 "exactly four equal 96x96 frames, no gutters, no extra panels"를 한 번 더 강조한다.
+- 완성 파일은 assets/sprites에 넣을 때 파일명 제안을 그대로 쓰면 관리하기 쉽다.
+
+[아군 유닛]
+
+01. 기본냥
+파일명 제안: player_01_gibonnyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, soft blue rim light, readable at 96px, facing right. Character: 기본냥, a small white rookie cat with a round face, blue scarf, tiny blue antenna baton, brave beginner mood. Frames: idle breathing pose, short marching step, paw swipe attack with a small blue crescent spark, hit recoil with tiny blue star particles. No text, no UI, no watermark.
+
+02. 방패냥
+파일명 제안: player_02_bangpaenyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, warm rim light, readable at 96px, facing right. Character: 방패냥, a tan box-guard cat wearing a square cardboard shield shell, sturdy little helmet, calm defensive expression. Frames: idle bracing behind shield, heavy step forward, shield bash attack with dust arc, hit recoil while shield absorbs impact. No text, no UI, no watermark.
+
+03. 전기냥
+파일명 제안: player_03_jeonginyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, violet rim light, readable at 96px, facing right. Character: 전기냥, a lavender electric cat with a glowing antenna orb, tiny floating sparks, focused caster expression. Frames: idle with flickering antenna, hovering step, ranged lightning attack with zigzag bolt from antenna, hit recoil with broken sparks. No text, no UI, no watermark.
+
+04. 질주냥
+파일명 제안: player_04_jiljunyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, mint green rim light, readable at 96px, facing right. Character: 질주냥, a slim mint runner cat with small speed fins, determined eyes, aerodynamic scarf trails. Frames: idle crouched start, fast running stride with afterimage, quick shoulder tackle attack with green speed slash, hit recoil skidding backward. No text, no UI, no watermark.
+
+05. 종냥
+파일명 제안: player_05_jongnyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, yellow rim light, readable at 96px, facing right. Character: 종냥, a golden bell cat with a small bell cap and round speaker charm, gentle but mystical expression. Frames: idle bell sway, light hopping step, sonic ring attack with two yellow ripple circles, hit recoil with muted bell wobble. No text, no UI, no watermark.
+
+06. 거대냥
+파일명 제안: player_06_geodaenyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, pink rim light, readable at 96px, facing right. Character: 거대냥, a large heavy pink cat with huge paws, chunky body, confident tank expression. Frames: idle heavy breathing, slow stomping step, double paw ground slam with shockwave dust, hit recoil barely pushed back with cracked ground. No text, no UI, no watermark.
+
+07. 얼음방패냥
+파일명 제안: player_07_eoreumbangpaenyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, cyan rim light, readable at 96px, facing right. Character: 얼음방패냥, a pale cyan guard cat carrying a crystal ice shield, snowflake badge, cool steady eyes. Frames: idle with frost mist, careful sliding step, ice shield bash with snow shard burst, hit recoil protected by cracked ice barrier. No text, no UI, no watermark.
+
+08. 혜성냥
+파일명 제안: player_08_hyeseongnyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, orange rim light, readable at 96px, facing right. Character: 혜성냥, a cream and orange comet cat with tiny booster tail, flame scarf, reckless grin. Frames: idle with small flame flicker, boosted dash step, comet headbutt attack with orange trail, hit recoil spinning with ember particles. No text, no UI, no watermark.
+
+09. 궤도냥
+파일명 제안: player_09_gwedonyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, soft blue rim light, readable at 96px, facing right. Character: 궤도냥, a blue orbit cat with a small satellite ring circling its head, star-map markings, calm sniper mood. Frames: idle satellite orbit, floating step, orbit star projectile attack from ring, hit recoil with satellite wobble. No text, no UI, no watermark.
+
+10. 태양검냥
+파일명 제안: player_10_taeyanggeomnyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, gold rim light, readable at 96px, facing right. Character: 태양검냥, a heroic golden cat wielding a short solar sword, small halo flare, confident warrior face. Frames: idle sword guard, forward step with cape flick, bright sword slash attack with golden arc, hit recoil while sword blocks sparks. No text, no UI, no watermark.
+
+11. 지원냥
+파일명 제안: player_11_jiwonnyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, mint rim light, readable at 96px, facing right. Character: 지원냥, a mint support cat with small medical pack, plus-shaped charm, kind focused expression. Frames: idle scanning allies, careful step, healing pulse attack/support skill with green cross particles, hit recoil protecting the med pack. No text, no UI, no watermark.
+
+12. 드릴냥
+파일명 제안: player_12_deurilnyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, metal beige rim light, readable at 96px, facing right. Character: 드릴냥, a sturdy beige drill cat with a spiral drill lance, construction helmet, determined builder face. Frames: idle drill spinning slowly, heavy step, drill thrust attack with spiral debris, hit recoil with drill scraping sparks. No text, no UI, no watermark.
+
+13. 프리즘냥
+파일명 제안: player_13_prijeumnyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, rainbow prism rim light, readable at 96px, facing right. Character: 프리즘냥, a pale crystal cat with prism ears, diamond staff, elegant magical expression. Frames: idle crystal shimmer, floating step, rainbow shard beam attack from prism staff, hit recoil with scattered prism fragments. No text, no UI, no watermark.
+
+14. 성운포냥
+파일명 제안: player_14_seongunponyang_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space cat defense game unit, thick dark outline, clean cel shading, purple nebula rim light, readable at 96px, facing right. Character: 성운포냥, a purple nebula cannon cat with a tiny shoulder cannon and star fuel tank, calm artillery expression. Frames: idle cannon charging, slow recoil step, cosmic orb cannon shot with purple muzzle flash, hit recoil with smoke from cannon barrel. No text, no UI, no watermark.
+
+[적 유닛]
+
+01. 먼지졸병
+파일명 제안: enemy_01_meonjijolbyeong_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, grey blue rim light, readable at 96px, facing left. Character: 먼지졸병, a small dusty asteroid grunt with round helmet shell, tiny claws, nervous hostile face. Frames: idle twitch, waddling step, claw poke attack with dust specks, hit recoil shedding asteroid dust. No text, no UI, no watermark.
+
+02. 철갑병
+파일명 제안: enemy_02_cheolgapbyeong_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, violet metal rim light, readable at 96px, facing left. Character: 철갑병, a bulky armored alien guard with riveted shell plates, short mace arm, stubborn expression. Frames: idle armor clank, heavy march, mace smash attack with purple impact, hit recoil armor dent sparkle. No text, no UI, no watermark.
+
+03. 가시러너
+파일명 제안: enemy_03_gasileoneo_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, yellow thorn rim light, readable at 96px, facing left. Character: 가시러너, a fast spiky runner creature with thorn crown, narrow eyes, tiny claw feet. Frames: idle crouch, sprinting step, spike lunge attack with yellow motion streak, hit recoil tumbling with loose spikes. No text, no UI, no watermark.
+
+04. 산성사수
+파일명 제안: enemy_04_sanseongsasu_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, orange acid rim light, readable at 96px, facing left. Character: 산성사수, a small acid shooter alien with beaker backpack, nozzle mouth, sly expression. Frames: idle bubbling backpack, cautious step, acid blob ranged shot with orange splash, hit recoil leaking acid drops. No text, no UI, no watermark.
+
+05. 포자병
+파일명 제안: enemy_05_pojabyeong_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, moss green rim light, readable at 96px, facing left. Character: 포자병, a mushroom spore trooper with soft cap helmet, puff cheeks, sleepy menace. Frames: idle spore puff, soft hopping step, body bump attack with green spores, hit recoil releasing spore cloud. No text, no UI, no watermark.
+
+06. 녹슨망치
+파일명 제안: enemy_06_nokseunmangchi_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, rusty orange rim light, readable at 96px, facing left. Character: 녹슨망치, a heavy rust robot enemy with cracked hammer arm, bolt eyes, rough old metal plates. Frames: idle rusty shake, dragging step, overhead hammer slam with orange sparks, hit recoil losing rust flakes. No text, no UI, no watermark.
+
+07. 중력방패
+파일명 제안: enemy_07_jungnyeokbangpae_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, bronze gravity rim light, readable at 96px, facing left. Character: 중력방패, a round gravity shield beast with floating shield disc, dense core, stern expression. Frames: idle shield orbit, slow levitating step, gravity shove attack with curved pressure ring, hit recoil shield flickering. No text, no UI, no watermark.
+
+08. 고리사수
+파일명 제안: enemy_08_gorisasu_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, pale ring rim light, readable at 96px, facing left. Character: 고리사수, a Saturn-ring archer alien with thin orbital bow, ring-shaped visor, precise expression. Frames: idle ring spin, gliding step, ring arrow ranged shot with pale trail, hit recoil ring wobble. No text, no UI, no watermark.
+
+09. 얼음러너
+파일명 제안: enemy_09_eoreumreoneo_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, icy cyan rim light, readable at 96px, facing left. Character: 얼음러너, a slick ice runner creature with frozen paws, sharp blue ears, cold glare. Frames: idle frosty breath, sliding run, ice jab attack with cyan shard, hit recoil slipping on ice. No text, no UI, no watermark.
+
+10. 해류사수
+파일명 제안: enemy_10_haeryusasoo_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, ocean blue rim light, readable at 96px, facing left. Character: 해류사수, a Neptune-current shooter with water tank fins, bubble cannon, calm threatening eyes. Frames: idle bubbles rising, swimming hover step, water bullet ranged shot with blue splash, hit recoil spilling droplets. No text, no UI, no watermark.
+
+11. 공허장갑
+파일명 제안: enemy_11_gongheojanggap_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, deep violet rim light, readable at 96px, facing left. Character: 공허장갑, a void armored knight with hollow visor, black purple gauntlet, slow ominous mood. Frames: idle dark pulse, armored step, void gauntlet punch with purple distortion, hit recoil armor cracks glowing. No text, no UI, no watermark.
+
+12. 화염러너
+파일명 제안: enemy_12_hwayeomreoneo_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, flame orange rim light, readable at 96px, facing left. Character: 화염러너, a fast flame runner with burning tail, ember goggles, aggressive grin. Frames: idle tail flame, blazing sprint, flame tackle attack with ember trail, hit recoil scattering sparks. No text, no UI, no watermark.
+
+13. 포자포병
+파일명 제안: enemy_13_pojapobyeong_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, magenta spore rim light, readable at 96px, facing left. Character: 포자포병, a spore artillery enemy with mushroom mortar on its back, sleepy eyes, round toxic shells. Frames: idle mortar wiggle, waddling step, spore shell ranged shot with magenta puff, hit recoil mortar smoke. No text, no UI, no watermark.
+
+14. 지진돌격
+파일명 제안: enemy_14_jijindolgyeok_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, brown quake rim light, readable at 96px, facing left. Character: 지진돌격, a massive rock charger with cracked stone horns, heavy jaw, unstoppable expression. Frames: idle ground rumble, slow charge step, quake body slam with cracked shockwave, hit recoil small rocks breaking off. No text, no UI, no watermark.
+
+15. 거울사수
+파일명 제안: enemy_15_geowoolsasu_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, glass cyan rim light, readable at 96px, facing left. Character: 거울사수, a mirror sniper alien with reflective face plate, glass shard rifle, quiet precise mood. Frames: idle mirror glint, smooth side step, glass beam ranged shot with cyan shard trail, hit recoil cracked reflection. No text, no UI, no watermark.
+
+16. 혜성추격
+파일명 제안: enemy_16_hyeseongchugyeok_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space monster enemy, thick dark outline, clean cel shading, hot comet rim light, readable at 96px, facing left. Character: 혜성추격, a red comet chaser with asteroid helmet, blazing tail, wild hunting eyes. Frames: idle ember shake, rapid comet dash, crashing bite attack with red orange trail, hit recoil spinning through smoke. No text, no UI, no watermark.
+
+17. 태양문지기
+파일명 제안: enemy_17_taeyangmunjigi_sheet.png
+Prompt:
+Create a 384x96 transparent PNG sprite sheet, four equal 96x96 frames in one horizontal row. Top-down slight 3/4 chibi space boss enemy, thick dark outline, clean cel shading, intense solar rim light, readable at 96px, facing left. Character: 태양문지기, a boss-like solar gatekeeper with dark red armor, small crown flare, triple sun core on chest, intimidating but cute chibi proportions. Frames: idle solar core pulsing, heavy boss step, triple flare attack with three orange fire rings, hit recoil roaring with cracked solar armor. No text, no UI, no watermark.

@@ -3346,7 +3346,7 @@ void PawlineGameImpl::DrawTutorialTips()
     }
     else if (m_stageTime < 6.5f)
     {
-        const float tipAlpha = tip(D2D1::RectF(436.0f, 512.0f, 772.0f, 590.0f), L"GUIDE 2", L"W 월렛은 비용 감소, 회복, 보급 펄스를 만든다.", D2D1::ColorF(0xB8FF89, alpha));
+        const float tipAlpha = tip(D2D1::RectF(436.0f, 512.0f, 772.0f, 590.0f), L"GUIDE 2", L"WALLET은 비용 감소, 회복, 보급 펄스를 만든다.", D2D1::ColorF(0xB8FF89, alpha));
         DrawLine({650.0f, 590.0f}, {736.0f, 628.0f}, D2D1::ColorF(0xB8FF89, 0.42f * tipAlpha), 2.4f);
     }
     else if (m_stageTime < 9.75f)
@@ -3388,7 +3388,7 @@ std::wstring PawlineGameImpl::DemoStepText() const
     }
     if (m_showcaseTimer < 12.0f)
     {
-        return L"2/5 월렛 성장";
+        return L"2/5 WALLET 성장";
     }
     if (m_showcaseTimer < 22.0f)
     {
@@ -3876,11 +3876,11 @@ void PawlineGameImpl::DrawResultScreen()
     DrawPixelTextCentered(subtitle, D2D1::RectF(panel.left + 34.0f, panel.top + 84.0f, panel.right - 34.0f, panel.top + 112.0f), 2.2f, D2D1::ColorF(0xEAF7FF), 1.0f);
 
     DrawString(stage.name, D2D1::RectF(panel.left + 64.0f, panel.top + 142.0f, panel.right - 64.0f, panel.top + 170.0f), m_headerFormat, D2D1::ColorF(0xF3FBFF));
-    DrawString(L"시간  " + ToWideTime(m_resultTime), D2D1::RectF(panel.left + 94.0f, panel.top + 190.0f, panel.left + 280.0f, panel.top + 218.0f), m_bodyFormat, D2D1::ColorF(0xC7D8FF));
-    DrawString(L"점수  " + ToWideInt(m_resultScore), D2D1::RectF(panel.left + 320.0f, panel.top + 190.0f, panel.right - 94.0f, panel.top + 218.0f), m_bodyFormat, D2D1::ColorF(0xF6FF83));
-    DrawString(L"월렛 Lv." + ToWideInt(m_walletLevel), D2D1::RectF(panel.left + 94.0f, panel.top + 224.0f, panel.left + 280.0f, panel.top + 252.0f), m_bodyFormat, D2D1::ColorF(0xB8FF89));
-    DrawString(L"난이도  " + DifficultyLabel(), D2D1::RectF(panel.left + 320.0f, panel.top + 224.0f, panel.right - 94.0f, panel.top + 252.0f), m_bodyFormat, D2D1::ColorF(0xD9E5F2));
-    DrawString(m_victory ? L"LUMEN +" + ToWideInt(m_lastReward) + L"   총 " + ToWideInt(m_lumen) : L"LUMEN +0   총 " + ToWideInt(m_lumen),
+    DrawString(L"TIME  " + ToWideTime(m_resultTime), D2D1::RectF(panel.left + 94.0f, panel.top + 190.0f, panel.left + 280.0f, panel.top + 218.0f), m_bodyFormat, D2D1::ColorF(0xC7D8FF));
+    DrawString(L"SCORE  " + ToWideInt(m_resultScore), D2D1::RectF(panel.left + 320.0f, panel.top + 190.0f, panel.right - 94.0f, panel.top + 218.0f), m_bodyFormat, D2D1::ColorF(0xF6FF83));
+    DrawString(L"WALLET Lv." + ToWideInt(m_walletLevel), D2D1::RectF(panel.left + 94.0f, panel.top + 224.0f, panel.left + 280.0f, panel.top + 252.0f), m_bodyFormat, D2D1::ColorF(0xB8FF89));
+    DrawString(L"DIFFICULTY  " + DifficultyLabel(), D2D1::RectF(panel.left + 320.0f, panel.top + 224.0f, panel.right - 94.0f, panel.top + 252.0f), m_bodyFormat, D2D1::ColorF(0xD9E5F2));
+    DrawString(m_victory ? L"LUMEN +" + ToWideInt(m_lastReward) + L"   TOTAL " + ToWideInt(m_lumen) : L"LUMEN +0   TOTAL " + ToWideInt(m_lumen),
                D2D1::RectF(panel.left + 94.0f, panel.top + 268.0f, panel.right - 94.0f, panel.top + 296.0f),
                m_bodyFormat,
                m_victory ? D2D1::ColorF(0xF6FF83) : D2D1::ColorF(0x8EA9B8));
@@ -3905,16 +3905,24 @@ void PawlineGameImpl::DrawResultScreen()
         StrokeEllipse(medal, 20.0f, 20.0f, earned ? D2D1::ColorF(0xF6FF83) : D2D1::ColorF(0x394955), 2.0f);
         DrawPixelTextCentered(earned ? L"OK" : L"--", D2D1::RectF(medal.x - 18.0f, medal.y - 10.0f, medal.x + 18.0f, medal.y + 12.0f), 1.8f, earned ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x65727C), 1.0f);
     }
-    DrawPixelTextCentered(m_victory ? L"REWARD SAVED" : L"TRY AGAIN",
-                          D2D1::RectF(panel.left + 532.0f, panel.top + 294.0f, panel.right - 52.0f, panel.top + 330.0f),
-                          2.2f,
+    const D2D1_RECT_F rewardBadge = D2D1::RectF(panel.left + 522.0f, panel.top + 288.0f, panel.right - 70.0f, panel.top + 338.0f);
+    FillRoundRect(rewardBadge, 8.0f, D2D1::ColorF(0x071017, 0.58f));
+    StrokeRoundRect(rewardBadge, 8.0f, m_victory ? D2D1::ColorF(0xB8FF89, 0.62f) : D2D1::ColorF(0x8EA9B8, 0.42f), 1.2f);
+    DrawPixelTextCentered(m_victory ? L"REWARD" : L"NO REWARD",
+                          D2D1::RectF(rewardBadge.left + 8.0f, rewardBadge.top + 7.0f, rewardBadge.right - 8.0f, rewardBadge.top + 27.0f),
+                          m_victory ? 1.75f : 1.38f,
                           m_victory ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0x8EA9B8),
                           1.0f);
-    DrawPixelTextCentered(finalClear ? L"태양 방어선 완주" : GrowthRecommendation(),
-                          D2D1::RectF(panel.left + 64.0f, panel.bottom - 36.0f, panel.right - 64.0f, panel.bottom - 10.0f),
-                          1.75f,
-                          D2D1::ColorF(0xF6FF83),
+    DrawPixelTextCentered(m_victory ? L"SAVED" : L"TRY AGAIN",
+                          D2D1::RectF(rewardBadge.left + 8.0f, rewardBadge.top + 27.0f, rewardBadge.right - 8.0f, rewardBadge.bottom - 6.0f),
+                          m_victory ? 1.55f : 1.25f,
+                          D2D1::ColorF(0xF3FBFF),
                           1.0f);
+    DrawOutlinedString(finalClear ? L"태양 방어선 완주" : GrowthRecommendation(),
+                       D2D1::RectF(panel.left + 64.0f, panel.bottom - 40.0f, panel.right - 64.0f, panel.bottom - 10.0f),
+                       m_smallFormat,
+                       D2D1::ColorF(0xF6FF83),
+                       0.74f);
 
     DrawButton(ResultRetryButtonRect(), L"Retry", true, D2D1::ColorF(0x173C4B));
     DrawButton(ResultNextButtonRect(), (m_victory && m_selectedStage < kStageCount - 1) ? L"Next" : L"Close", true, D2D1::ColorF(0x283B27));
