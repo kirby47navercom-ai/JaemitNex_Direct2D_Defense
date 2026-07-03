@@ -245,8 +245,25 @@ struct Unit
     UnitAnimState animState = UnitAnimState::Idle;
 };
 
-// Ranged attacks are separate from units so they can travel over time, keep a
-// short trail, and trigger impact VFX only when they actually reach the target.
+enum class ProjectileVisual
+{
+    Bolt,
+    BellWave,
+    OrbitStar,
+    PrismShard,
+    NebulaOrb,
+    MintPulse,
+    FrostShard,
+    AcidGlob,
+    TideWave,
+    MirrorShard,
+    VoidOrb,
+    SolarSpark,
+    SporeSeed
+};
+
+// 원거리 공격은 유닛과 분리해서 실제로 날아가고, 유닛 종류별로
+// 다른 탄 모양과 착탄 이펙트를 낼 수 있게 관리한다.
 struct Projectile
 {
     Vec2 pos;
@@ -259,6 +276,10 @@ struct Projectile
     float speed = 380.0f;
     float radius = 4.0f;
     float life = 2.2f;
+    float age = 0.0f;
+    float spin = 0.0f;
+    float wobble = 0.0f;
+    ProjectileVisual visual = ProjectileVisual::Bolt;
     D2D1_COLOR_F color = D2D1::ColorF(0xFFFFFF);
 };
 
@@ -544,6 +565,14 @@ private:
 
     void FireProjectileAtBase(Unit& attacker);
 
+    Vec2 ProjectileMuzzle(const Unit& attacker, Vec2 targetPos) const;
+
+    void ConfigureProjectileVisual(Projectile& projectile, const Unit& attacker);
+
+    void AddProjectileImpact(const Projectile& projectile);
+
+    void AddMeleeClashVfx(const Unit& attacker, Vec2 targetPos, D2D1_COLOR_F color);
+
     void BeginAttack(Unit& attacker, Vec2 targetPos);
 
     void AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_COLOR_F color);
@@ -819,6 +848,8 @@ private:
     void DrawUnitHp(const Unit& unit);
 
     void DrawProjectiles();
+
+    void DrawProjectileShape(const Projectile& projectile, Vec2 drawPos, Vec2 dir, Vec2 normal, float pulse);
 
     void DrawBeams();
 

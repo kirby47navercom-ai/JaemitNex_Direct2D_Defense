@@ -248,7 +248,7 @@ void PawlineGameImpl::OnBriefingClick(Vec2 pos)
         {
             m_selectedLoadoutSlot = i;
             m_screen = GameScreen::Menu;
-            SetMessage(L"Pick a replacement unit.");
+            SetMessage(L"교체할 유닛을 골라줘.");
             return;
         }
     }
@@ -258,7 +258,7 @@ void PawlineGameImpl::OnBriefingClick(Vec2 pos)
         if (Contains(BriefingDifficultyRect(i), pos))
         {
             m_difficulty = static_cast<Difficulty>(i);
-            SetMessage(std::wstring(L"Difficulty ") + DifficultyLabel());
+            SetMessage(std::wstring(L"난이도 ") + DifficultyLabel());
             return;
         }
     }

@@ -24,7 +24,7 @@ void PawlineGameImpl::UpdateEnemyDirector(float dt)
         AddCameraTrauma(0.62f);
         m_nextBossTime += 44.0f / stage.threatScale;
         m_enemyTimer = std::min(m_enemyTimer, 1.1f);
-        SetMessage(GetEnemyStats(bossType, threat).name + L" incoming.");
+        SetMessage(GetEnemyStats(bossType, threat).name + L" 접근 중.");
         AddRing({kEnemyBaseX - 80.0f, kLaneY}, 220.0f, 0.70f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.46f), 5.0f);
     }
 
@@ -373,7 +373,7 @@ void PawlineGameImpl::UpdateBossPatterns(float dt)
     {
         m_bossPhaseTwoTriggered = true;
         m_bossPatternTimer = 1.2f;
-        SetMessage(L"Boss phase two.");
+        SetMessage(L"보스 2페이즈 돌입.");
         AddRing(boss->pos, 180.0f, 0.70f, D2D1::ColorF(0xFFB347, 0.48f), 5.0f);
         AddCameraTrauma(0.58f);
         SpawnStageReinforcement(m_selectedStage == 9 ? EnemyUnit::Flare : StageBossType(), 360.0f, false);
@@ -561,46 +561,46 @@ void PawlineGameImpl::TriggerStageGimmick()
     switch (m_selectedStage)
     {
     case 0:
-        SetMessage(L"Mercury heat wave.");
+        SetMessage(L"수성 열파.");
         AddTelegraph(TelegraphKind::MercuryHeat, TelegraphShape::FullLane, {kPlayerBaseX + 40.0f, kLaneY - 86.0f}, {kEnemyBaseX - 30.0f, kLaneY + 68.0f}, kWorldWidth, 92.0f, 0.90f, 12.0f + ThreatLevel() * 1.6f, D2D1::ColorF(0xCFA27B));
         break;
     case 1:
-        SetMessage(L"Venus acid fog: ranged units lose range.");
+        SetMessage(L"금성 산성 안개: 원거리 사거리 감소.");
         AddTelegraph(TelegraphKind::VenusFog, TelegraphShape::FullLane, {m_cameraX + 64.0f, kLaneY}, {m_cameraX + kWidth - 64.0f, kLaneY}, 280.0f, 0.0f, 0.85f, 8.0f + ThreatLevel(), D2D1::ColorF(0xE0B16D));
         break;
     case 2:
-        SetMessage(L"Earth supply bloom.");
+        SetMessage(L"지구 보급 개화.");
         AddTelegraph(TelegraphKind::EarthBloom, TelegraphShape::Circle, {kPlayerBaseX + 72.0f, kLaneY}, {kPlayerBaseX + 72.0f, kLaneY}, 150.0f, 0.0f, 0.70f, 0.0f, D2D1::ColorF(0xB8FF89));
         break;
     case 3:
     {
-        SetMessage(L"Mars meteor impact.");
+        SetMessage(L"화성 운석 낙하.");
         const Vec2 impact = {xDist(m_rng), yDist(m_rng)};
         AddTelegraph(TelegraphKind::MarsMeteor, TelegraphShape::Circle, impact, impact, 154.0f, 0.0f, 1.10f, 64.0f + ThreatLevel() * 4.0f, D2D1::ColorF(0xFF8B60));
         break;
     }
     case 4:
-        SetMessage(L"Jupiter gravity surge.");
+        SetMessage(L"목성 중력 파동.");
         AddTelegraph(TelegraphKind::JupiterGravity, TelegraphShape::Circle, {m_cameraX + 640.0f, kLaneY}, {m_cameraX + 640.0f, kLaneY}, 340.0f, 0.0f, 0.95f, 0.0f, D2D1::ColorF(0xD8A66A));
         break;
     case 5:
-        SetMessage(L"Saturn ring reinforcement.");
+        SetMessage(L"토성 고리 증원.");
         AddTelegraph(TelegraphKind::SaturnReinforce, TelegraphShape::Circle, {kEnemyBaseX - 330.0f, kLaneY}, {kEnemyBaseX - 330.0f, kLaneY}, 124.0f, 0.0f, 0.95f, 0.0f, D2D1::ColorF(0xE6D392));
         break;
     case 6:
-        SetMessage(L"Uranus ice gust.");
+        SetMessage(L"천왕성 얼음 돌풍.");
         AddTelegraph(TelegraphKind::UranusIce, TelegraphShape::Line, {m_cameraX + 58.0f, kLaneY - 92.0f}, {m_cameraX + 1210.0f, kLaneY + 76.0f}, 0.0f, 94.0f, 0.85f, 0.0f, D2D1::ColorF(0xD9FFF8));
         break;
     case 7:
-        SetMessage(L"Neptune tide surge.");
+        SetMessage(L"해왕성 밀물 쇄도.");
         AddTelegraph(TelegraphKind::NeptuneTide, TelegraphShape::FullLane, {m_cameraX + 64.0f, kLaneY + 32.0f}, {m_cameraX + kWidth - 64.0f, kLaneY + 32.0f}, 320.0f, 0.0f, 0.80f, 0.0f, D2D1::ColorF(0x75A7FF));
         break;
     case 8:
-        SetMessage(L"Pluto void eclipse.");
+        SetMessage(L"명왕성 공허 일식.");
         AddTelegraph(TelegraphKind::PlutoVoid, TelegraphShape::Circle, {m_cameraX + 640.0f, kLaneY}, {m_cameraX + 640.0f, kLaneY}, 230.0f, 0.0f, 0.95f, 34.0f + ThreatLevel() * 2.2f, D2D1::ColorF(0xC8B7FF));
         break;
     default:
-        SetMessage(L"Solar flare.");
+        SetMessage(L"태양 플레어.");
         AddTelegraph(TelegraphKind::SolarFlare, TelegraphShape::Line, {m_cameraX + 20.0f, kBattleTop + 44.0f}, {m_cameraX + kWidth - 20.0f, kBattleBottom - 58.0f}, 330.0f, 128.0f, 1.05f, 52.0f + ThreatLevel() * 3.0f, D2D1::ColorF(0xFFB347));
         break;
     }
@@ -1493,6 +1493,7 @@ void PawlineGameImpl::AttackUnit(Unit& attacker, Unit& target)
     }
 
     DamageUnit(target, attacker.damage, attacker.team);
+    AddMeleeClashVfx(attacker, target.pos, hitColor);
     AddBeam(attacker.pos, target.pos, 4.0f, 0.11f, hitColor);
     AddHitEffects(target.pos, hitColor);
 }
@@ -1510,6 +1511,7 @@ void PawlineGameImpl::AttackBase(Unit& attacker)
         return;
     }
 
+    AddMeleeClashVfx(attacker, baseHit, hitColor);
     AddBeam(attacker.pos, baseHit, 4.6f, 0.13f, hitColor);
     DamageBase(attacker.team == Team::Player ? Team::Enemy : Team::Player, attacker.damage, attacker.pos);
 }
@@ -1517,42 +1519,382 @@ void PawlineGameImpl::AttackBase(Unit& attacker)
 void PawlineGameImpl::FireProjectile(Unit& attacker, const Unit& target)
 {
     BeginAttack(attacker, target.pos);
+    const Vec2 muzzle = ProjectileMuzzle(attacker, target.pos);
     Projectile projectile;
-    projectile.pos = attacker.pos;
-    projectile.lastPos = attacker.pos;
+    projectile.pos = muzzle;
+    projectile.lastPos = muzzle;
     projectile.targetId = target.id;
     projectile.sourceId = attacker.id;
     projectile.team = attacker.team;
     projectile.targetBase = false;
     projectile.damage = attacker.damage;
-    projectile.speed = 420.0f;
-    projectile.radius = 5.0f;
-    projectile.color = attacker.team == Team::Player ? D2D1::ColorF(0xBA7BFF) : D2D1::ColorF(0xFF9BA8);
+    ConfigureProjectileVisual(projectile, attacker);
     m_projectiles.push_back(projectile);
-    const Vec2 dir = Normalize(target.pos - attacker.pos);
-    AddBeam(attacker.pos + dir * 8.0f, attacker.pos + dir * 58.0f, 2.4f, 0.10f, FadeColor(projectile.color, 0.72f));
-    AddRing(attacker.pos, 28.0f, 0.16f, FadeColor(projectile.color, 0.34f), 1.6f);
+    const Vec2 dir = Normalize(target.pos - muzzle);
+    AddBeam(muzzle - dir * 8.0f, muzzle + dir * (58.0f + projectile.radius * 2.0f), 2.4f + projectile.radius * 0.22f, 0.13f, FadeColor(projectile.color, 0.72f));
+    AddRing(muzzle, 30.0f + projectile.radius * 2.0f, 0.18f, FadeColor(projectile.color, 0.36f), 1.8f);
+    AddParticleEx(muzzle, {-dir.y * 28.0f, dir.x * 28.0f}, 4.0f, 0.24f, FadeColor(projectile.color, 0.80f), ParticleKind::Glow, 0.0f, 0.88f, 16.0f);
 }
 
 void PawlineGameImpl::FireProjectileAtBase(Unit& attacker)
 {
     const Vec2 targetPos = attacker.team == Team::Player ? Vec2{kEnemyBaseX - 40.0f, kLaneY} : Vec2{kPlayerBaseX + 40.0f, kLaneY};
     BeginAttack(attacker, targetPos);
+    const Vec2 muzzle = ProjectileMuzzle(attacker, targetPos);
     Projectile projectile;
-    projectile.pos = attacker.pos;
-    projectile.lastPos = attacker.pos;
+    projectile.pos = muzzle;
+    projectile.lastPos = muzzle;
     projectile.targetId = -1;
     projectile.sourceId = attacker.id;
     projectile.team = attacker.team;
     projectile.targetBase = true;
     projectile.damage = attacker.damage;
-    projectile.speed = 430.0f;
-    projectile.radius = 5.0f;
-    projectile.color = attacker.team == Team::Player ? D2D1::ColorF(0xBA7BFF) : D2D1::ColorF(0xFF9BA8);
+    ConfigureProjectileVisual(projectile, attacker);
+    projectile.speed += 18.0f;
     m_projectiles.push_back(projectile);
+    const Vec2 dir = Normalize(targetPos - muzzle);
+    AddBeam(muzzle - dir * 8.0f, muzzle + dir * (62.0f + projectile.radius * 2.0f), 2.6f + projectile.radius * 0.22f, 0.13f, FadeColor(projectile.color, 0.72f));
+    AddRing(muzzle, 32.0f + projectile.radius * 2.0f, 0.18f, FadeColor(projectile.color, 0.36f), 1.8f);
+    AddParticleEx(muzzle, {dir.x * 14.0f, dir.y * 14.0f - 18.0f}, 4.4f, 0.26f, FadeColor(projectile.color, 0.82f), ParticleKind::Glow, 0.0f, 0.88f, 18.0f);
+}
+
+Vec2 PawlineGameImpl::ProjectileMuzzle(const Unit& attacker, Vec2 targetPos) const
+{
     const Vec2 dir = Normalize(targetPos - attacker.pos);
-    AddBeam(attacker.pos + dir * 8.0f, attacker.pos + dir * 62.0f, 2.6f, 0.11f, FadeColor(projectile.color, 0.72f));
-    AddRing(attacker.pos, 30.0f, 0.16f, FadeColor(projectile.color, 0.34f), 1.8f);
+    const float side = attacker.team == Team::Player ? 1.0f : -1.0f;
+    const Vec2 normal = {-dir.y, dir.x};
+    float lift = -attacker.radius * 0.38f;
+    float sideOffset = 0.0f;
+    float reach = attacker.radius + 18.0f;
+
+    if (attacker.team == Team::Player)
+    {
+        switch (static_cast<PlayerUnit>(attacker.kind))
+        {
+        case PlayerUnit::Spark:
+            lift = -attacker.radius - 26.0f;
+            sideOffset = 6.0f;
+            reach += 8.0f;
+            break;
+        case PlayerUnit::Bell:
+            lift = -attacker.radius - 4.0f;
+            sideOffset = -10.0f;
+            break;
+        case PlayerUnit::Orbit:
+            lift = -attacker.radius * 0.25f;
+            sideOffset = 20.0f;
+            reach += 12.0f;
+            break;
+        case PlayerUnit::Prism:
+            lift = -attacker.radius - 24.0f;
+            sideOffset = 14.0f;
+            reach += 16.0f;
+            break;
+        case PlayerUnit::Nebula:
+            lift = -attacker.radius * 0.20f;
+            reach += 20.0f;
+            break;
+        case PlayerUnit::Mint:
+            lift = -attacker.radius - 20.0f;
+            reach += 6.0f;
+            break;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        switch (static_cast<EnemyUnit>(attacker.kind))
+        {
+        case EnemyUnit::Sulfur:
+            lift = -attacker.radius * 0.15f;
+            sideOffset = 10.0f;
+            break;
+        case EnemyUnit::Ring:
+            lift = -attacker.radius * 0.55f;
+            sideOffset = -16.0f;
+            reach += 10.0f;
+            break;
+        case EnemyUnit::Frost:
+            lift = -attacker.radius - 14.0f;
+            reach += 8.0f;
+            break;
+        case EnemyUnit::Tide:
+            lift = -attacker.radius * 0.18f;
+            reach += 12.0f;
+            break;
+        case EnemyUnit::Void:
+        case EnemyUnit::Boss:
+            lift = -attacker.radius * 0.28f;
+            reach += 20.0f;
+            break;
+        case EnemyUnit::Mirror:
+            lift = -attacker.radius - 10.0f;
+            sideOffset = 12.0f;
+            break;
+        case EnemyUnit::Flare:
+        case EnemyUnit::Comet:
+            lift = -attacker.radius * 0.35f;
+            reach += 16.0f;
+            break;
+        case EnemyUnit::Spore:
+            lift = -attacker.radius * 0.70f;
+            sideOffset = -12.0f;
+            break;
+        default:
+            break;
+        }
+    }
+
+    return attacker.pos + dir * reach + normal * sideOffset * side + Vec2{0.0f, lift};
+}
+
+void PawlineGameImpl::ConfigureProjectileVisual(Projectile& projectile, const Unit& attacker)
+{
+    // 공격자의 종류를 탄의 실루엣과 속도에 연결해, 같은 원거리라도
+    // 화면에서 역할이 바로 읽히게 만든다.
+    projectile.age = 0.0f;
+    projectile.spin = Hash01(attacker.pos.x, attacker.pos.y, m_stageTime) * kPi * 2.0f;
+    projectile.wobble = Hash01(attacker.pos.y, attacker.pos.x, m_uiTime) * kPi * 2.0f;
+    projectile.life = 2.8f;
+
+    if (attacker.team == Team::Player)
+    {
+        switch (static_cast<PlayerUnit>(attacker.kind))
+        {
+        case PlayerUnit::Spark:
+            projectile.visual = ProjectileVisual::Bolt;
+            projectile.color = D2D1::ColorF(0xF6FF83);
+            projectile.speed = 560.0f;
+            projectile.radius = 5.4f;
+            break;
+        case PlayerUnit::Bell:
+            projectile.visual = ProjectileVisual::BellWave;
+            projectile.color = D2D1::ColorF(0xF2C94C);
+            projectile.speed = 330.0f;
+            projectile.radius = 7.8f;
+            break;
+        case PlayerUnit::Orbit:
+            projectile.visual = ProjectileVisual::OrbitStar;
+            projectile.color = D2D1::ColorF(0x88A8FF);
+            projectile.speed = 405.0f;
+            projectile.radius = 7.0f;
+            break;
+        case PlayerUnit::Prism:
+            projectile.visual = ProjectileVisual::PrismShard;
+            projectile.color = D2D1::ColorF(0xE19BFF);
+            projectile.speed = 620.0f;
+            projectile.radius = 6.0f;
+            break;
+        case PlayerUnit::Nebula:
+            projectile.visual = ProjectileVisual::NebulaOrb;
+            projectile.color = D2D1::ColorF(0x9D83FF);
+            projectile.speed = 360.0f;
+            projectile.radius = 10.5f;
+            break;
+        case PlayerUnit::Mint:
+            projectile.visual = ProjectileVisual::MintPulse;
+            projectile.color = D2D1::ColorF(0x61E6B0);
+            projectile.speed = 440.0f;
+            projectile.radius = 6.8f;
+            break;
+        default:
+            projectile.visual = ProjectileVisual::Bolt;
+            projectile.color = D2D1::ColorF(0x65B8FF);
+            projectile.speed = 430.0f;
+            projectile.radius = 5.0f;
+            break;
+        }
+        return;
+    }
+
+    switch (static_cast<EnemyUnit>(attacker.kind))
+    {
+    case EnemyUnit::Sulfur:
+        projectile.visual = ProjectileVisual::AcidGlob;
+        projectile.color = D2D1::ColorF(0xFFD27A);
+        projectile.speed = 330.0f;
+        projectile.radius = 8.0f;
+        break;
+    case EnemyUnit::Ring:
+        projectile.visual = ProjectileVisual::OrbitStar;
+        projectile.color = D2D1::ColorF(0xE6D392);
+        projectile.speed = 390.0f;
+        projectile.radius = 7.0f;
+        break;
+    case EnemyUnit::Frost:
+        projectile.visual = ProjectileVisual::FrostShard;
+        projectile.color = D2D1::ColorF(0xB9FFF5);
+        projectile.speed = 460.0f;
+        projectile.radius = 6.0f;
+        break;
+    case EnemyUnit::Tide:
+        projectile.visual = ProjectileVisual::TideWave;
+        projectile.color = D2D1::ColorF(0x75A7FF);
+        projectile.speed = 350.0f;
+        projectile.radius = 8.0f;
+        break;
+    case EnemyUnit::Void:
+    case EnemyUnit::Boss:
+        projectile.visual = ProjectileVisual::VoidOrb;
+        projectile.color = attacker.kind == static_cast<int>(EnemyUnit::Boss) ? D2D1::ColorF(0xFFB347) : D2D1::ColorF(0xC8B7FF);
+        projectile.speed = attacker.kind == static_cast<int>(EnemyUnit::Boss) ? 390.0f : 340.0f;
+        projectile.radius = attacker.kind == static_cast<int>(EnemyUnit::Boss) ? 12.0f : 10.0f;
+        break;
+    case EnemyUnit::Flare:
+    case EnemyUnit::Comet:
+        projectile.visual = ProjectileVisual::SolarSpark;
+        projectile.color = D2D1::ColorF(0xFFDB7A);
+        projectile.speed = 520.0f;
+        projectile.radius = 6.8f;
+        break;
+    case EnemyUnit::Spore:
+        projectile.visual = ProjectileVisual::SporeSeed;
+        projectile.color = D2D1::ColorF(0xFFB6E8);
+        projectile.speed = 315.0f;
+        projectile.radius = 8.5f;
+        break;
+    case EnemyUnit::Mirror:
+        projectile.visual = ProjectileVisual::MirrorShard;
+        projectile.color = D2D1::ColorF(0xEAF7FF);
+        projectile.speed = 590.0f;
+        projectile.radius = 5.6f;
+        break;
+    default:
+        projectile.visual = ProjectileVisual::Bolt;
+        projectile.color = D2D1::ColorF(0xFF9BA8);
+        projectile.speed = 420.0f;
+        projectile.radius = 5.2f;
+        break;
+    }
+}
+
+void PawlineGameImpl::AddProjectileImpact(const Projectile& projectile)
+{
+    const Vec2 pos = projectile.pos;
+    AddBeam(projectile.lastPos, pos, projectile.radius * 1.6f, 0.13f, FadeColor(projectile.color, 0.88f));
+
+    switch (projectile.visual)
+    {
+    case ProjectileVisual::Bolt:
+        AddSparkLines(pos, D2D1::ColorF(0xF6FF83), 16);
+        AddRing(pos, 58.0f, 0.22f, FadeColor(projectile.color, 0.42f), 2.4f);
+        break;
+    case ProjectileVisual::BellWave:
+        AddRing(pos, 104.0f, 0.42f, FadeColor(projectile.color, 0.46f), 3.2f);
+        AddRing(pos, 66.0f, 0.32f, D2D1::ColorF(0xFFF4B8, 0.32f), 2.2f);
+        AddSparkLines(pos, D2D1::ColorF(0xFFF4B8), 8);
+        break;
+    case ProjectileVisual::OrbitStar:
+        AddRing(pos, 82.0f, 0.32f, FadeColor(projectile.color, 0.42f), 2.8f);
+        AddBurst(pos, projectile.color, 12);
+        break;
+    case ProjectileVisual::PrismShard:
+    case ProjectileVisual::MirrorShard:
+        AddSparkLines(pos, projectile.visual == ProjectileVisual::MirrorShard ? D2D1::ColorF(0xEAF7FF) : D2D1::ColorF(0xF7D6FF), 18);
+        AddBurst(pos, projectile.color, 12);
+        AddRing(pos, 62.0f, 0.26f, FadeColor(projectile.color, 0.44f), 2.6f);
+        break;
+    case ProjectileVisual::NebulaOrb:
+    case ProjectileVisual::VoidOrb:
+        AddRing(pos, 96.0f, 0.38f, FadeColor(projectile.color, 0.46f), 3.3f);
+        AddRing(pos, 46.0f, 0.25f, D2D1::ColorF(0x061019, 0.48f), 4.0f);
+        AddBurst(pos, projectile.color, 16);
+        break;
+    case ProjectileVisual::MintPulse:
+        AddRing(pos, 72.0f, 0.30f, FadeColor(projectile.color, 0.44f), 2.4f);
+        AddParticleEx(pos, {0.0f, -32.0f}, 10.0f, 0.42f, D2D1::ColorF(0xD8FFF3, 0.66f), ParticleKind::Glow, 0.0f, 0.90f, 22.0f);
+        break;
+    case ProjectileVisual::FrostShard:
+        AddSparkLines(pos, D2D1::ColorF(0xD9FFF8), 14);
+        AddRing(pos, 64.0f, 0.34f, D2D1::ColorF(0xB9FFF5, 0.42f), 2.4f);
+        AddDustPuff({pos.x, pos.y + 12.0f}, D2D1::ColorF(0xD9FFF8, 0.22f), 7);
+        break;
+    case ProjectileVisual::AcidGlob:
+        AddBurst(pos, D2D1::ColorF(0xFFD27A), 18);
+        AddRing(pos, 58.0f, 0.33f, D2D1::ColorF(0xB8FF89, 0.36f), 2.6f);
+        break;
+    case ProjectileVisual::TideWave:
+        AddRing(pos, 88.0f, 0.36f, D2D1::ColorF(0x75A7FF, 0.40f), 3.0f);
+        for (int i = -2; i <= 2; ++i)
+        {
+            AddParticleEx({pos.x + static_cast<float>(i) * 10.0f, pos.y + 8.0f}, {static_cast<float>(i) * 12.0f, -34.0f}, 5.2f, 0.46f, D2D1::ColorF(0xBFD9FF, 0.70f), ParticleKind::Bubble, -18.0f, 0.90f, 4.0f);
+        }
+        break;
+    case ProjectileVisual::SolarSpark:
+        AddSparkLines(pos, D2D1::ColorF(0xFFDB7A), 20);
+        AddRing(pos, 76.0f, 0.30f, D2D1::ColorF(0xFFB347, 0.46f), 3.0f);
+        AddBurst(pos, D2D1::ColorF(0xFF6A3D), 12);
+        break;
+    case ProjectileVisual::SporeSeed:
+        AddRing(pos, 66.0f, 0.36f, D2D1::ColorF(0xFFB6E8, 0.38f), 2.8f);
+        AddBurst(pos, D2D1::ColorF(0xFFB6E8), 14);
+        break;
+    }
+}
+
+void PawlineGameImpl::AddMeleeClashVfx(const Unit& attacker, Vec2 targetPos, D2D1_COLOR_F color)
+{
+    const Vec2 dir = Normalize(targetPos - attacker.pos);
+    const Vec2 normal = {-dir.y, dir.x};
+    const Vec2 clash = attacker.pos + dir * (attacker.radius + std::min(28.0f, Distance(attacker.pos, targetPos) * 0.45f));
+    const float heavy = attacker.radius >= 23.0f ? 1.0f : 0.0f;
+
+    AddRing(clash, 42.0f + attacker.radius * 1.2f + heavy * 22.0f, 0.24f + heavy * 0.08f, FadeColor(color, 0.46f), 2.4f + heavy * 1.4f);
+    AddBeam(clash - normal * (18.0f + attacker.radius * 0.45f), clash + normal * (18.0f + attacker.radius * 0.45f), 3.0f + heavy * 2.0f, 0.11f, FadeColor(color, 0.68f));
+    AddSparkLines(clash, FadeColor(color, 0.92f), attacker.radius >= 23.0f ? 14 : 8);
+    AddDustPuff({clash.x, clash.y + 18.0f}, D2D1::ColorF(color.r, color.g, color.b, 0.24f), attacker.radius >= 23.0f ? 8 : 4);
+    AddParticleEx(clash, dir * 28.0f + Vec2{0.0f, -22.0f}, 5.0f + heavy * 2.0f, 0.24f, FadeColor(color, 0.82f), ParticleKind::Glow, 0.0f, 0.88f, 16.0f + heavy * 8.0f);
+
+    if (attacker.team == Team::Player)
+    {
+        switch (static_cast<PlayerUnit>(attacker.kind))
+        {
+        case PlayerUnit::Box:
+        case PlayerUnit::Titan:
+            AddRing({clash.x, clash.y + 20.0f}, 82.0f + attacker.radius, 0.32f, D2D1::ColorF(0xFFF0B5, 0.34f), 4.2f);
+            break;
+        case PlayerUnit::Dash:
+        case PlayerUnit::Comet:
+            AddBeam(attacker.pos - dir * 52.0f, clash + dir * 24.0f, 4.8f, 0.14f, FadeColor(color, 0.72f));
+            break;
+        case PlayerUnit::Drill:
+            for (int i = -1; i <= 1; ++i)
+            {
+                AddBeam(clash - dir * 18.0f + normal * static_cast<float>(i) * 8.0f, clash + dir * 34.0f + normal * static_cast<float>(i) * 8.0f, 2.4f, 0.12f, D2D1::ColorF(0xFFF0C8, 0.62f));
+            }
+            break;
+        case PlayerUnit::Frost:
+            AddRing(clash, 64.0f, 0.30f, D2D1::ColorF(0xB9FFF5, 0.38f), 2.6f);
+            break;
+        case PlayerUnit::Solar:
+            AddRing(clash, 92.0f, 0.34f, D2D1::ColorF(0xFFE66D, 0.42f), 4.0f);
+            AddBurst(clash, D2D1::ColorF(0xFFB347), 14);
+            break;
+        default:
+            break;
+        }
+        return;
+    }
+
+    switch (static_cast<EnemyUnit>(attacker.kind))
+    {
+    case EnemyUnit::Brute:
+    case EnemyUnit::Quake:
+        AddRing({clash.x, clash.y + 24.0f}, 88.0f + attacker.radius, 0.34f, D2D1::ColorF(0xD8A66A, 0.34f), 4.0f);
+        break;
+    case EnemyUnit::Skitter:
+        AddBeam(attacker.pos - dir * 34.0f, clash + dir * 18.0f, 3.6f, 0.12f, D2D1::ColorF(0xFFB6C2, 0.62f));
+        break;
+    case EnemyUnit::Moss:
+        AddRing(clash, 58.0f, 0.30f, D2D1::ColorF(0xB8FF89, 0.32f), 2.4f);
+        break;
+    case EnemyUnit::Rust:
+        AddBurst(clash, D2D1::ColorF(0xD77A5C), 10);
+        break;
+    default:
+        break;
+    }
 }
 
 void PawlineGameImpl::UpdateProjectiles(float dt)
@@ -1562,6 +1904,9 @@ void PawlineGameImpl::UpdateProjectiles(float dt)
     for (Projectile& projectile : m_projectiles)
     {
         projectile.life -= dt;
+        projectile.age += dt;
+        projectile.wobble += dt * 7.5f;
+        projectile.spin += dt * (projectile.team == Team::Player ? 6.0f : -5.0f);
         if (projectile.life <= 0.0f)
         {
             continue;
@@ -1594,13 +1939,13 @@ void PawlineGameImpl::UpdateProjectiles(float dt)
             if (projectile.targetBase)
             {
                 ShakeUnitById(projectile.sourceId, 0.15f);
-                AddBeam(projectile.lastPos, projectile.pos, projectile.radius * 1.7f, 0.13f, FadeColor(projectile.color, 0.88f));
+                AddProjectileImpact(projectile);
                 DamageBase(projectile.team == Team::Player ? Team::Enemy : Team::Player, projectile.damage, projectile.pos);
             }
             else if (target)
             {
                 ShakeUnitById(projectile.sourceId, 0.15f);
-                AddBeam(projectile.lastPos, projectile.pos, projectile.radius * 1.7f, 0.13f, FadeColor(projectile.color, 0.88f));
+                AddProjectileImpact(projectile);
                 DamageUnit(*target, projectile.damage, projectile.team);
                 AddHitEffects(projectile.pos, projectile.color);
             }
@@ -1867,7 +2212,7 @@ void PawlineGameImpl::TryFireCannon()
 {
     if (m_cannonCharge < 100.0f)
     {
-        SetMessage(L"Cannon is still charging.");
+        SetMessage(L"문빔 캐논 충전 중.");
         return;
     }
 
@@ -1889,19 +2234,19 @@ void PawlineGameImpl::TryFireCannon()
     }
     AddBurst({(kPlayerBaseX + kEnemyBaseX) * 0.5f, kLaneY}, D2D1::ColorF(0xF6FF83), 40);
     AddRing({(kPlayerBaseX + kEnemyBaseX) * 0.5f, kLaneY}, 620.0f, 0.72f, D2D1::ColorF(0xF6FF83, 0.55f), 6.0f);
-    SetMessage(L"Moonbeam cannon fired.");
+    SetMessage(L"문빔 캐논 발사.");
 }
 
 void PawlineGameImpl::DecreaseGameSpeed()
 {
     m_gameSpeed = std::max(0.5f, m_gameSpeed - 0.5f);
-    SetMessage(L"Game speed x" + ToWideFloat(m_gameSpeed));
+    SetMessage(L"게임 속도 x" + ToWideFloat(m_gameSpeed));
 }
 
 void PawlineGameImpl::IncreaseGameSpeed()
 {
     m_gameSpeed = std::min(3.0f, m_gameSpeed + 0.5f);
-    SetMessage(L"Game speed x" + ToWideFloat(m_gameSpeed));
+    SetMessage(L"게임 속도 x" + ToWideFloat(m_gameSpeed));
 }
 
 void PawlineGameImpl::AddParticle(Vec2 pos, Vec2 vel, float radius, float life, D2D1_COLOR_F color)
