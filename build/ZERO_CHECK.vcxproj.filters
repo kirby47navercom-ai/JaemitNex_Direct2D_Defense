@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\build\CMakeFiles\0ea3a6336d4547d749ce8732ec89835d\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{898A2ADE-D124-3090-B0DD-C952D09F8D73}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
