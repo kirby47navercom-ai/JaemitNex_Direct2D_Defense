@@ -507,6 +507,12 @@ void PawlineGameImpl::ResetGame()
     m_cannonFlash = 0.0f;
     m_screenFlash = 0.0f;
     m_walletPulseTimer = WalletPulseInterval();
+    m_stageGimmickTimer = 7.0f + static_cast<float>(m_selectedStage % 3) * 1.8f;
+    m_stageGimmickPulse = 0.0f;
+    m_stageAmbientTimer = 0.0f;
+    m_bossBannerTimer = 0.0f;
+    m_bossWarningTimer = 0.0f;
+    m_bossFocusX = 0.0f;
     m_cameraX = 0.0f;
     m_cameraTargetX = 0.0f;
     m_playerBaseShake = 0.0f;
@@ -547,6 +553,18 @@ void PawlineGameImpl::Update(float dt)
     {
         m_screenFlash -= dt;
     }
+    if (m_stageGimmickPulse > 0.0f)
+    {
+        m_stageGimmickPulse -= dt;
+    }
+    if (m_bossBannerTimer > 0.0f)
+    {
+        m_bossBannerTimer -= dt;
+    }
+    if (m_bossWarningTimer > 0.0f)
+    {
+        m_bossWarningTimer -= dt;
+    }
 
     if (m_screen == GameScreen::Title || m_screen == GameScreen::Options || m_screen == GameScreen::Menu || m_screen == GameScreen::Shop || m_screen == GameScreen::Result)
     {
@@ -573,6 +591,7 @@ void PawlineGameImpl::Update(float dt)
     m_energy = std::min(MaxEnergy(), m_energy + EnergyRegen() * gameDt);
     m_cannonCharge = std::min(100.0f, m_cannonCharge + (6.8f + static_cast<float>(m_walletLevel) * 1.1f) * gameDt);
     UpdateWalletPulse(gameDt);
+    UpdateStageGimmicks(gameDt);
 
     for (float& cooldown : m_cardCooldowns)
     {
@@ -667,6 +686,10 @@ void PawlineGameImpl::UpdateCamera(float dt)
         if (m_screen == GameScreen::Playing && m_units.empty() && m_stageTime < 2.0f)
         {
             m_cameraTargetX = 0.0f;
+        }
+        if (m_bossBannerTimer > 0.0f)
+        {
+            m_cameraTargetX = m_bossFocusX;
         }
     }
 

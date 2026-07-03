@@ -191,8 +191,10 @@ void PawlineGameImpl::Render()
     SetViewTransform();
 
     DrawShaderPostProcess();
+    DrawStageGimmickOverlay();
     DrawHeader();
     DrawCameraHud();
+    DrawBossPresentation();
     DrawCommandBar();
     DrawUiPulses();
     DrawMessage();
@@ -2114,6 +2116,84 @@ void PawlineGameImpl::DrawUiPulses()
         StrokeEllipse(pulse.pos, pulse.radius, pulse.radius, D2D1::ColorF(pulse.color.r, pulse.color.g, pulse.color.b, 0.42f * alpha), 2.0f);
         StrokeEllipse(pulse.pos, pulse.radius * 0.58f, pulse.radius * 0.58f, D2D1::ColorF(0xFFFFFF, 0.20f * alpha), 1.0f);
     }
+}
+
+void PawlineGameImpl::DrawStageGimmickOverlay()
+{
+    if (m_screen != GameScreen::Playing && m_screen != GameScreen::Result)
+    {
+        return;
+    }
+
+    const StageDefinition stage = CurrentStage();
+    const float interval = std::max(0.1f, GimmickInterval());
+    const float ready = 1.0f - Clamp01(m_stageGimmickTimer / interval);
+    const D2D1_RECT_F meter = D2D1::RectF(470.0f, 84.0f, 810.0f, 93.0f);
+    FillRoundRect(meter, 4.0f, D2D1::ColorF(0x061019, 0.70f));
+    FillRoundRect(D2D1::RectF(meter.left, meter.top, meter.left + (meter.right - meter.left) * ready, meter.bottom), 4.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.62f));
+    StrokeRoundRect(meter, 4.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.56f), 1.0f);
+
+    if (m_stageGimmickPulse > 0.0f)
+    {
+        const float pulse = Clamp01(m_stageGimmickPulse / 1.35f);
+        const D2D1_RECT_F arena = D2D1::RectF(24.0f, kBattleTop, 1256.0f, kBattleBottom);
+        FillRoundRect(arena, 8.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.055f * pulse));
+        StrokeRoundRect(InflateRectF(arena, -8.0f, -8.0f), 8.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.28f * pulse), 2.8f);
+        DrawPixelTextCentered(L"PLANET EVENT", D2D1::RectF(520.0f, 116.0f, 760.0f, 146.0f), 2.8f, D2D1::ColorF(0xF3FBFF), pulse);
+    }
+}
+
+void PawlineGameImpl::DrawBossPresentation()
+{
+    if (m_screen != GameScreen::Playing && m_screen != GameScreen::Result)
+    {
+        return;
+    }
+
+    const StageDefinition stage = CurrentStage();
+    const Unit* boss = nullptr;
+    for (const Unit& unit : m_units)
+    {
+        if (unit.team == Team::Enemy && unit.alive && (unit.elite || static_cast<EnemyUnit>(unit.kind) == EnemyUnit::Boss))
+        {
+            if (!boss || unit.maxHp > boss->maxHp)
+            {
+                boss = &unit;
+            }
+        }
+    }
+
+    if (m_bossBannerTimer > 0.0f)
+    {
+        const float alpha = Clamp01(m_bossBannerTimer / 0.55f);
+        const float slide = (1.0f - Clamp01(m_bossBannerTimer / 3.15f)) * 18.0f;
+        const D2D1_RECT_F panel = D2D1::RectF(286.0f, 198.0f + slide, 994.0f, 314.0f + slide);
+        FillRect(D2D1::RectF(0.0f, kBattleTop, kWidth, kBattleBottom), D2D1::ColorF(0x000000, 0.24f * alpha));
+        DrawCartoonPanel(panel, D2D1::ColorF(0x190D0F, 0.96f * alpha), D2D1::ColorF(0xFF9BA8, alpha), true);
+        for (int i = 0; i < 11; ++i)
+        {
+            const float x = panel.left + 18.0f + static_cast<float>(i) * 64.0f;
+            DrawLine({x, panel.top + 8.0f}, {x + 38.0f, panel.bottom - 8.0f}, D2D1::ColorF(0xFFB347, 0.16f * alpha), 5.0f);
+        }
+        DrawPixelTextCentered(L"WARNING", D2D1::RectF(panel.left + 30.0f, panel.top + 22.0f, panel.right - 30.0f, panel.top + 62.0f), 4.4f, D2D1::ColorF(0xFFB347), alpha);
+        DrawPixelTextCentered(L"BOSS INCOMING", D2D1::RectF(panel.left + 30.0f, panel.top + 70.0f, panel.right - 30.0f, panel.bottom - 18.0f), 3.2f, D2D1::ColorF(0xF3FBFF), alpha);
+    }
+
+    if (!boss)
+    {
+        return;
+    }
+
+    const float pct = Clamp01(boss->hp / boss->maxHp);
+    const UnitStats stats = GetEnemyStats(static_cast<EnemyUnit>(boss->kind), ThreatLevel());
+    const D2D1_RECT_F panel = D2D1::RectF(378.0f, 104.0f, 902.0f, 142.0f);
+    DrawCartoonPanel(panel, D2D1::ColorF(0x0D1118, 0.94f), D2D1::ColorF(0xFF9BA8));
+    DrawPixelText(L"BOSS", {panel.left + 18.0f, panel.top + 10.0f}, 2.4f, D2D1::ColorF(0xFFB347), 1.0f);
+    DrawPixelTextCentered(stats.name, D2D1::RectF(panel.left + 82.0f, panel.top + 7.0f, panel.left + 254.0f, panel.bottom - 7.0f), 2.2f, D2D1::ColorF(0xF3FBFF), 1.0f);
+    const D2D1_RECT_F bar = D2D1::RectF(panel.left + 270.0f, panel.top + 13.0f, panel.right - 18.0f, panel.bottom - 13.0f);
+    FillRoundRect(bar, 6.0f, D2D1::ColorF(0x061019, 0.94f));
+    FillRoundRect(D2D1::RectF(bar.left, bar.top, bar.left + (bar.right - bar.left) * pct, bar.bottom), 6.0f, D2D1::ColorF(0xFF9BA8));
+    FillRoundRect(D2D1::RectF(bar.left, bar.top, bar.left + (bar.right - bar.left) * pct, bar.top + 7.0f), 5.0f, D2D1::ColorF(0xFFFFFF, 0.15f));
 }
 
 void PawlineGameImpl::DrawBattleLogo()

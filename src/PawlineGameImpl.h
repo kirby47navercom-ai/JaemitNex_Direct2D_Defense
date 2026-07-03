@@ -369,6 +369,20 @@ private:
 
     std::wstring StageEnemySummary() const;
 
+    float GimmickInterval() const;
+
+    float EffectiveUnitRange(const Unit& unit) const;
+
+    float StageMoveSpeedModifier(const Unit& unit) const;
+
+    void UpdateStageGimmicks(float dt);
+
+    void TriggerStageGimmick();
+
+    void ApplyAreaDamage(Vec2 center, float radius, float damage, D2D1_COLOR_F color);
+
+    void SpawnStageReinforcement(EnemyUnit type, float forwardOffset, bool elite = false);
+
     float ThreatLevel() const;
 
     float MaxEnergy() const;
@@ -679,6 +693,10 @@ private:
 
     void DrawUiPulses();
 
+    void DrawStageGimmickOverlay();
+
+    void DrawBossPresentation();
+
     void DrawHeader();
 
     void DrawBattleLogo();
@@ -771,6 +789,12 @@ private:
     float m_screenFlash = 0.0f;
     float m_uiTime = 0.0f;
     float m_walletPulseTimer = 0.0f;
+    float m_stageGimmickTimer = 0.0f;
+    float m_stageGimmickPulse = 0.0f;
+    float m_stageAmbientTimer = 0.0f;
+    float m_bossBannerTimer = 0.0f;
+    float m_bossWarningTimer = 0.0f;
+    float m_bossFocusX = 0.0f;
     float m_cameraX = 0.0f;
     float m_cameraTargetX = 0.0f;
     float m_viewScale = 1.0f;
