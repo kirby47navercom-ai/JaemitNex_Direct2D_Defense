@@ -966,13 +966,11 @@ private:
 
     bool IsUnitInLoadout(PlayerUnit unit) const;
 
+    void DrawBitmapCover(ID2D1Bitmap* bitmap, D2D1_RECT_F area, float opacity, float time, float cameraX);
+
     void DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, float time, float cameraX, bool showRoute);
 
     void DrawSpaceDepthGrid(D2D1_RECT_F area, int stageIndex, float time, float cameraX);
-
-    void DrawAsteroidField(D2D1_RECT_F area, int stageIndex, float time, float cameraX);
-
-    void DrawOrbitalPlanet(Vec2 center, float radius, int stageIndex, float alpha, float time);
 
     void DrawTitle();
 
@@ -1147,7 +1145,6 @@ private:
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_buttonFormat;
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_centerFormat;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_deepSpaceBitmap;
-    std::array<Microsoft::WRL::ComPtr<ID2D1Bitmap>, kStageCount> m_backgroundBitmaps;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_vfxAtlas;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_slashEffectSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_enemySlashEffectSheet;

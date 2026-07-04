@@ -732,12 +732,6 @@ void PawlineGameImpl::LoadBitmapAssets()
     }
 
     LoadBitmapFromFile(AssetPath(L"assets\\ui\\pawline_ui_atlas.png"), m_uiAtlas.ReleaseAndGetAddressOf());
-    for (int i = 0; i < kStageCount; ++i)
-    {
-        std::wstringstream path;
-        path << L"assets\\backgrounds\\stage_" << std::setw(2) << std::setfill(L'0') << i << L"_space.png";
-        LoadBitmapFromFile(AssetPath(path.str()), m_backgroundBitmaps[i].ReleaseAndGetAddressOf());
-    }
 
     m_bitmapAssetsLoaded = true;
 }
@@ -785,10 +779,6 @@ void PawlineGameImpl::DiscardBitmapAssets()
         bitmap.Reset();
     }
     m_uiAtlas.Reset();
-    for (auto& bitmap : m_backgroundBitmaps)
-    {
-        bitmap.Reset();
-    }
     m_bitmapAssetsLoaded = false;
 }
 
