@@ -21,6 +21,6 @@ NASA 로고나 휘장은 사용하지 않았고, NASA가 안내하는 이미지/
 
 Additional deep-space backdrop:
 
-- Hubble Ultra Deep Field, NASA SVS ID 30946, `hudf-hst-6200x6200_print.jpg`
+- Hubble Ultra Deep Field, NASA SVS ID 30946, `hudf-hst-6200x6200.png` source, resized to `deep_space_hudf.jpg` at 4096x4096 for runtime use
 - Source: https://svs.gsfc.nasa.gov/30946
 - Credit: NASA, ESA, S. Beckwith (STScI) and the HUDF Team

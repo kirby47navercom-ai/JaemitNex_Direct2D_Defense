@@ -465,7 +465,7 @@ void PawlineGameImpl::DrawWeaponBitmap(ID2D1Bitmap* bitmap, Vec2 center, float w
     m_renderTarget->SetTransform(previous);
 }
 
-void PawlineGameImpl::DrawBitmapCover(ID2D1Bitmap* bitmap, D2D1_RECT_F area, float opacity, float time, float cameraX)
+void PawlineGameImpl::DrawBitmapCover(ID2D1Bitmap* bitmap, D2D1_RECT_F area, float opacity, float time, float cameraX, float motionScale)
 {
     if (!bitmap || !m_renderTarget)
     {
@@ -489,8 +489,11 @@ void PawlineGameImpl::DrawBitmapCover(ID2D1Bitmap* bitmap, D2D1_RECT_F area, flo
     const float drawHeight = sourceSize.height * scale;
     const float overflowX = std::max(0.0f, drawWidth - areaWidth);
     const float overflowY = std::max(0.0f, drawHeight - areaHeight);
-    const float panX = std::sin(time * 0.028f + cameraX * 0.00055f) * overflowX * 0.22f;
-    const float panY = std::cos(time * 0.021f + cameraX * 0.00038f) * overflowY * 0.20f;
+    const float motion = std::max(0.0f, motionScale);
+    const float panRangeX = std::min(0.48f, 0.18f + motion * 0.085f);
+    const float panRangeY = std::min(0.44f, 0.16f + motion * 0.070f);
+    const float panX = std::sin(time * (0.022f + motion * 0.042f) + cameraX * (0.00045f + motion * 0.00016f)) * overflowX * panRangeX;
+    const float panY = std::cos(time * (0.017f + motion * 0.031f) + cameraX * (0.00030f + motion * 0.00011f)) * overflowY * panRangeY;
     const D2D1_RECT_F dest = D2D1::RectF(area.left + (areaWidth - drawWidth) * 0.5f + panX,
                                          area.top + (areaHeight - drawHeight) * 0.5f + panY,
                                          area.left + (areaWidth + drawWidth) * 0.5f + panX,
@@ -923,7 +926,8 @@ void PawlineGameImpl::DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, fl
     FillRect(area, D2D1::ColorF(0x01050B));
     if (m_deepSpaceBitmap)
     {
-        DrawBitmapCover(m_deepSpaceBitmap.Get(), area, 0.98f, time, cameraX);
+        const bool gameplayBackdrop = (area.right - area.left) > kWidth + 180.0f || std::abs(cameraX) > 0.01f;
+        DrawBitmapCover(m_deepSpaceBitmap.Get(), area, 0.98f, time, cameraX, gameplayBackdrop ? 3.0f : 0.45f);
     }
     FillRect(area, D2D1::ColorF(0x01050B, 0.18f));
     DrawSpaceDepthGrid(area, safeStage, time, cameraX);

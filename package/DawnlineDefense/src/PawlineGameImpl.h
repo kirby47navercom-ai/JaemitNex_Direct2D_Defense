@@ -966,7 +966,7 @@ private:
 
     bool IsUnitInLoadout(PlayerUnit unit) const;
 
-    void DrawBitmapCover(ID2D1Bitmap* bitmap, D2D1_RECT_F area, float opacity, float time, float cameraX);
+    void DrawBitmapCover(ID2D1Bitmap* bitmap, D2D1_RECT_F area, float opacity, float time, float cameraX, float motionScale);
 
     void DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, float time, float cameraX, bool showRoute);
 
