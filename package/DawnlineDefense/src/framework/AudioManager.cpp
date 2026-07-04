@@ -151,7 +151,7 @@ bool AudioManager::PlayEffectAt(const std::wstring& absolutePath, float worldX, 
     const float halfWidth = std::max(1.0f, m_audibleWidth * 0.5f);
     const float normalized = std::clamp((worldX - m_listenerX) / halfWidth, -1.0f, 1.0f);
     const float distance = std::abs(normalized);
-    const float attenuation = std::clamp(1.0f - distance * 0.58f, 0.24f, 1.0f) * std::clamp(volumeScale, 0.0f, 1.6f);
+    const float attenuation = std::clamp(1.0f - distance * 0.48f, 0.34f, 1.0f) * std::clamp(volumeScale, 0.0f, 1.8f);
 
 #if defined(PAWLINE_WITH_FMOD)
     if (m_fmodSystem)

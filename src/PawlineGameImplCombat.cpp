@@ -4,78 +4,95 @@ namespace
 {
 // 전투 시스템은 유닛 종류만 알고, 렌더러는 ImageVfxKind를 받아 실제 PNG 시트를 고른다.
 // 이렇게 분리하면 새 이펙트를 추가해도 공격 판정 코드를 거의 건드리지 않아도 된다.
-ImageVfxKind UnitImageVfxKind(const Unit& unit)
+struct VfxCombo
+{
+    ImageVfxKind primary;
+    ImageVfxKind secondary;
+    ImageVfxKind accent;
+};
+
+VfxCombo UnitVfxCombo(const Unit& unit)
 {
     if (unit.team == Team::Player)
     {
         switch (static_cast<PlayerUnit>(unit.kind))
         {
-        case PlayerUnit::Spark:
-            return ImageVfxKind::ThunderSplash;
-        case PlayerUnit::Frost:
-            return ImageVfxKind::Ice;
-        case PlayerUnit::Comet:
-            return ImageVfxKind::FireBreath;
-        case PlayerUnit::Solar:
-            return ImageVfxKind::Explosion;
-        case PlayerUnit::Bell:
-            return ImageVfxKind::EnergyImpact;
-        case PlayerUnit::Orbit:
-            return ImageVfxKind::Crystal;
-        case PlayerUnit::Prism:
-            return ImageVfxKind::MagicMirror;
-        case PlayerUnit::Nebula:
-            return ImageVfxKind::Dark;
-        case PlayerUnit::Mint:
-            return ImageVfxKind::Heal;
-        case PlayerUnit::Dash:
-            return ImageVfxKind::Wind;
-        case PlayerUnit::Drill:
-            return ImageVfxKind::Thrust;
-        case PlayerUnit::Box:
-        case PlayerUnit::Titan:
-            return ImageVfxKind::Earth;
         case PlayerUnit::Paw:
-            return ImageVfxKind::HitFlash;
+            return {ImageVfxKind::Slash, ImageVfxKind::HitFlash, ImageVfxKind::AirBurst};
+        case PlayerUnit::Box:
+            return {ImageVfxKind::Earth, ImageVfxKind::SmokeDust, ImageVfxKind::HitFlash};
+        case PlayerUnit::Spark:
+            return {ImageVfxKind::ThunderSplash, ImageVfxKind::Thunder, ImageVfxKind::EnergyImpact};
+        case PlayerUnit::Dash:
+            return {ImageVfxKind::WindHit, ImageVfxKind::Smear, ImageVfxKind::AirBurst};
+        case PlayerUnit::Bell:
+            return {ImageVfxKind::Holy, ImageVfxKind::EnergyImpact, ImageVfxKind::HealSoft};
+        case PlayerUnit::Titan:
+            return {ImageVfxKind::Earth, ImageVfxKind::Explosion, ImageVfxKind::SmokeDust};
+        case PlayerUnit::Frost:
+            return {ImageVfxKind::Ice, ImageVfxKind::Crystal, ImageVfxKind::HitFlash};
+        case PlayerUnit::Comet:
+            return {ImageVfxKind::FireBreath, ImageVfxKind::Explosion, ImageVfxKind::SmokeDust};
+        case PlayerUnit::Orbit:
+            return {ImageVfxKind::Crystal, ImageVfxKind::EnergyImpact, ImageVfxKind::MagicMirror};
+        case PlayerUnit::Solar:
+            return {ImageVfxKind::Explosion, ImageVfxKind::FireBreath, ImageVfxKind::Holy};
+        case PlayerUnit::Mint:
+            return {ImageVfxKind::Heal, ImageVfxKind::Wood, ImageVfxKind::HealSoft};
+        case PlayerUnit::Drill:
+            return {ImageVfxKind::Thrust, ImageVfxKind::Smear, ImageVfxKind::Earth};
+        case PlayerUnit::Prism:
+            return {ImageVfxKind::MagicMirror, ImageVfxKind::Crystal, ImageVfxKind::EnergyImpact};
+        case PlayerUnit::Nebula:
+            return {ImageVfxKind::Dark, ImageVfxKind::MagicMirror, ImageVfxKind::EnergyImpact};
         default:
-            return ImageVfxKind::Slash;
+            return {ImageVfxKind::Slash, ImageVfxKind::HitFlash, ImageVfxKind::AirBurst};
         }
     }
 
     switch (static_cast<EnemyUnit>(unit.kind))
     {
+    case EnemyUnit::Dust:
+        return {ImageVfxKind::EnemySlash, ImageVfxKind::HitFlash, ImageVfxKind::SmokeDust};
+    case EnemyUnit::Brute:
+        return {ImageVfxKind::Earth, ImageVfxKind::SmokeDust, ImageVfxKind::HitFlash};
+    case EnemyUnit::Skitter:
+        return {ImageVfxKind::Smear, ImageVfxKind::EnemySlash, ImageVfxKind::AirBurst};
     case EnemyUnit::Sulfur:
     case EnemyUnit::Spore:
-        return ImageVfxKind::Acid;
+        return {ImageVfxKind::Acid, ImageVfxKind::Smoke, ImageVfxKind::WaterBallImpact};
     case EnemyUnit::Moss:
-        return ImageVfxKind::Wood;
-    case EnemyUnit::Frost:
-        return ImageVfxKind::Ice;
-    case EnemyUnit::Tide:
-        return ImageVfxKind::WaterBallImpact;
-    case EnemyUnit::Void:
-    case EnemyUnit::Boss:
-        return ImageVfxKind::Dark;
-    case EnemyUnit::Flare:
-        return ImageVfxKind::FireBreath;
-    case EnemyUnit::Comet:
-        return ImageVfxKind::Explosion;
-    case EnemyUnit::Ring:
-        return ImageVfxKind::Crystal;
-    case EnemyUnit::Mirror:
-        return ImageVfxKind::MagicMirror;
-    case EnemyUnit::Brute:
+        return {ImageVfxKind::Wood, ImageVfxKind::HealSoft, ImageVfxKind::SmokeDust};
     case EnemyUnit::Rust:
+        return {ImageVfxKind::Earth, ImageVfxKind::SmokeDust, ImageVfxKind::Smear};
     case EnemyUnit::Storm:
+        return {ImageVfxKind::ThunderSplash, ImageVfxKind::AirBurst, ImageVfxKind::EnergyImpact};
+    case EnemyUnit::Ring:
+        return {ImageVfxKind::Crystal, ImageVfxKind::EnergyImpact, ImageVfxKind::MagicMirror};
+    case EnemyUnit::Frost:
+        return {ImageVfxKind::Ice, ImageVfxKind::Crystal, ImageVfxKind::HitFlash};
+    case EnemyUnit::Tide:
+        return {ImageVfxKind::WaterBallImpact, ImageVfxKind::Water, ImageVfxKind::Smoke};
+    case EnemyUnit::Void:
+        return {ImageVfxKind::Dark, ImageVfxKind::MagicMirror, ImageVfxKind::EnergyImpact};
+    case EnemyUnit::Flare:
+        return {ImageVfxKind::FireBreath, ImageVfxKind::Explosion, ImageVfxKind::Smoke};
     case EnemyUnit::Quake:
-        return ImageVfxKind::Earth;
-    case EnemyUnit::Skitter:
-        return ImageVfxKind::Smear;
-    case EnemyUnit::Dust:
-        return ImageVfxKind::HitFlash;
+        return {ImageVfxKind::Earth, ImageVfxKind::Explosion, ImageVfxKind::SmokeDust};
+    case EnemyUnit::Mirror:
+        return {ImageVfxKind::MagicMirror, ImageVfxKind::Crystal, ImageVfxKind::EnergyImpact};
+    case EnemyUnit::Comet:
+        return {ImageVfxKind::Explosion, ImageVfxKind::FireBreath, ImageVfxKind::SmokeDust};
+    case EnemyUnit::Boss:
+        return {ImageVfxKind::Explosion, ImageVfxKind::Dark, ImageVfxKind::FireBreath};
     default:
-        return ImageVfxKind::EnemySlash;
+        return {ImageVfxKind::EnemySlash, ImageVfxKind::HitFlash, ImageVfxKind::SmokeDust};
     }
+}
+
+ImageVfxKind UnitImageVfxKind(const Unit& unit)
+{
+    return UnitVfxCombo(unit).primary;
 }
 
 // 투사체는 발사체 모양과 충돌 이미지가 함께 읽혀야 하므로 ProjectileVisual에서 VFX를 결정한다.
@@ -1306,7 +1323,7 @@ void PawlineGameImpl::SpawnPlayer(PlayerUnit type)
     {
         AddRing(unit.pos, 52.0f + static_cast<float>(m_walletLevel) * 5.0f, 0.34f, D2D1::ColorF(0xB8FF89, 0.28f), 2.0f);
         AddImageVfx(ImageVfxKind::HealSoft, unit.pos + Vec2{0.0f, -10.0f}, 72.0f, 0.36f, D2D1::ColorF(0xB8FF89, 0.76f), 1.0f);
-        AddFloatText(unit.pos + Vec2{0.0f, -unit.radius - 34.0f}, L"월렛 +" + ToWideInt(static_cast<int>(std::round((walletBoost - 1.0f) * 100.0f))) + L"%", D2D1::ColorF(0xB8FF89), 0.82f);
+        AddFloatText(unit.pos + Vec2{0.0f, -unit.radius - 34.0f}, L"WALLET +" + ToWideInt(static_cast<int>(std::round((walletBoost - 1.0f) * 100.0f))) + L"%", D2D1::ColorF(0xB8FF89), 0.82f);
     }
     PlaySfxAt(SfxKind::Spawn, unit.pos.x, 0.10f, 0.95f);
 }
@@ -1621,11 +1638,18 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
     // 여기에서 이미지 VFX, 링, 빔, 파편을 함께 생성하고 각 객체는 UpdateParticles에서 수명을 소모한다.
     const Vec2 dir = Normalize(targetPos - attacker.pos);
     const Vec2 muzzle = attacker.pos + dir * (attacker.radius + 10.0f);
-    const ImageVfxKind imageKind = UnitImageVfxKind(attacker);
+    const VfxCombo combo = UnitVfxCombo(attacker);
+    const ImageVfxKind imageKind = combo.primary;
     const Vec2 imagePos = attacker.ranged ? muzzle : targetPos;
     const float imageSize = attacker.ranged ? 132.0f : 148.0f + attacker.radius * 0.86f;
     const float imageLife = attacker.ranged ? 0.46f : 0.40f;
     AddImageVfx(imageKind, imagePos, imageSize, imageLife, FadeColor(color, 1.0f), attacker.attackDir);
+    const Vec2 impactPos = targetPos + Vec2{0.0f, attacker.ranged ? -2.0f : -5.0f};
+    AddImageVfx(combo.secondary, impactPos, attacker.ranged ? 112.0f : 122.0f + attacker.radius * 0.56f,
+                attacker.ranged ? 0.34f : 0.30f, FadeColor(color, 0.74f), attacker.attackDir);
+    AddImageVfx(combo.accent, attacker.ranged ? muzzle : impactPos + dir * 8.0f,
+                attacker.ranged ? 88.0f : 96.0f + attacker.radius * 0.34f,
+                attacker.ranged ? 0.28f : 0.24f, FadeColor(color, 0.58f), attacker.attackDir);
     if (!attacker.ranged)
     {
         AddImageVfx(ImageVfxKind::HitFlash, targetPos + Vec2{0.0f, -4.0f}, 108.0f, 0.28f, FadeColor(color, 0.88f), attacker.attackDir);
@@ -1869,7 +1893,7 @@ void PawlineGameImpl::AttackUnit(Unit& attacker, Unit& target)
 {
     const D2D1_COLOR_F hitColor = attacker.team == Team::Player ? D2D1::ColorF(0x65B8FF) : D2D1::ColorF(0xFF9BA8);
     BeginAttack(attacker, target.pos);
-    PlaySfxFileAt(AttackSfxPath(attacker), SfxKind::UnitAttack, attacker.pos.x, 0.045f, attacker.boss ? 1.20f : 0.90f);
+    PlayAttackSfxAt(attacker, attacker.ranged ? 0.014f : 0.020f);
     AddAttackVfx(attacker, target.pos, hitColor);
     ShakeUnit(attacker, 0.15f);
     if (attacker.ranged)
@@ -1895,7 +1919,7 @@ void PawlineGameImpl::AttackBase(Unit& attacker)
     const Vec2 baseHit = attacker.team == Team::Player ? Vec2{kEnemyBaseX - 44.0f, attacker.pos.y} : Vec2{kPlayerBaseX + 44.0f, attacker.pos.y};
     const D2D1_COLOR_F hitColor = attacker.team == Team::Player ? D2D1::ColorF(0x65B8FF) : D2D1::ColorF(0xFF9BA8);
     BeginAttack(attacker, baseHit);
-    PlaySfxFileAt(AttackSfxPath(attacker), SfxKind::UnitAttack, attacker.pos.x, 0.045f, attacker.boss ? 1.20f : 0.90f);
+    PlayAttackSfxAt(attacker, attacker.ranged ? 0.014f : 0.020f);
     AddAttackVfx(attacker, baseHit, hitColor);
     ShakeUnit(attacker, 0.15f);
     if (attacker.ranged)
@@ -2669,7 +2693,7 @@ void PawlineGameImpl::TryUpgradeWallet()
     m_walletPulseTimer = std::min(m_walletPulseTimer, 1.0f);
     TriggerWalletPulse(true);
     PlaySfxAt(SfxKind::Wallet, kPlayerBaseX + 58.0f, 0.12f, 1.05f);
-    AddFloatText({640.0f, 570.0f}, L"월렛 Lv." + ToWideInt(m_walletLevel), D2D1::ColorF(0xB8FF89), 1.1f);
+    AddFloatText({640.0f, 570.0f}, L"WALLET Lv." + ToWideInt(m_walletLevel), D2D1::ColorF(0xB8FF89), 1.1f);
     AddRing({kPlayerBaseX + 58.0f, kLaneY}, 152.0f, 0.58f, D2D1::ColorF(0xB8FF89, 0.48f), 4.0f);
     SetMessage(L"월렛 강화. 소환 비용 감소, 아군 강화, 보급 펄스 활성.");
 }

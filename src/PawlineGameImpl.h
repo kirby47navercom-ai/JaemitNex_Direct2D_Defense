@@ -490,6 +490,8 @@ private:
 
     std::wstring AttackSfxPath(const Unit& attacker) const;
 
+    void PlayAttackSfxAt(const Unit& attacker, float minGapSeconds = 0.018f);
+
     void AdjustSfxVolume(float delta);
 
     HRESULT LoadBitmapFromFile(const std::wstring& path, ID2D1Bitmap** bitmap) const;
@@ -1181,7 +1183,6 @@ private:
     std::array<Microsoft::WRL::ComPtr<ID2D1Bitmap>, kRosterCount> m_playerWeaponBitmaps;
     std::array<Microsoft::WRL::ComPtr<ID2D1Bitmap>, kEnemyCount> m_enemyWeaponBitmaps;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_uiAtlas;
-    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_bossCutin;
     bool m_comInitialized = false;
     bool m_bitmapAssetsLoaded = false;
     bool m_privateFontLoaded = false;
@@ -1196,8 +1197,19 @@ private:
         values.fill(-10.0f);
         return values;
     }();
+    // 공격 효과음은 유닛 타입별로 따로 막아야 여러 종류가 동시에 싸울 때 소리가 먹히지 않는다.
+    std::array<float, kRosterCount> m_playerAttackSfxLastTimes = [] {
+        std::array<float, kRosterCount> values = {};
+        values.fill(-10.0f);
+        return values;
+    }();
+    std::array<float, kEnemyCount> m_enemyAttackSfxLastTimes = [] {
+        std::array<float, kEnemyCount> values = {};
+        values.fill(-10.0f);
+        return values;
+    }();
     framework::AudioManager m_audio;
-    float m_sfxVolume = 0.78f;
+    float m_sfxVolume = 0.86f;
     bool m_soundEnabled = true;
 
     // 전투 중 살아 움직이는 객체와 짧게 사라지는 VFX 컨테이너.

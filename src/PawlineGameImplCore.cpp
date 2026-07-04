@@ -573,6 +573,47 @@ std::wstring PawlineGameImpl::AttackSfxPath(const Unit& attacker) const
     return L"shoot.wav";
 }
 
+void PawlineGameImpl::PlayAttackSfxAt(const Unit& attacker, float minGapSeconds)
+{
+    if (!m_soundEnabled || m_sfxVolume <= 0.001f)
+    {
+        return;
+    }
+
+    // 공격음은 SfxKind 하나로 묶지 않고 유닛 타입별로 기록한다.
+    // 그래야 서로 다른 캐릭터가 동시에 싸워도 각자의 무기 소리가 살아난다.
+    float* lastPlayed = nullptr;
+    if (attacker.team == Team::Player)
+    {
+        const int index = std::clamp(attacker.kind, 0, static_cast<int>(kRosterCount) - 1);
+        lastPlayed = &m_playerAttackSfxLastTimes[static_cast<size_t>(index)];
+    }
+    else
+    {
+        const int index = std::clamp(attacker.kind, 0, static_cast<int>(kEnemyCount) - 1);
+        lastPlayed = &m_enemyAttackSfxLastTimes[static_cast<size_t>(index)];
+    }
+
+    if (!lastPlayed || m_uiTime - *lastPlayed < minGapSeconds)
+    {
+        return;
+    }
+    *lastPlayed = m_uiTime;
+
+    float volumeScale = attacker.ranged ? 1.14f : 1.04f;
+    if (attacker.team == Team::Enemy)
+    {
+        volumeScale += 0.06f;
+    }
+    if (attacker.boss)
+    {
+        volumeScale = 1.46f;
+    }
+
+    m_audio.SetVolume(m_sfxVolume);
+    m_audio.PlayEffectAt(AssetPath(L"assets\\sfx\\" + AttackSfxPath(attacker)), attacker.pos.x, volumeScale);
+}
+
 void PawlineGameImpl::AdjustSfxVolume(float delta)
 {
     m_sfxVolume = std::clamp(m_sfxVolume + delta, 0.0f, 1.0f);
@@ -690,8 +731,6 @@ void PawlineGameImpl::LoadBitmapAssets()
     }
 
     LoadBitmapFromFile(AssetPath(L"assets\\ui\\pawline_ui_atlas.png"), m_uiAtlas.ReleaseAndGetAddressOf());
-    LoadBitmapFromFile(AssetPath(L"assets\\cutins\\solar_gatekeeper_cutin.png"), m_bossCutin.ReleaseAndGetAddressOf());
-
     for (int i = 0; i < kStageCount; ++i)
     {
         std::wstringstream path;
@@ -744,7 +783,6 @@ void PawlineGameImpl::DiscardBitmapAssets()
         bitmap.Reset();
     }
     m_uiAtlas.Reset();
-    m_bossCutin.Reset();
     for (auto& bitmap : m_backgroundBitmaps)
     {
         bitmap.Reset();
