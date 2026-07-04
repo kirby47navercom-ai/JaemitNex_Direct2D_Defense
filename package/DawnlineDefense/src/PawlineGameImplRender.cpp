@@ -448,6 +448,23 @@ void PawlineGameImpl::DrawBitmap(ID2D1Bitmap* bitmap, D2D1_RECT_F destination, f
     m_renderTarget->DrawBitmap(bitmap, destination, Clamp01(opacity), D2D1_BITMAP_INTERPOLATION_MODE_LINEAR, source);
 }
 
+void PawlineGameImpl::DrawWeaponBitmap(ID2D1Bitmap* bitmap, Vec2 center, float width, float height, float angleDegrees, float opacity, bool flipX)
+{
+    if (!bitmap || opacity <= 0.001f || !m_renderTarget)
+    {
+        return;
+    }
+
+    D2D1_MATRIX_3X2_F previous = D2D1::Matrix3x2F::Identity();
+    m_renderTarget->GetTransform(&previous);
+    const D2D1_POINT_2F pivot = D2D1::Point2F(center.x, center.y);
+    const D2D1_MATRIX_3X2_F flip = D2D1::Matrix3x2F::Scale(flipX ? -1.0f : 1.0f, 1.0f, pivot);
+    const D2D1_MATRIX_3X2_F rotate = D2D1::Matrix3x2F::Rotation(angleDegrees, pivot);
+    m_renderTarget->SetTransform(flip * rotate * previous);
+    DrawBitmap(bitmap, D2D1::RectF(center.x - width * 0.5f, center.y - height * 0.5f, center.x + width * 0.5f, center.y + height * 0.5f), opacity);
+    m_renderTarget->SetTransform(previous);
+}
+
 void PawlineGameImpl::DrawString(const std::wstring& text, D2D1_RECT_F rect, IDWriteTextFormat* format, D2D1_COLOR_F color)
 {
     SetColor(color);
@@ -2243,6 +2260,16 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
     const float reach = strike * 22.0f - windup * 8.0f + recoil * 4.0f;
     const Vec2 hand = {pos.x + dir * (unit.radius * 0.72f), pos.y + 2.0f};
     const Vec2 front = {pos.x + dir * (unit.radius + 26.0f + reach), pos.y - 4.0f};
+    const int weaponIndex = std::clamp(static_cast<int>(type), 0, kRosterCount - 1);
+    const Vec2 weaponCenter = {hand.x + dir * (34.0f + reach * 0.56f), hand.y - 12.0f + recoil * 3.0f};
+    const float weaponAngle = (dir >= 0.0f ? -5.0f : 5.0f) + dir * (strike * 15.0f - windup * 10.0f);
+    DrawWeaponBitmap(m_playerWeaponBitmaps[static_cast<size_t>(weaponIndex)].Get(),
+                     weaponCenter,
+                     56.0f + unit.radius * 0.30f + strike * 7.0f,
+                     34.0f + unit.radius * 0.14f,
+                     weaponAngle,
+                     0.74f + strike * 0.18f,
+                     dir < 0.0f);
 
     auto drawStroke = [&](Vec2 a, Vec2 b, D2D1_COLOR_F color, float width) {
         DrawLine(a, b, ink, width + 3.2f);
@@ -2345,12 +2372,8 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
     case PlayerUnit::Orbit:
     {
         drawStroke(hand, {hand.x + dir * 8.0f, hand.y - 36.0f}, stats.accent, 2.6f);
-        const float orbit = m_stageTime * 3.4f + unit.id * 0.7f;
-        for (int i = 0; i < 3; ++i)
-        {
-            const float a = orbit + static_cast<float>(i) * kPi * 2.0f / 3.0f;
-            drawOrb({pos.x + std::cos(a) * (30.0f + strike * 12.0f), pos.y + std::sin(a) * (14.0f + strike * 8.0f)}, 4.5f, stats.accent);
-        }
+        StrokeEllipse(pos, unit.radius + 24.0f + strike * 12.0f, unit.radius * 0.70f + strike * 6.0f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.24f + strike * 0.20f), 2.0f);
+        DrawLine({front.x - dir * 26.0f, front.y - 2.0f}, {front.x + dir * (32.0f + strike * 26.0f), front.y - 2.0f}, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.44f + strike * 0.28f), 2.6f);
         break;
     }
     case PlayerUnit::Mint:
@@ -2380,8 +2403,8 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
         break;
     case PlayerUnit::Nebula:
         drawStroke(hand, {hand.x + dir * 12.0f, hand.y - 44.0f}, D2D1::ColorF(0xC8B7FF), 3.0f);
-        drawOrb({hand.x + dir * 14.0f, hand.y - 50.0f}, 9.0f + strike * 4.0f, D2D1::ColorF(0xE5D9FF));
         StrokeEllipse(pos, unit.radius + 22.0f + strike * 14.0f, unit.radius * 0.82f + strike * 8.0f, D2D1::ColorF(0xC8B7FF, 0.38f), 2.0f);
+        DrawLine({front.x - dir * 18.0f, front.y - 20.0f}, {front.x + dir * (34.0f + strike * 34.0f), front.y + 2.0f}, D2D1::ColorF(0xE5D9FF, 0.38f + strike * 0.30f), 3.0f);
         break;
     }
 }
@@ -2394,6 +2417,16 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
     const float reach = strike * 22.0f - windup * 7.0f + recoil * 4.0f;
     const Vec2 hand = {pos.x + dir * (unit.radius * 0.68f), pos.y + 4.0f};
     const Vec2 front = {pos.x + dir * (unit.radius + 24.0f + reach), pos.y - 2.0f};
+    const int weaponIndex = std::clamp(static_cast<int>(type), 0, kEnemyCount - 1);
+    const Vec2 weaponCenter = {hand.x + dir * (35.0f + reach * 0.58f), hand.y - 10.0f + recoil * 3.0f};
+    const float weaponAngle = (dir >= 0.0f ? -4.0f : 4.0f) + dir * (strike * 14.0f - windup * 8.0f);
+    DrawWeaponBitmap(m_enemyWeaponBitmaps[static_cast<size_t>(weaponIndex)].Get(),
+                     weaponCenter,
+                     58.0f + unit.radius * 0.34f + strike * 8.0f,
+                     36.0f + unit.radius * 0.16f,
+                     weaponAngle,
+                     0.76f + strike * 0.18f,
+                     dir < 0.0f);
 
     auto drawStroke = [&](Vec2 a, Vec2 b, D2D1_COLOR_F color, float width) {
         DrawLine(a, b, ink, width + 3.0f);
@@ -2514,9 +2547,8 @@ void PawlineGameImpl::DrawUnitIdentityMark(const Unit& unit, Vec2 pos, D2D1_COLO
         switch (static_cast<PlayerUnit>(unit.kind))
         {
         case PlayerUnit::Paw:
-            FillEllipse({pos.x + dir * 26.0f, pos.y - 24.0f}, 5.0f + attack * 2.0f, 4.0f + attack * 2.0f, soft);
-            FillEllipse({pos.x + dir * 36.0f, pos.y - 15.0f}, 4.0f, 3.5f, bright);
-            FillEllipse({pos.x + dir * 21.0f, pos.y - 11.0f}, 3.6f, 3.0f, bright);
+            DrawLine({pos.x + dir * 18.0f, pos.y - 24.0f}, {pos.x + dir * (42.0f + attack * 12.0f), pos.y - 18.0f}, bright, 2.4f);
+            FillEllipse({pos.x + dir * 29.0f, pos.y - 16.0f}, 17.0f + attack * 9.0f, 8.0f + attack * 4.0f, soft);
             break;
         case PlayerUnit::Box:
             FillRoundRect(D2D1::RectF(pos.x + dir * 18.0f - 5.0f, pos.y - 28.0f, pos.x + dir * 48.0f + 5.0f, pos.y + 24.0f), 7.0f, D2D1::ColorF(0xFFF0B5, 0.13f + attack * 0.16f));
@@ -2557,9 +2589,8 @@ void PawlineGameImpl::DrawUnitIdentityMark(const Unit& unit, Vec2 pos, D2D1_COLO
             break;
         case PlayerUnit::Orbit:
         {
-            const float a = m_uiTime * 2.2f + static_cast<float>(unit.id);
             StrokeEllipse(pos, unit.radius + 20.0f, unit.radius * 0.62f + 3.0f, bright, 1.8f);
-            FillEllipse({pos.x + std::cos(a) * 32.0f, pos.y + std::sin(a) * 13.0f - 4.0f}, 5.0f, 5.0f, D2D1::ColorF(0xDCE6FF, 0.82f));
+            DrawLine({pos.x - dir * 30.0f, pos.y - 4.0f}, {pos.x + dir * 32.0f, pos.y - 4.0f}, D2D1::ColorF(0xDCE6FF, 0.46f + attack * 0.20f), 1.8f);
             break;
         }
         case PlayerUnit::Solar:
@@ -2588,10 +2619,8 @@ void PawlineGameImpl::DrawUnitIdentityMark(const Unit& unit, Vec2 pos, D2D1_COLO
             break;
         case PlayerUnit::Nebula:
         {
-            const float a = m_uiTime * 1.7f + static_cast<float>(unit.id);
             StrokeEllipse(pos, unit.radius + 23.0f, unit.radius + 9.0f, D2D1::ColorF(0xC8B7FF, 0.22f + attack * 0.14f), 1.8f);
-            FillEllipse({pos.x + std::cos(a) * 34.0f, pos.y + std::sin(a) * 21.0f}, 6.0f, 6.0f, D2D1::ColorF(0xE5D9FF, 0.78f));
-            FillEllipse({pos.x + std::cos(a + kPi) * 26.0f, pos.y + std::sin(a + kPi) * 16.0f}, 4.5f, 4.5f, D2D1::ColorF(0x9D83FF, 0.78f));
+            StrokeEllipse(pos, unit.radius + 11.0f + attack * 10.0f, unit.radius * 0.55f + 5.0f, D2D1::ColorF(0xE5D9FF, 0.20f + attack * 0.18f), 1.5f);
             break;
         }
         }
@@ -4288,27 +4317,26 @@ void PawlineGameImpl::DrawSceneTransition()
     }
 
     const float t = Clamp01(m_sceneTransitionTimer / m_sceneTransitionMax);
-    const float alpha = t * t;
-    FillViewport(D2D1::ColorF(0x000000, 0.34f * alpha));
+    const float cover = Smooth01(t);
+    const float side = cover * kWidth * 0.52f;
+    const float topBottom = cover * kHeight * 0.52f;
+    const D2D1_COLOR_F curtain = D2D1::ColorF(0x000000, 0.92f);
+    const D2D1_COLOR_F edge = D2D1::ColorF(0x071017, 0.98f);
 
-    const D2D1_COLOR_F stageColor = CurrentStage().lineColor;
-    const float sweep = (1.0f - t) * (kWidth + 260.0f) - 130.0f;
-    for (int i = 0; i < 3; ++i)
+    FillRect(D2D1::RectF(0.0f, 0.0f, side, kHeight), curtain);
+    FillRect(D2D1::RectF(kWidth - side, 0.0f, kWidth, kHeight), curtain);
+    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, topBottom), D2D1::ColorF(0x000000, 0.72f * cover));
+    FillRect(D2D1::RectF(0.0f, kHeight - topBottom, kWidth, kHeight), D2D1::ColorF(0x000000, 0.72f * cover));
+
+    if (side > 2.0f)
     {
-        const float y = 238.0f + static_cast<float>(i) * 128.0f;
-        DrawLine({sweep - 260.0f, y - 42.0f},
-                 {sweep + 250.0f, y + 18.0f},
-                 D2D1::ColorF(stageColor.r, stageColor.g, stageColor.b, 0.16f * alpha),
-                 22.0f - static_cast<float>(i) * 4.0f);
-        DrawLine({sweep - 220.0f, y - 36.0f},
-                 {sweep + 300.0f, y + 24.0f},
-                 D2D1::ColorF(0xEAF7FF, 0.12f * alpha),
-                 5.0f);
+        FillRect(D2D1::RectF(side - 6.0f, 0.0f, side + 2.0f, kHeight), edge);
+        FillRect(D2D1::RectF(kWidth - side - 2.0f, 0.0f, kWidth - side + 6.0f, kHeight), edge);
     }
-
-    const float gate = 70.0f * alpha;
-    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, gate), D2D1::ColorF(0x061019, 0.72f * alpha));
-    FillRect(D2D1::RectF(0.0f, kHeight - gate, kWidth, kHeight), D2D1::ColorF(0x061019, 0.72f * alpha));
+    if (cover > 0.72f)
+    {
+        FillViewport(D2D1::ColorF(0x000000, (cover - 0.72f) * 1.45f));
+    }
 }
 
 void PawlineGameImpl::DrawEscapeMenuClean()

@@ -107,6 +107,7 @@ void PawlineGameImpl::TriggerBossEntrance(Unit& boss, D2D1_COLOR_F color)
     m_bossWarningTimer = 1.20f;
     AddCameraTrauma(0.78f);
     TriggerHitStop(0.095f, 0.34f, 0.44f);
+    PlaySfxAt(SfxKind::Boss, boss.pos.x, 0.35f, 1.25f);
 
     const std::wstring name = GetEnemyStats(static_cast<EnemyUnit>(boss.kind), ThreatLevel()).name;
     SetMessage(name + L" 강림. 전선 충격!");
@@ -145,6 +146,7 @@ void PawlineGameImpl::TriggerBossPhaseChange(Unit& boss, int phase)
     SetMessage(finalPhase ? L"보스 최종 페이즈. 전선 붕괴 주의!" : L"보스 2페이즈. 패턴 강화!");
     AddCameraTrauma(finalPhase ? 0.82f : 0.62f);
     TriggerHitStop(finalPhase ? 0.11f : 0.075f, finalPhase ? 0.26f : 0.36f, finalPhase ? 0.58f : 0.36f);
+    PlaySfxAt(SfxKind::Boss, boss.pos.x, finalPhase ? 0.45f : 0.32f, finalPhase ? 1.16f : 0.96f);
     AddRing(boss.pos, finalPhase ? 270.0f : 190.0f, finalPhase ? 0.78f : 0.62f, FadeColor(color, finalPhase ? 0.62f : 0.48f), finalPhase ? 6.0f : 4.8f);
     AddRing({boss.pos.x - 92.0f, kLaneY}, finalPhase ? 520.0f : 340.0f, finalPhase ? 0.86f : 0.66f, D2D1::ColorF(0xFFB347, finalPhase ? 0.40f : 0.30f), finalPhase ? 5.6f : 4.2f);
     AddBeam({boss.pos.x - 220.0f, kBattleTop + 26.0f}, {boss.pos.x + 30.0f, kBattleBottom - 32.0f}, finalPhase ? 15.0f : 10.0f, 0.30f, FadeColor(color, 0.70f));

@@ -180,11 +180,19 @@ enum class ParticleKind
 enum class SfxKind
 {
     Spawn,
+    EnemySpawn,
     Hit,
+    HeavyHit,
     Shoot,
     Upgrade,
     Clear,
     UnitAttack,
+    ProjectileImpact,
+    BaseHit,
+    Death,
+    Boss,
+    Stage,
+    Wallet,
     Ui,
     Count
 };
@@ -475,6 +483,10 @@ private:
     void PlaySfx(SfxKind kind, float minGapSeconds = 0.05f);
 
     void PlaySfxFile(const std::wstring& relativeFileName, SfxKind throttleKind, float minGapSeconds = 0.05f);
+
+    void PlaySfxAt(SfxKind kind, float worldX, float minGapSeconds = 0.05f, float volumeScale = 1.0f);
+
+    void PlaySfxFileAt(const std::wstring& relativeFileName, SfxKind throttleKind, float worldX, float minGapSeconds = 0.05f, float volumeScale = 1.0f);
 
     std::wstring AttackSfxPath(const Unit& attacker) const;
 
@@ -922,6 +934,8 @@ private:
 
     void DrawBitmap(ID2D1Bitmap* bitmap, D2D1_RECT_F destination, float opacity = 1.0f, const D2D1_RECT_F* source = nullptr);
 
+    void DrawWeaponBitmap(ID2D1Bitmap* bitmap, Vec2 center, float width, float height, float angleDegrees, float opacity, bool flipX);
+
     void DrawString(const std::wstring& text, D2D1_RECT_F rect, IDWriteTextFormat* format, D2D1_COLOR_F color);
 
     void DrawString(const std::wstring& text, D2D1_RECT_F rect, const Microsoft::WRL::ComPtr<IDWriteTextFormat>& format, D2D1_COLOR_F color);
@@ -1164,6 +1178,8 @@ private:
     // 10열 프레임, 유닛별 7행 모션(idle/walk/run/hurt/death/windup/attack) 구조를 사용한다.
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_playerUnitAtlas;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_enemyUnitAtlas;
+    std::array<Microsoft::WRL::ComPtr<ID2D1Bitmap>, kRosterCount> m_playerWeaponBitmaps;
+    std::array<Microsoft::WRL::ComPtr<ID2D1Bitmap>, kEnemyCount> m_enemyWeaponBitmaps;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_uiAtlas;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_bossCutin;
     bool m_comInitialized = false;
@@ -1175,7 +1191,11 @@ private:
     DeltaTimer m_timer;
     std::mt19937 m_rng{std::random_device{}()};
     // 효과음이 한 프레임에 과하게 겹치지 않도록 종류별 마지막 재생 시간을 기록한다.
-    std::array<float, kSfxChannelCount> m_sfxLastTimes = {-10.0f, -10.0f, -10.0f, -10.0f, -10.0f, -10.0f, -10.0f};
+    std::array<float, kSfxChannelCount> m_sfxLastTimes = [] {
+        std::array<float, kSfxChannelCount> values = {};
+        values.fill(-10.0f);
+        return values;
+    }();
     framework::AudioManager m_audio;
     float m_sfxVolume = 0.78f;
     bool m_soundEnabled = true;

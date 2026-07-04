@@ -7,6 +7,7 @@ PawlineGameImpl::~PawlineGameImpl()
 {
     DiscardDeviceResources();
     UnregisterPrivateFonts();
+    m_audio.Shutdown();
     if (m_comInitialized)
     {
         CoUninitialize();
@@ -67,6 +68,7 @@ HRESULT PawlineGameImpl::Initialize()
 
     LoadProgress();
     ResetToTitle();
+    m_audio.Initialize();
 
     const wchar_t className[] = L"PawlineDefenseWindow";
     WNDCLASSEXW wc = {};
@@ -353,22 +355,46 @@ void PawlineGameImpl::PlaySfx(SfxKind kind, float minGapSeconds)
     switch (kind)
     {
     case SfxKind::Spawn:
-        fileName = L"spawn.wav";
+        fileName = L"events\\player_spawn.wav";
+        break;
+    case SfxKind::EnemySpawn:
+        fileName = L"events\\enemy_spawn.wav";
         break;
     case SfxKind::Hit:
-        fileName = L"hit.wav";
+        fileName = L"events\\hit_light.wav";
+        break;
+    case SfxKind::HeavyHit:
+        fileName = L"events\\hit_heavy.wav";
         break;
     case SfxKind::Shoot:
-        fileName = L"shoot.wav";
+        fileName = L"events\\cannon_fire.wav";
         break;
     case SfxKind::Upgrade:
-        fileName = L"upgrade.wav";
+        fileName = L"events\\ui_confirm.wav";
         break;
     case SfxKind::Clear:
-        fileName = L"clear.wav";
+        fileName = L"events\\stage_clear.wav";
         break;
     case SfxKind::Ui:
-        fileName = L"ui_click.wav";
+        fileName = L"events\\ui_click.wav";
+        break;
+    case SfxKind::ProjectileImpact:
+        fileName = L"events\\projectile_impact.wav";
+        break;
+    case SfxKind::BaseHit:
+        fileName = L"events\\base_hit.wav";
+        break;
+    case SfxKind::Death:
+        fileName = L"events\\unit_death.wav";
+        break;
+    case SfxKind::Boss:
+        fileName = L"events\\boss_arrive.wav";
+        break;
+    case SfxKind::Stage:
+        fileName = L"events\\scene_curtain.wav";
+        break;
+    case SfxKind::Wallet:
+        fileName = L"events\\wallet_upgrade.wav";
         break;
     case SfxKind::UnitAttack:
     case SfxKind::Count:
@@ -376,6 +402,61 @@ void PawlineGameImpl::PlaySfx(SfxKind kind, float minGapSeconds)
     }
 
     PlaySfxFile(fileName, kind, minGapSeconds);
+}
+
+void PawlineGameImpl::PlaySfxAt(SfxKind kind, float worldX, float minGapSeconds, float volumeScale)
+{
+    std::wstring fileName;
+    switch (kind)
+    {
+    case SfxKind::Spawn:
+        fileName = L"events\\player_spawn.wav";
+        break;
+    case SfxKind::EnemySpawn:
+        fileName = L"events\\enemy_spawn.wav";
+        break;
+    case SfxKind::Hit:
+        fileName = L"events\\hit_light.wav";
+        break;
+    case SfxKind::HeavyHit:
+        fileName = L"events\\hit_heavy.wav";
+        break;
+    case SfxKind::Shoot:
+        fileName = L"events\\cannon_fire.wav";
+        break;
+    case SfxKind::Upgrade:
+        fileName = L"events\\ui_confirm.wav";
+        break;
+    case SfxKind::Clear:
+        fileName = L"events\\stage_clear.wav";
+        break;
+    case SfxKind::ProjectileImpact:
+        fileName = L"events\\projectile_impact.wav";
+        break;
+    case SfxKind::BaseHit:
+        fileName = L"events\\base_hit.wav";
+        break;
+    case SfxKind::Death:
+        fileName = L"events\\unit_death.wav";
+        break;
+    case SfxKind::Boss:
+        fileName = L"events\\boss_arrive.wav";
+        break;
+    case SfxKind::Stage:
+        fileName = L"events\\scene_curtain.wav";
+        break;
+    case SfxKind::Wallet:
+        fileName = L"events\\wallet_upgrade.wav";
+        break;
+    case SfxKind::Ui:
+        fileName = L"events\\ui_click.wav";
+        break;
+    case SfxKind::UnitAttack:
+    case SfxKind::Count:
+        return;
+    }
+
+    PlaySfxFileAt(fileName, kind, worldX, minGapSeconds, volumeScale);
 }
 
 void PawlineGameImpl::PlaySfxFile(const std::wstring& relativeFileName, SfxKind throttleKind, float minGapSeconds)
@@ -394,6 +475,24 @@ void PawlineGameImpl::PlaySfxFile(const std::wstring& relativeFileName, SfxKind 
 
     m_audio.SetVolume(m_sfxVolume);
     m_audio.PlayEffect(AssetPath(L"assets\\sfx\\" + relativeFileName));
+}
+
+void PawlineGameImpl::PlaySfxFileAt(const std::wstring& relativeFileName, SfxKind throttleKind, float worldX, float minGapSeconds, float volumeScale)
+{
+    if (!m_soundEnabled || m_sfxVolume <= 0.001f)
+    {
+        return;
+    }
+
+    const int index = std::clamp(static_cast<int>(throttleKind), 0, static_cast<int>(m_sfxLastTimes.size()) - 1);
+    if (m_uiTime - m_sfxLastTimes[static_cast<size_t>(index)] < minGapSeconds)
+    {
+        return;
+    }
+    m_sfxLastTimes[static_cast<size_t>(index)] = m_uiTime;
+
+    m_audio.SetVolume(m_sfxVolume);
+    m_audio.PlayEffectAt(AssetPath(L"assets\\sfx\\" + relativeFileName), worldX, volumeScale);
 }
 
 std::wstring PawlineGameImpl::AttackSfxPath(const Unit& attacker) const
@@ -569,6 +668,27 @@ void PawlineGameImpl::LoadBitmapAssets()
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\smoke_dust_sheet.png"), m_smokeDustEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\sprites\\kenney_toon_units\\player_unit_atlas.png"), m_playerUnitAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\sprites\\kenney_toon_units\\enemy_unit_atlas.png"), m_enemyUnitAtlas.ReleaseAndGetAddressOf());
+    const std::array<const wchar_t*, kRosterCount> playerWeapons = {
+        L"blaster-a.png", L"target-small.png", L"blaster-q.png", L"blaster-b.png", L"blaster-n.png",
+        L"blaster-r.png", L"blaster-m.png", L"blaster-c.png", L"blaster-o.png", L"blaster-p.png",
+        L"blaster-l.png", L"blaster-g.png", L"blaster-k.png", L"blaster-h.png"};
+    for (int i = 0; i < kRosterCount; ++i)
+    {
+        LoadBitmapFromFile(AssetPath(L"assets\\weapons\\kenney_blaster\\" + std::wstring(playerWeapons[static_cast<size_t>(i)])),
+                           m_playerWeaponBitmaps[static_cast<size_t>(i)].ReleaseAndGetAddressOf());
+    }
+
+    const std::array<const wchar_t*, kEnemyCount> enemyWeapons = {
+        L"bullet-foam.png", L"blaster-r.png", L"blaster-b.png", L"blaster-d.png", L"grenade-a.png",
+        L"blaster-e.png", L"target-small.png", L"blaster-i.png", L"blaster-m.png", L"blaster-j.png",
+        L"blaster-q.png", L"blaster-p.png", L"grenade-b.png", L"blaster-g.png", L"blaster-k.png",
+        L"blaster-c.png", L"blaster-o.png"};
+    for (int i = 0; i < kEnemyCount; ++i)
+    {
+        LoadBitmapFromFile(AssetPath(L"assets\\weapons\\kenney_blaster\\" + std::wstring(enemyWeapons[static_cast<size_t>(i)])),
+                           m_enemyWeaponBitmaps[static_cast<size_t>(i)].ReleaseAndGetAddressOf());
+    }
+
     LoadBitmapFromFile(AssetPath(L"assets\\ui\\pawline_ui_atlas.png"), m_uiAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\cutins\\solar_gatekeeper_cutin.png"), m_bossCutin.ReleaseAndGetAddressOf());
 
@@ -615,6 +735,14 @@ void PawlineGameImpl::DiscardBitmapAssets()
     m_smokeDustEffectSheet.Reset();
     m_playerUnitAtlas.Reset();
     m_enemyUnitAtlas.Reset();
+    for (auto& bitmap : m_playerWeaponBitmaps)
+    {
+        bitmap.Reset();
+    }
+    for (auto& bitmap : m_enemyWeaponBitmaps)
+    {
+        bitmap.Reset();
+    }
     m_uiAtlas.Reset();
     m_bossCutin.Reset();
     for (auto& bitmap : m_backgroundBitmaps)
@@ -1204,11 +1332,14 @@ void PawlineGameImpl::Update(float dt)
     // UI time always moves, but combat time below is multiplied by m_gameSpeed.
     // This keeps menus/VFX alive even when the battle itself is paused.
     m_uiTime += dt;
+    m_audio.SetListener(m_cameraX + kWidth * 0.5f, kWidth * 1.10f);
+    m_audio.Update();
     if (m_screen != m_observedScreen)
     {
         // 모든 씬 변경을 한곳에서 감지해 페이드 전환을 켠다.
         m_observedScreen = m_screen;
         m_sceneTransitionTimer = m_sceneTransitionMax;
+        PlaySfx(SfxKind::Stage, 0.10f);
     }
     if (m_sceneTransitionTimer > 0.0f)
     {

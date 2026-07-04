@@ -17,6 +17,7 @@ void PawlineGameImpl::OpenEscapeMenu()
 
     m_pauseBeforeEscape = m_paused;
     m_escapeMenuOpen = true;
+    PlaySfxFile(L"events\\ui_open.wav", SfxKind::Ui, 0.03f);
     if (m_screen == GameScreen::Playing)
     {
         m_paused = true;
@@ -31,6 +32,7 @@ void PawlineGameImpl::CloseEscapeMenu()
     }
 
     m_escapeMenuOpen = false;
+    PlaySfxFile(L"events\\ui_close.wav", SfxKind::Ui, 0.03f);
     if (m_screen == GameScreen::Playing)
     {
         m_paused = m_pauseBeforeEscape;
@@ -51,6 +53,7 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
     // Every screen owns its click handling. The shared rectangle helpers live in
     // PawlineGameImplLayout.cpp, so render and input stay pixel-aligned.
     AddUiPulse(pos, D2D1::ColorF(0x65B8FF, 0.72f));
+    PlaySfx(SfxKind::Ui, 0.025f);
     if (m_escapeMenuOpen)
     {
         OnEscapeMenuClick(pos);

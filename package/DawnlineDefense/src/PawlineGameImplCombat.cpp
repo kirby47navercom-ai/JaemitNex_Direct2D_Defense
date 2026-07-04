@@ -1272,7 +1272,7 @@ void PawlineGameImpl::TriggerWalletPulse(bool upgradeBurst)
     AddBurst({kPlayerBaseX + 58.0f, kLaneY - 18.0f}, D2D1::ColorF(0xB8FF89), upgradeBurst ? 24 : 12);
     if (upgradeBurst)
     {
-        PlaySfx(SfxKind::Upgrade, 0.18f);
+        PlaySfxAt(SfxKind::Upgrade, kPlayerBaseX + 58.0f, 0.18f, upgradeBurst ? 1.10f : 0.85f);
     }
 }
 
@@ -1307,7 +1307,7 @@ void PawlineGameImpl::SpawnPlayer(PlayerUnit type)
         AddImageVfx(ImageVfxKind::HealSoft, unit.pos + Vec2{0.0f, -10.0f}, 72.0f, 0.36f, D2D1::ColorF(0xB8FF89, 0.76f), 1.0f);
         AddFloatText(unit.pos + Vec2{0.0f, -unit.radius - 34.0f}, L"Wallet +" + ToWideInt(static_cast<int>(std::round((walletBoost - 1.0f) * 100.0f))) + L"%", D2D1::ColorF(0xB8FF89), 0.82f);
     }
-    PlaySfx(SfxKind::Spawn, 0.10f);
+    PlaySfxAt(SfxKind::Spawn, unit.pos.x, 0.10f, 0.95f);
 }
 
 void PawlineGameImpl::SpawnEnemy(EnemyUnit type, bool elite)
@@ -1336,6 +1336,7 @@ void PawlineGameImpl::SpawnEnemy(EnemyUnit type, bool elite)
     m_units.push_back(unit);
     AddBurst(unit.pos, stats.accent, elite || type == EnemyUnit::Boss ? 20 : 8);
     AddRing(unit.pos, elite ? 86.0f : 38.0f, elite ? 0.46f : 0.25f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, elite ? 0.48f : 0.28f), elite ? 3.2f : 1.8f);
+    PlaySfxAt(SfxKind::EnemySpawn, unit.pos.x, elite ? 0.10f : 0.16f, elite ? 1.12f : 0.76f);
 }
 
 float PawlineGameImpl::RandomLaneY()
@@ -1866,7 +1867,7 @@ void PawlineGameImpl::AttackUnit(Unit& attacker, Unit& target)
 {
     const D2D1_COLOR_F hitColor = attacker.team == Team::Player ? D2D1::ColorF(0x65B8FF) : D2D1::ColorF(0xFF9BA8);
     BeginAttack(attacker, target.pos);
-    PlaySfxFile(AttackSfxPath(attacker), SfxKind::UnitAttack, 0.045f);
+    PlaySfxFileAt(AttackSfxPath(attacker), SfxKind::UnitAttack, attacker.pos.x, 0.045f, attacker.boss ? 1.20f : 0.90f);
     AddAttackVfx(attacker, target.pos, hitColor);
     ShakeUnit(attacker, 0.15f);
     if (attacker.ranged)
@@ -1892,7 +1893,7 @@ void PawlineGameImpl::AttackBase(Unit& attacker)
     const Vec2 baseHit = attacker.team == Team::Player ? Vec2{kEnemyBaseX - 44.0f, attacker.pos.y} : Vec2{kPlayerBaseX + 44.0f, attacker.pos.y};
     const D2D1_COLOR_F hitColor = attacker.team == Team::Player ? D2D1::ColorF(0x65B8FF) : D2D1::ColorF(0xFF9BA8);
     BeginAttack(attacker, baseHit);
-    PlaySfxFile(AttackSfxPath(attacker), SfxKind::UnitAttack, 0.045f);
+    PlaySfxFileAt(AttackSfxPath(attacker), SfxKind::UnitAttack, attacker.pos.x, 0.045f, attacker.boss ? 1.20f : 0.90f);
     AddAttackVfx(attacker, baseHit, hitColor);
     ShakeUnit(attacker, 0.15f);
     if (attacker.ranged)
@@ -2344,12 +2345,14 @@ void PawlineGameImpl::UpdateProjectiles(float dt)
             {
                 ShakeUnitById(projectile.sourceId, 0.15f);
                 AddProjectileImpact(projectile);
+                PlaySfxAt(SfxKind::ProjectileImpact, projectile.pos.x, 0.030f, 0.70f);
                 DamageBase(projectile.team == Team::Player ? Team::Enemy : Team::Player, projectile.damage, projectile.pos);
             }
             else if (target)
             {
                 ShakeUnitById(projectile.sourceId, 0.15f);
                 AddProjectileImpact(projectile);
+                PlaySfxAt(SfxKind::ProjectileImpact, projectile.pos.x, 0.030f, 0.72f);
                 const float matchup = AttackMatchupMultiplier(projectile.team, projectile.sourceKind, target->get());
                 AddCounterFloatText(target->get(), matchup);
                 DamageUnit(target->get(), projectile.damage * matchup, projectile.team);
@@ -2407,7 +2410,7 @@ void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
 
     const bool heavyHit = damage >= std::max(42.0f, target.maxHp * (target.boss ? 0.060f : 0.120f));
     target.hp -= damage;
-    PlaySfx(SfxKind::Hit, heavyHit ? 0.030f : 0.050f);
+    PlaySfxAt(heavyHit ? SfxKind::HeavyHit : SfxKind::Hit, target.pos.x, heavyHit ? 0.030f : 0.050f, heavyHit ? 1.12f : 0.82f);
     target.hitFlash = 0.12f;
     ShakeUnit(target, 0.18f);
     AddFloatText(target.pos + Vec2{0.0f, -target.radius - 22.0f}, ToWideInt(static_cast<int>(std::round(damage))),
@@ -2418,6 +2421,7 @@ void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
     {
         SetUnitAnimState(target, UnitAnimState::Death);
         target.alive = false;
+        PlaySfxAt(SfxKind::Death, target.pos.x, target.boss ? 0.16f : 0.045f, target.boss ? 1.25f : 0.86f);
         if (target.team == Team::Enemy)
         {
             m_energy = std::min(MaxEnergy(), m_energy + static_cast<float>(target.reward));
@@ -2439,6 +2443,8 @@ void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
 
 void PawlineGameImpl::DamageBase(Team baseTeam, float damage, Vec2 source)
 {
+    const float baseX = baseTeam == Team::Enemy ? kEnemyBaseX : kPlayerBaseX;
+    PlaySfxAt(SfxKind::BaseHit, baseX, 0.050f, damage > 140.0f ? 1.15f : 0.86f);
     if (baseTeam == Team::Enemy)
     {
         m_enemyBaseHp -= damage;
@@ -2660,6 +2666,7 @@ void PawlineGameImpl::TryUpgradeWallet()
     ++m_walletLevel;
     m_walletPulseTimer = std::min(m_walletPulseTimer, 1.0f);
     TriggerWalletPulse(true);
+    PlaySfxAt(SfxKind::Wallet, kPlayerBaseX + 58.0f, 0.12f, 1.05f);
     AddFloatText({640.0f, 570.0f}, L"WALLET Lv." + ToWideInt(m_walletLevel), D2D1::ColorF(0xB8FF89), 1.1f);
     AddRing({kPlayerBaseX + 58.0f, kLaneY}, 152.0f, 0.58f, D2D1::ColorF(0xB8FF89, 0.48f), 4.0f);
     SetMessage(L"WALLET 강화. 소환 비용 감소, 아군 강화, 보급 펄스 활성.");
@@ -2676,6 +2683,7 @@ void PawlineGameImpl::TryFireCannon()
     m_cannonCharge = 0.0f;
     m_cannonFlash = 0.42f;
     m_screenFlash = m_reduceFlashes ? 0.04f : 0.12f;
+    PlaySfxAt(SfxKind::Shoot, kPlayerBaseX + 120.0f, 0.18f, 1.20f);
     AddCameraTrauma(0.55f);
     TriggerHitStop(0.070f, 0.38f, 0.30f);
     const float damage = 210.0f + static_cast<float>(m_walletLevel) * 48.0f;

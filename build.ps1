@@ -15,6 +15,10 @@ if (Test-Path $dist) {
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 
 Copy-Item -LiteralPath (Join-Path $build "Release\DawnlineDefense.exe") -Destination $dist
+$fmodDll = Join-Path $build "Release\fmod.dll"
+if (Test-Path $fmodDll) {
+    Copy-Item -LiteralPath $fmodDll -Destination $dist
+}
 if (Test-Path (Join-Path $root "data")) {
     Copy-Item -LiteralPath (Join-Path $root "data") -Destination (Join-Path $build "Release") -Recurse -Force
 }

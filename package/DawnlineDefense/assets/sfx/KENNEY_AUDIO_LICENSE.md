@@ -1,11 +1,18 @@
 # Kenney Audio Asset Notice
 
-이 폴더의 `spawn.wav`, `hit.wav`, `shoot.wav`, `upgrade.wav`, `clear.wav`, `ui_click.wav`,
-그리고 `kenney/*.wav` 파일은 Kenney의 무료 CC0 음원 팩에서 OGG 원본을 WAV로 변환해 사용한다.
+이 폴더의 WAV 효과음은 Kenney의 무료 CC0 음원 팩에서 가져온 원본을 게임용으로 변환하거나 이름을 정리해 사용합니다.
 
-- Source: Kenney Sci-fi Sounds (`https://kenney.nl/assets/sci-fi-sounds`)
-- Source: Kenney Digital Audio (`https://kenney.nl/assets/digital-audio`)
-- License: Creative Commons CC0
-- Use: UI 클릭음, 공통 전투 효과음, 플레이어/적 유닛별 공격 효과음
+- Kenney Sci-fi Sounds: https://kenney.nl/assets/sci-fi-sounds
+- Kenney Digital Audio: https://kenney.nl/assets/digital-audio
+- Kenney Impact Sounds: https://kenney.nl/assets/impact-sounds
+- Kenney Interface Sounds: https://kenney.nl/assets/interface-sounds
+- Kenney RPG Audio: https://kenney.nl/assets/rpg-audio
+- License: Creative Commons Zero, CC0
 
-변환 목적은 WinMM `PlaySoundW`가 WAV 파일을 안정적으로 재생하게 하기 위한 것이다.
+## 사용 위치
+
+- `kenney/*.wav`: 유닛별 기본 공격음
+- `events/*.wav`: UI, 소환, 타격, 탄착, 기지 피격, 보스 등장, 장면 전환, 스테이지 클리어 효과음
+- 루트의 기존 WAV 파일: 이전 빌드 호환용 기본 효과음
+
+WAV 변환은 Windows 기본 빌드의 `PlaySoundW` 호환성과 FMOD Core API 재생 안정성을 위해 진행했습니다.

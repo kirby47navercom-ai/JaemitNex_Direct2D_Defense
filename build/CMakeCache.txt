@@ -182,6 +182,12 @@ DawnlineDefense_IS_TOP_LEVEL:STATIC=ON
 //Value Computed by CMake
 DawnlineDefense_SOURCE_DIR:STATIC=C:/Users/kirby/OneDrive/바탕 화면/JaemitNex_Direct2D_Defense
 
+//FMOD Engine SDK root directory
+FMOD_SDK_DIR:PATH=
+
+//Build with FMOD Core API when FMOD_SDK_DIR is provided
+USE_FMOD:BOOL=OFF
+
 
 ########################
 # INTERNAL cache entries
