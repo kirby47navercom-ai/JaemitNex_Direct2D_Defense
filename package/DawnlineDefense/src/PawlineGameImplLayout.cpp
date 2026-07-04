@@ -176,11 +176,8 @@ D2D1_RECT_F PawlineGameImpl::BriefingDifficultyRect(int index) const
 
 D2D1_RECT_F PawlineGameImpl::BriefingLoadoutSlotRect(int index) const
 {
-    const float cardWidth = 104.0f;
-    const float gap = 24.0f;
-    const float totalWidth = cardWidth * static_cast<float>(kLoadoutSize) + gap * static_cast<float>(kLoadoutSize - 1);
-    const float x = (kWidth - totalWidth) * 0.5f + static_cast<float>(index) * (cardWidth + gap);
-    return D2D1::RectF(x, 402.0f, x + cardWidth, 514.0f);
+    const float x = 604.0f + static_cast<float>(index) * 112.0f;
+    return D2D1::RectF(x, 236.0f, x + 96.0f, 348.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::ShopBackButtonRect() const
@@ -235,6 +232,11 @@ D2D1_RECT_F PawlineGameImpl::CannonButtonRect() const
 D2D1_RECT_F PawlineGameImpl::MessageToastRect() const
 {
     // 메시지는 전투 카드와 브리핑 본문을 가리지 않도록 화면 상단의 얇은 토스트로 고정한다.
+    if (m_screen == GameScreen::Briefing)
+    {
+        return D2D1::RectF(604.0f, 100.0f, 1196.0f, 130.0f);
+    }
+
     const float y = (m_screen == GameScreen::Playing || m_screen == GameScreen::Result) ? 120.0f : 100.0f;
     return D2D1::RectF(392.0f, y, 888.0f, y + 34.0f);
 }
