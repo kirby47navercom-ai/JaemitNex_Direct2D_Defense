@@ -674,7 +674,7 @@ void PawlineGameImpl::LoadBitmapAssets()
         L"player_10_mint_staff.png", L"player_11_drill_bit.png", L"player_12_prism_focus.png", L"player_13_nebula_cannon.png"};
     for (int i = 0; i < kRosterCount; ++i)
     {
-        LoadBitmapFromFile(AssetPath(L"assets\\weapons\\jaemit_roles\\" + std::wstring(playerWeapons[static_cast<size_t>(i)])),
+        LoadBitmapFromFile(AssetPath(L"assets\\weapons\\external_roles\\" + std::wstring(playerWeapons[static_cast<size_t>(i)])),
                            m_playerWeaponBitmaps[static_cast<size_t>(i)].ReleaseAndGetAddressOf());
     }
 
@@ -685,7 +685,7 @@ void PawlineGameImpl::LoadBitmapAssets()
         L"enemy_15_comet_lance.png", L"enemy_16_boss_solar_axe.png"};
     for (int i = 0; i < kEnemyCount; ++i)
     {
-        LoadBitmapFromFile(AssetPath(L"assets\\weapons\\jaemit_roles\\" + std::wstring(enemyWeapons[static_cast<size_t>(i)])),
+        LoadBitmapFromFile(AssetPath(L"assets\\weapons\\external_roles\\" + std::wstring(enemyWeapons[static_cast<size_t>(i)])),
                            m_enemyWeaponBitmaps[static_cast<size_t>(i)].ReleaseAndGetAddressOf());
     }
 

@@ -2258,15 +2258,107 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
     const bool ranged = unit.ranged;
     const float dir = unit.attackDir;
     const float reach = ranged ? (strike * 7.0f - windup * 5.0f + recoil * 4.0f) : (strike * 34.0f - windup * 18.0f + recoil * 7.0f);
-    const float handLift = ranged ? (-unit.radius * 0.58f - 11.0f) : (-unit.radius * 0.16f - 4.0f);
-    const Vec2 hand = {pos.x + dir * (unit.radius * (ranged ? 0.52f : 0.68f)), pos.y + handLift};
-    const Vec2 front = {pos.x + dir * (unit.radius + (ranged ? 50.0f : 46.0f) + reach), pos.y + (ranged ? handLift : -5.0f)};
     const int weaponIndex = std::clamp(static_cast<int>(type), 0, kRosterCount - 1);
-    const Vec2 weaponCenter = {hand.x + dir * ((ranged ? 36.0f : 42.0f) + reach * (ranged ? 0.45f : 0.68f)),
-                               hand.y + (ranged ? 0.0f : -7.0f) + recoil * 3.0f};
-    const float weaponAngle = ranged
-                                  ? ((dir >= 0.0f ? -2.0f : 2.0f) + dir * (strike * 3.0f - windup * 5.0f + recoil * 2.0f))
-                                  : ((dir >= 0.0f ? -18.0f : 18.0f) + dir * (strike * 48.0f - windup * 38.0f + recoil * 17.0f));
+
+    // 스프라이트 팔 위치에 붙이는 수동 무기 포즈.
+    // 각 유닛의 무기 길이와 전투 방식이 달라서 손 위치, 크기, 휘두름 각도를 따로 보정한다.
+    float handLift = ranged ? (-unit.radius * 0.58f - 11.0f) : (-unit.radius * 0.16f - 4.0f);
+    float handForward = unit.radius * (ranged ? 0.52f : 0.68f);
+    float weaponForward = ranged ? 36.0f : 42.0f;
+    float weaponLift = ranged ? 0.0f : -7.0f;
+    float frontForward = ranged ? 50.0f : 46.0f;
+    float frontLift = ranged ? handLift : -5.0f;
+    float weaponWidth = (ranged ? 82.0f : 92.0f) + unit.radius * (ranged ? 0.28f : 0.36f);
+    float weaponHeight = (ranged ? 54.0f : 58.0f) + unit.radius * (ranged ? 0.10f : 0.14f);
+    float angleBase = ranged ? -2.0f : -18.0f;
+    float strikeAngle = ranged ? 3.0f : 48.0f;
+    float windupAngle = ranged ? 5.0f : 38.0f;
+    float recoilAngle = ranged ? 2.0f : 17.0f;
+    float reachWeight = ranged ? 0.45f : 0.68f;
+
+    switch (type)
+    {
+    case PlayerUnit::Box:
+        weaponForward = 28.0f;
+        weaponLift = 1.0f;
+        weaponWidth = 74.0f;
+        weaponHeight = 64.0f;
+        angleBase = -6.0f;
+        strikeAngle = 16.0f;
+        windupAngle = 8.0f;
+        break;
+    case PlayerUnit::Spark:
+    case PlayerUnit::Bell:
+    case PlayerUnit::Mint:
+        handLift -= 8.0f;
+        weaponForward = 31.0f;
+        weaponLift = -6.0f;
+        weaponWidth = 78.0f;
+        weaponHeight = 72.0f;
+        angleBase = -10.0f;
+        strikeAngle = 9.0f;
+        windupAngle = 10.0f;
+        break;
+    case PlayerUnit::Titan:
+        weaponForward = 49.0f;
+        weaponLift = -9.0f;
+        weaponWidth += 18.0f;
+        weaponHeight += 8.0f;
+        strikeAngle = 64.0f;
+        windupAngle = 52.0f;
+        recoilAngle = 24.0f;
+        break;
+    case PlayerUnit::Frost:
+    case PlayerUnit::Comet:
+        weaponForward = 54.0f;
+        weaponLift = -5.0f;
+        weaponWidth += 20.0f;
+        weaponHeight -= 4.0f;
+        angleBase = -8.0f;
+        strikeAngle = 28.0f;
+        windupAngle = 18.0f;
+        reachWeight = 0.88f;
+        break;
+    case PlayerUnit::Orbit:
+    case PlayerUnit::Prism:
+    case PlayerUnit::Nebula:
+        handLift -= 3.0f;
+        weaponForward = 39.0f;
+        weaponLift = 1.0f;
+        weaponWidth += type == PlayerUnit::Nebula ? 20.0f : 10.0f;
+        weaponHeight += type == PlayerUnit::Nebula ? 10.0f : 4.0f;
+        angleBase = -1.0f;
+        strikeAngle = 5.0f;
+        recoilAngle = 9.0f;
+        break;
+    case PlayerUnit::Solar:
+        weaponForward = 50.0f;
+        weaponLift = -8.0f;
+        weaponWidth += 22.0f;
+        weaponHeight += 8.0f;
+        strikeAngle = 58.0f;
+        windupAngle = 46.0f;
+        recoilAngle = 22.0f;
+        break;
+    case PlayerUnit::Drill:
+        weaponForward = 45.0f;
+        weaponLift = -3.0f;
+        weaponWidth += 16.0f;
+        weaponHeight += 5.0f;
+        angleBase = -6.0f;
+        strikeAngle = 22.0f;
+        windupAngle = 16.0f;
+        break;
+    default:
+        break;
+    }
+
+    frontLift = ranged ? handLift : frontLift;
+    const Vec2 hand = {pos.x + dir * handForward, pos.y + handLift};
+    const Vec2 front = {pos.x + dir * (unit.radius + frontForward + reach), pos.y + frontLift};
+    const Vec2 weaponCenter = {hand.x + dir * (weaponForward + reach * reachWeight),
+                               hand.y + weaponLift + recoil * 3.0f};
+    const float weaponAngle = (dir >= 0.0f ? angleBase : -angleBase) + dir * (strike * strikeAngle - windup * windupAngle + recoil * recoilAngle);
     const float action = Clamp01(windup + strike + recoil);
     const float glowAlpha = 0.10f + action * 0.18f;
     ImageVfxKind vfx = ImageVfxKind::HitFlash;
@@ -2345,11 +2437,10 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
                       2.0f + strike * 1.2f);
     }
 
-    const float heavy = (type == PlayerUnit::Titan || type == PlayerUnit::Solar || type == PlayerUnit::Drill || type == PlayerUnit::Nebula) ? 1.0f : 0.0f;
     DrawWeaponBitmap(m_playerWeaponBitmaps[static_cast<size_t>(weaponIndex)].Get(),
                      weaponCenter,
-                     (ranged ? 66.0f : 74.0f) + unit.radius * (ranged ? 0.30f : 0.40f) + strike * (ranged ? 4.0f : 13.0f) + heavy * 8.0f,
-                     (ranged ? 42.0f : 48.0f) + unit.radius * (ranged ? 0.14f : 0.18f) + heavy * 4.0f,
+                     weaponWidth + strike * (ranged ? 4.0f : 13.0f),
+                     weaponHeight,
                      weaponAngle,
                      0.88f,
                      dir < 0.0f);
@@ -2368,15 +2459,91 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
     const bool ranged = unit.ranged;
     const float dir = unit.attackDir;
     const float reach = ranged ? (strike * 7.0f - windup * 4.0f + recoil * 4.0f) : (strike * 32.0f - windup * 16.0f + recoil * 7.0f);
-    const float handLift = ranged ? (-unit.radius * 0.52f - 9.0f) : (-unit.radius * 0.10f - 3.0f);
-    const Vec2 hand = {pos.x + dir * (unit.radius * (ranged ? 0.52f : 0.66f)), pos.y + handLift};
-    const Vec2 front = {pos.x + dir * (unit.radius + (ranged ? 48.0f : 44.0f) + reach), pos.y + (ranged ? handLift : -3.0f)};
     const int weaponIndex = std::clamp(static_cast<int>(type), 0, kEnemyCount - 1);
-    const Vec2 weaponCenter = {hand.x + dir * ((ranged ? 35.0f : 40.0f) + reach * (ranged ? 0.45f : 0.66f)),
-                               hand.y + (ranged ? 0.0f : -6.0f) + recoil * 3.0f};
-    const float weaponAngle = ranged
-                                  ? ((dir >= 0.0f ? -2.0f : 2.0f) + dir * (strike * 3.0f - windup * 4.0f + recoil * 2.0f))
-                                  : ((dir >= 0.0f ? -16.0f : 16.0f) + dir * (strike * 46.0f - windup * 36.0f + recoil * 16.0f));
+
+    // 적도 타워 쪽이 아니라 플레이어 쪽으로 무기가 향하도록 attackDir(-1)을 기준으로 좌우 반전한다.
+    float handLift = ranged ? (-unit.radius * 0.52f - 9.0f) : (-unit.radius * 0.10f - 3.0f);
+    float handForward = unit.radius * (ranged ? 0.52f : 0.66f);
+    float weaponForward = ranged ? 35.0f : 40.0f;
+    float weaponLift = ranged ? 0.0f : -6.0f;
+    float frontForward = ranged ? 48.0f : 44.0f;
+    float frontLift = ranged ? handLift : -3.0f;
+    float weaponWidth = (ranged ? 82.0f : 92.0f) + unit.radius * (ranged ? 0.28f : 0.36f);
+    float weaponHeight = (ranged ? 54.0f : 58.0f) + unit.radius * (ranged ? 0.10f : 0.14f);
+    float angleBase = ranged ? -2.0f : -16.0f;
+    float strikeAngle = ranged ? 3.0f : 46.0f;
+    float windupAngle = ranged ? 4.0f : 36.0f;
+    float recoilAngle = ranged ? 2.0f : 16.0f;
+    float reachWeight = ranged ? 0.45f : 0.66f;
+
+    switch (type)
+    {
+    case EnemyUnit::Brute:
+    case EnemyUnit::Rust:
+    case EnemyUnit::Quake:
+    case EnemyUnit::Boss:
+        weaponForward = type == EnemyUnit::Boss ? 54.0f : 48.0f;
+        weaponLift = -8.0f;
+        weaponWidth += type == EnemyUnit::Boss ? 28.0f : 16.0f;
+        weaponHeight += type == EnemyUnit::Boss ? 12.0f : 7.0f;
+        strikeAngle = type == EnemyUnit::Boss ? 66.0f : 58.0f;
+        windupAngle = type == EnemyUnit::Boss ? 54.0f : 46.0f;
+        recoilAngle = 23.0f;
+        break;
+    case EnemyUnit::Skitter:
+    case EnemyUnit::Frost:
+        weaponForward = 45.0f;
+        weaponLift = -4.0f;
+        weaponWidth += 8.0f;
+        weaponHeight -= 2.0f;
+        strikeAngle = 34.0f;
+        windupAngle = 20.0f;
+        reachWeight = 0.82f;
+        break;
+    case EnemyUnit::Sulfur:
+    case EnemyUnit::Ring:
+    case EnemyUnit::Tide:
+    case EnemyUnit::Mirror:
+        handLift -= 3.0f;
+        weaponForward = 39.0f;
+        weaponLift = 1.0f;
+        weaponWidth += 10.0f;
+        weaponHeight += 4.0f;
+        angleBase = -1.0f;
+        strikeAngle = 5.0f;
+        recoilAngle = 9.0f;
+        break;
+    case EnemyUnit::Flare:
+    case EnemyUnit::Comet:
+        weaponForward = 54.0f;
+        weaponLift = -5.0f;
+        weaponWidth += 20.0f;
+        weaponHeight -= 4.0f;
+        angleBase = -8.0f;
+        strikeAngle = 28.0f;
+        windupAngle = 18.0f;
+        reachWeight = 0.86f;
+        break;
+    case EnemyUnit::Spore:
+        handLift -= 8.0f;
+        weaponForward = 31.0f;
+        weaponLift = -6.0f;
+        weaponWidth = 78.0f;
+        weaponHeight = 72.0f;
+        angleBase = -10.0f;
+        strikeAngle = 9.0f;
+        windupAngle = 10.0f;
+        break;
+    default:
+        break;
+    }
+
+    frontLift = ranged ? handLift : frontLift;
+    const Vec2 hand = {pos.x + dir * handForward, pos.y + handLift};
+    const Vec2 front = {pos.x + dir * (unit.radius + frontForward + reach), pos.y + frontLift};
+    const Vec2 weaponCenter = {hand.x + dir * (weaponForward + reach * reachWeight),
+                               hand.y + weaponLift + recoil * 3.0f};
+    const float weaponAngle = (dir >= 0.0f ? angleBase : -angleBase) + dir * (strike * strikeAngle - windup * windupAngle + recoil * recoilAngle);
     const float action = Clamp01(windup + strike + recoil);
     ImageVfxKind vfx = ImageVfxKind::EnemySlash;
     float vfxSize = (ranged ? 58.0f : 72.0f) + strike * (ranged ? 22.0f : 44.0f);
@@ -2461,11 +2628,10 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
                       2.0f + strike * 1.2f);
     }
 
-    const float heavy = (type == EnemyUnit::Brute || type == EnemyUnit::Storm || type == EnemyUnit::Quake || type == EnemyUnit::Boss) ? 1.0f : 0.0f;
     DrawWeaponBitmap(m_enemyWeaponBitmaps[static_cast<size_t>(weaponIndex)].Get(),
                      weaponCenter,
-                     (ranged ? 66.0f : 74.0f) + unit.radius * (ranged ? 0.30f : 0.40f) + strike * (ranged ? 4.0f : 13.0f) + heavy * 8.0f,
-                     (ranged ? 42.0f : 48.0f) + unit.radius * (ranged ? 0.14f : 0.18f) + heavy * 4.0f,
+                     weaponWidth + strike * (ranged ? 4.0f : 13.0f),
+                     weaponHeight,
                      weaponAngle,
                      0.88f,
                      dir < 0.0f);
