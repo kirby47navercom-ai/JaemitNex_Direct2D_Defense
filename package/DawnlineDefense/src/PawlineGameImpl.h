@@ -956,6 +956,10 @@ private:
 
     void DrawCartoonPanel(D2D1_RECT_F rect, D2D1_COLOR_F fill, D2D1_COLOR_F accent, bool hover = false);
 
+    void DrawBriefingPanel(D2D1_RECT_F rect, D2D1_COLOR_F fill, D2D1_COLOR_F accent, bool hover = false);
+
+    void DrawBriefingButton(D2D1_RECT_F rect, const std::wstring& label, bool enabled, D2D1_COLOR_F fill, bool active = false);
+
     float PixelTextWidth(const std::wstring& text, float cell) const;
 
     void DrawPixelText(const std::wstring& text, Vec2 pos, float cell, D2D1_COLOR_F color, float alpha = 1.0f, bool shadow = true);

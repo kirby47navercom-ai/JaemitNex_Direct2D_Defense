@@ -600,6 +600,48 @@ void PawlineGameImpl::DrawCartoonPanel(D2D1_RECT_F rect, D2D1_COLOR_F fill, D2D1
     StrokeRoundRect(InsetRectF(rect, 3.0f, 3.0f), 6.0f, D2D1::ColorF(accent.r, accent.g, accent.b, hover ? 0.72f : 0.45f), hover ? 2.0f : 1.2f);
 }
 
+void PawlineGameImpl::DrawBriefingPanel(D2D1_RECT_F rect, D2D1_COLOR_F fill, D2D1_COLOR_F accent, bool hover)
+{
+    // 브리핑 화면 전용 패널이다. 내부 큰 사각 프레임을 빼고, 외곽선과 얇은 광택만 남겨 답답함을 줄인다.
+    const D2D1_COLOR_F ink = D2D1::ColorF(0x061019, 0.94f);
+    FillRoundRect(OffsetRectF(rect, 4.0f, 5.0f), 8.0f, D2D1::ColorF(0x000000, 0.28f));
+    FillRoundRect(rect, 8.0f, fill);
+    FillRoundRect(D2D1::RectF(rect.left + 8.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 19.0f),
+                  6.0f,
+                  D2D1::ColorF(0xFFFFFF, hover ? 0.13f : 0.08f));
+    FillRoundRect(D2D1::RectF(rect.left + 22.0f, rect.bottom - 19.0f, rect.right - 22.0f, rect.bottom - 13.0f),
+                  3.0f,
+                  D2D1::ColorF(accent.r, accent.g, accent.b, hover ? 0.20f : 0.12f));
+    StrokeRoundRect(rect, 8.0f, ink, hover ? 3.4f : 2.9f);
+    StrokeRoundRect(InsetRectF(rect, 2.0f, 2.0f), 7.0f, D2D1::ColorF(accent.r, accent.g, accent.b, hover ? 0.72f : 0.48f), hover ? 1.8f : 1.2f);
+}
+
+void PawlineGameImpl::DrawBriefingButton(D2D1_RECT_F rect, const std::wstring& label, bool enabled, D2D1_COLOR_F fill, bool active)
+{
+    // 브리핑 버튼은 일반 버튼보다 내부 장식을 줄여 선택 상태만 또렷하게 보이도록 그린다.
+    const bool hover = Contains(rect, m_mouse);
+    D2D1_COLOR_F actualFill = enabled ? fill : D2D1::ColorF(0x171D23);
+    if ((hover || active) && enabled)
+    {
+        actualFill.r = std::min(1.0f, actualFill.r + (active ? 0.07f : 0.04f));
+        actualFill.g = std::min(1.0f, actualFill.g + (active ? 0.07f : 0.04f));
+        actualFill.b = std::min(1.0f, actualFill.b + (active ? 0.07f : 0.04f));
+    }
+
+    if ((hover || active) && enabled)
+    {
+        FillRoundRect(InflateRectF(rect, active ? 7.0f : 5.0f, active ? 7.0f : 5.0f), 10.0f, D2D1::ColorF(active ? 0xB8FF89 : 0x65B8FF, active ? 0.075f : 0.055f));
+    }
+
+    const D2D1_COLOR_F accent = enabled ? (active ? D2D1::ColorF(0xB8FF89) : (hover ? D2D1::ColorF(0x9EDFFF) : D2D1::ColorF(0x476779))) : D2D1::ColorF(0x2B333A);
+    FillRoundRect(OffsetRectF(rect, 3.0f, 4.0f), 8.0f, D2D1::ColorF(0x000000, 0.25f));
+    FillRoundRect(rect, 8.0f, actualFill);
+    FillRoundRect(D2D1::RectF(rect.left + 8.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 15.0f), 4.0f, D2D1::ColorF(0xFFFFFF, hover ? 0.14f : 0.085f));
+    StrokeRoundRect(rect, 8.0f, D2D1::ColorF(0x061019, 0.94f), active ? 3.4f : 2.8f);
+    StrokeRoundRect(InsetRectF(rect, 2.0f, 2.0f), 6.0f, D2D1::ColorF(accent.r, accent.g, accent.b, active ? 0.78f : 0.48f), active ? 1.7f : 1.1f);
+    DrawPixelTextCentered(label, rect, 2.55f, enabled ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x7E8B94), enabled ? 1.0f : 0.72f);
+}
+
 float PawlineGameImpl::PixelTextWidth(const std::wstring& text, float cell) const
 {
     float width = 0.0f;
@@ -1274,7 +1316,7 @@ void PawlineGameImpl::DrawBriefing()
     DrawPixelTextCentered(L"LUMEN " + ToWideInt(m_lumen), D2D1::RectF(972.0f, 50.0f, 1220.0f, 82.0f), 2.8f, D2D1::ColorF(0xF6FF83), 1.0f);
 
     const D2D1_RECT_F terrainPanel = D2D1::RectF(78.0f, 136.0f, 516.0f, 500.0f);
-    DrawCartoonPanel(terrainPanel, D2D1::ColorF(0x0D1821, 0.96f), stage.lineColor);
+    DrawBriefingPanel(terrainPanel, D2D1::ColorF(0x0D1821, 0.96f), stage.lineColor);
     DrawOutlinedString(stage.name, D2D1::RectF(106.0f, 158.0f, 488.0f, 188.0f), m_centerFormat, D2D1::ColorF(0xF3FBFF), 0.70f);
     DrawOutlinedString(stage.subtitle, D2D1::RectF(106.0f, 188.0f, 488.0f, 212.0f), m_centerFormat, D2D1::ColorF(0xBFD1DB), 0.56f);
     DrawPixelTextCentered(L"SURFACE SAMPLE", D2D1::RectF(106.0f, 216.0f, 488.0f, 240.0f), 1.75f, D2D1::ColorF(0xCFE8F5), 1.0f);
@@ -1319,7 +1361,7 @@ void PawlineGameImpl::DrawBriefing()
     DrawBalancePanel(D2D1::RectF(78.0f, 520.0f, 516.0f, 666.0f));
 
     const D2D1_RECT_F plan = D2D1::RectF(560.0f, 136.0f, 1202.0f, 474.0f);
-    DrawCartoonPanel(plan, D2D1::ColorF(0x07131C, 0.98f), D2D1::ColorF(0x65B8FF));
+    DrawBriefingPanel(plan, D2D1::ColorF(0x07131C, 0.98f), D2D1::ColorF(0x65B8FF));
     DrawPixelText(L"LOADOUT CHECK", {598.0f, 160.0f}, 3.15f, D2D1::ColorF(0xEAF7FF));
     DrawPixelText(L"CLICK SLOT TO EDIT", {600.0f, 198.0f}, 1.9f, D2D1::ColorF(0xC8D8E2));
     FillRoundRect(D2D1::RectF(plan.left + 34.0f, plan.top + 82.0f, plan.right - 34.0f, plan.top + 94.0f), 6.0f, D2D1::ColorF(0x0E2635, 0.92f));
@@ -1354,19 +1396,19 @@ void PawlineGameImpl::DrawBriefing()
                        0.76f);
 
     const D2D1_RECT_F difficultyPanel = D2D1::RectF(594.0f, 616.0f, 1068.0f, 710.0f);
-    DrawCartoonPanel(difficultyPanel, D2D1::ColorF(0x07131C, 0.90f), D2D1::ColorF(0x476779));
+    DrawBriefingPanel(difficultyPanel, D2D1::ColorF(0x07131C, 0.90f), D2D1::ColorF(0x476779));
     DrawPixelText(L"DIFFICULTY", {612.0f, 628.0f}, 2.05f, D2D1::ColorF(0xEAF7FF));
     const std::array<std::wstring, 3> labels = {L"EASY", L"NORMAL", L"HARD"};
     for (int i = 0; i < 3; ++i)
     {
         const bool active = static_cast<int>(m_difficulty) == i;
-        DrawButton(BriefingDifficultyRect(i), labels[i], true, active ? D2D1::ColorF(0x283B27) : D2D1::ColorF(0x202833));
+        DrawBriefingButton(BriefingDifficultyRect(i), labels[i], true, active ? D2D1::ColorF(0x283B27) : D2D1::ColorF(0x202833), active);
     }
     DrawSynergyPanel(D2D1::RectF(604.0f, 536.0f, 1196.0f, 612.0f));
 
-    DrawButton(BriefingBackButtonRect(), L"BACK", true, D2D1::ColorF(0x173C4B));
-    DrawButton(BriefingShopButtonRect(), L"SHOP", true, D2D1::ColorF(0x4B4321));
-    DrawButton(BriefingStartButtonRect(), L"LAUNCH", true, D2D1::ColorF(0x283B27));
+    DrawBriefingButton(BriefingBackButtonRect(), L"BACK", true, D2D1::ColorF(0x173C4B));
+    DrawBriefingButton(BriefingShopButtonRect(), L"SHOP", true, D2D1::ColorF(0x4B4321));
+    DrawBriefingButton(BriefingStartButtonRect(), L"LAUNCH", true, D2D1::ColorF(0x283B27));
     DrawPixelTextCentered(L"ENTER / SPACE", D2D1::RectF(BriefingStartButtonRect().left - 8.0f, 700.0f, BriefingStartButtonRect().right + 8.0f, 722.0f), 1.55f, D2D1::ColorF(0x8EA9B8), 1.0f);
 }
 
@@ -1429,7 +1471,7 @@ void PawlineGameImpl::DrawShopUnitCard(int index)
 void PawlineGameImpl::DrawSynergyPanel(D2D1_RECT_F rect)
 {
     // 편성 조합에 따라 활성화된 보너스를 한눈에 보여주는 패널이다.
-    DrawCartoonPanel(rect, D2D1::ColorF(0x07131C, 0.98f), D2D1::ColorF(0xB8FF89));
+    DrawBriefingPanel(rect, D2D1::ColorF(0x07131C, 0.98f), D2D1::ColorF(0xB8FF89));
     DrawPixelText(L"SYNERGY", {rect.left + 14.0f, rect.top + 12.0f}, 2.4f, D2D1::ColorF(0xB8FF89));
     DrawOutlinedString(SynergySummary(),
                        D2D1::RectF(rect.left + 188.0f, rect.top + 16.0f, rect.right - 18.0f, rect.bottom - 10.0f),
@@ -1441,7 +1483,7 @@ void PawlineGameImpl::DrawSynergyPanel(D2D1_RECT_F rect)
 void PawlineGameImpl::DrawBalancePanel(D2D1_RECT_F rect)
 {
     // 스테이지 위협도와 현재 편성 전투력을 비교해 출격 전 판단을 돕는다.
-    DrawCartoonPanel(rect, D2D1::ColorF(0x0F1A22, 0.96f), D2D1::ColorF(0xF6FF83));
+    DrawBriefingPanel(rect, D2D1::ColorF(0x0F1A22, 0.96f), D2D1::ColorF(0xF6FF83));
     DrawPixelText(L"BALANCE", {rect.left + 14.0f, rect.top + 12.0f}, 2.35f, D2D1::ColorF(0xF6FF83));
 
     const float threat = StageThreatRating();
@@ -1735,7 +1777,6 @@ void PawlineGameImpl::DrawStageDecorations()
 
 void PawlineGameImpl::DrawLongRangeDecorations()
 {
-    const StageDefinition stage = CurrentStage();
     const float drift = std::sin(m_stageTime * 0.36f) * 7.0f;
 
     for (int i = 0; i < 5; ++i)
@@ -1789,8 +1830,7 @@ void PawlineGameImpl::DrawLongRangeDecorations()
             break;
         }
 
-        DrawLine({x - 140.0f, kLaneY - kLaneHalfHeight + 20.0f}, {x + 260.0f, kLaneY - kLaneHalfHeight + 20.0f}, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.08f), 2.0f);
-        DrawLine({x - 80.0f, kLaneY + kLaneHalfHeight - 22.0f}, {x + 320.0f, kLaneY + kLaneHalfHeight - 22.0f}, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.07f), 2.0f);
+        // 레인 위아래 보조선은 이동 경로처럼 보이기 쉬워 제거하고, 배경 장식만 남긴다.
     }
 }
 
@@ -1803,28 +1843,28 @@ void PawlineGameImpl::DrawStageLanePattern()
         DrawCrater({828.0f, 408.0f}, 46.0f, 15.0f, D2D1::ColorF(0xBFC9CE, 0.18f), D2D1::ColorF(0x000000, 0.10f));
         break;
     case 1:
-        DrawLine({82.0f, 320.0f}, {1210.0f, 294.0f}, D2D1::ColorF(0xFFD27A, 0.20f), 5.0f);
-        DrawLine({82.0f, 414.0f}, {1210.0f, 442.0f}, D2D1::ColorF(0xFF9BA8, 0.15f), 4.0f);
+        FillEllipse({310.0f, 318.0f}, 78.0f, 18.0f, D2D1::ColorF(0xFFD27A, 0.12f));
+        FillEllipse({952.0f, 414.0f}, 112.0f, 22.0f, D2D1::ColorF(0xFF9BA8, 0.10f));
         break;
     case 2:
         FillEllipse({356.0f, 398.0f}, 88.0f, 24.0f, D2D1::ColorF(0x4BAA75, 0.18f));
         FillEllipse({906.0f, 312.0f}, 110.0f, 26.0f, D2D1::ColorF(0x2B9B8D, 0.15f));
         break;
     case 3:
-        DrawLine({74.0f, 298.0f}, {1206.0f, 384.0f}, D2D1::ColorF(0xFF8B60, 0.18f), 5.0f);
-        DrawLine({110.0f, 430.0f}, {1170.0f, 344.0f}, D2D1::ColorF(0x6D2D28, 0.18f), 3.0f);
+        FillEllipse({284.0f, 306.0f}, 96.0f, 20.0f, D2D1::ColorF(0xFF8B60, 0.12f));
+        FillEllipse({916.0f, 424.0f}, 118.0f, 24.0f, D2D1::ColorF(0x6D2D28, 0.13f));
         break;
     case 4:
-        FillRoundRect(D2D1::RectF(72.0f, 282.0f, 1210.0f, 304.0f), 10.0f, D2D1::ColorF(0xEAC089, 0.16f));
-        FillRoundRect(D2D1::RectF(72.0f, 414.0f, 1210.0f, 436.0f), 10.0f, D2D1::ColorF(0xA66445, 0.15f));
+        FillEllipse({390.0f, 292.0f}, 142.0f, 24.0f, D2D1::ColorF(0xEAC089, 0.12f));
+        FillEllipse({898.0f, 426.0f}, 166.0f, 28.0f, D2D1::ColorF(0xA66445, 0.11f));
         break;
     case 5:
         StrokeEllipse({640.0f, kLaneY}, 470.0f, 74.0f, D2D1::ColorF(0xE6D392, 0.20f), 3.0f);
         StrokeEllipse({640.0f, kLaneY}, 336.0f, 52.0f, D2D1::ColorF(0xF1E5B9, 0.12f), 2.0f);
         break;
     case 6:
-        DrawLine({178.0f, 460.0f}, {318.0f, 270.0f}, D2D1::ColorF(0xB9FFF5, 0.20f), 4.0f);
-        DrawLine({784.0f, 462.0f}, {924.0f, 270.0f}, D2D1::ColorF(0x80E5D4, 0.20f), 4.0f);
+        FillEllipse({246.0f, 304.0f}, 72.0f, 20.0f, D2D1::ColorF(0xB9FFF5, 0.12f));
+        FillEllipse({856.0f, 418.0f}, 92.0f, 22.0f, D2D1::ColorF(0x80E5D4, 0.12f));
         break;
     case 7:
         StrokeEllipse({464.0f, kLaneY}, 144.0f, 44.0f, D2D1::ColorF(0x75A7FF, 0.16f), 3.0f);
@@ -1835,11 +1875,6 @@ void PawlineGameImpl::DrawStageLanePattern()
         FillEllipse({796.0f, 414.0f}, 92.0f, 24.0f, D2D1::ColorF(0xC8B7FF, 0.12f));
         break;
     default:
-        for (int i = 0; i < 8; ++i)
-        {
-            const float x = 112.0f + static_cast<float>(i) * 148.0f;
-            DrawLine({x, 448.0f}, {x + 64.0f, 268.0f}, D2D1::ColorF(0xFFE66D, 0.16f), 4.0f);
-        }
         FillEllipse({646.0f, kLaneY}, 154.0f, 42.0f, D2D1::ColorF(0xFFB347, 0.13f));
         break;
     }
@@ -3968,14 +4003,9 @@ void PawlineGameImpl::DrawTelegraphs()
         {
             FillRoundRect(D2D1::RectF(kPlayerBaseX + 28.0f, kLaneY - kLaneHalfHeight - 18.0f, kEnemyBaseX - 28.0f, kLaneY + kLaneHalfHeight + 18.0f), 18.0f, fill);
             StrokeRoundRect(D2D1::RectF(kPlayerBaseX + 28.0f, kLaneY - kLaneHalfHeight - 18.0f, kEnemyBaseX - 28.0f, kLaneY + kLaneHalfHeight + 18.0f), 18.0f, stroke, 2.0f + pct * 2.6f);
-            DrawLine({kPlayerBaseX + 54.0f, kLaneY - kLaneHalfHeight + 4.0f},
-                     {kEnemyBaseX - 54.0f, kLaneY - kLaneHalfHeight + 4.0f},
-                     D2D1::ColorF(0xFFFFFF, 0.16f + pct * 0.16f),
-                     1.4f);
-            DrawLine({kPlayerBaseX + 54.0f, kLaneY + kLaneHalfHeight - 4.0f},
-                     {kEnemyBaseX - 54.0f, kLaneY + kLaneHalfHeight - 4.0f},
-                     D2D1::ColorF(0xFFFFFF, 0.16f + pct * 0.16f),
-                     1.4f);
+            FillRoundRect(D2D1::RectF(kPlayerBaseX + 70.0f, kLaneY - 6.0f, kEnemyBaseX - 70.0f, kLaneY + 6.0f),
+                          6.0f,
+                          D2D1::ColorF(0xFFFFFF, 0.045f + pct * 0.065f));
         }
 
         const float labelLift = telegraph.shape == TelegraphShape::Circle ? telegraph.radius * 0.62f + 42.0f : 52.0f;
