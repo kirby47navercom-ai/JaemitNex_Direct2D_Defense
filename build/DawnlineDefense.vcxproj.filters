@@ -28,6 +28,9 @@
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\GameData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\framework\GameFramework.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\framework\DeltaTimer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

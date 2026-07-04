@@ -196,7 +196,16 @@ enum class ImageVfxKind
     Wood,
     HitFlash,
     Smear,
-    Thrust
+    Thrust,
+    Explosion,
+    FireBreath,
+    MagicMirror,
+    EnergyImpact,
+    Crystal,
+    AirBurst,
+    ThunderSplash,
+    WaterBallImpact,
+    SmokeDust
 };
 
 enum class Difficulty
@@ -302,6 +311,8 @@ struct Projectile
     Vec2 lastPos;
     int targetId = -1;
     int sourceId = -1;
+    // 발사자가 사라져도 착탄 상성을 계산할 수 있게 발사 당시 종류를 보관한다.
+    int sourceKind = 0;
     Team team = Team::Player;
     bool targetBase = false;
     float damage = 1.0f;
@@ -504,6 +515,10 @@ private:
 
     void SelectSaveSlot(int slot);
 
+    void ResetProgressMemory();
+
+    void DeleteSelectedSaveSlot();
+
     void ResetProgressData();
 
     void ResetToTitle();
@@ -551,6 +566,8 @@ private:
     EnemyUnit StageBossType() const;
 
     std::wstring StageEnemySummary() const;
+
+    std::wstring CounterPlanSummary() const;
 
     float StageThreatRating() const;
 
@@ -655,6 +672,10 @@ private:
     void AttackUnit(Unit& attacker, Unit& target);
 
     void AttackBase(Unit& attacker);
+
+    float AttackMatchupMultiplier(Team attackerTeam, int attackerKind, const Unit& target) const;
+
+    void AddCounterFloatText(const Unit& target, float multiplier);
 
     void FireProjectile(Unit& attacker, const Unit& target);
 
@@ -783,6 +804,8 @@ private:
     D2D1_RECT_F OptionsSaveProgressButtonRect() const;
 
     D2D1_RECT_F OptionsLoadProgressButtonRect() const;
+
+    D2D1_RECT_F OptionsDeleteProgressButtonRect() const;
 
     D2D1_RECT_F OptionsResetProgressButtonRect() const;
 
@@ -970,6 +993,8 @@ private:
 
     void DrawImageVfxSprites();
 
+    bool DrawUnitCharacterSprite(const Unit& unit, Vec2 pos, D2D1_COLOR_F accent);
+
     void DrawUnitIdentityMark(const Unit& unit, Vec2 pos, D2D1_COLOR_F accent);
 
     void DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitStats& stats, float windup, float strike, float recoil);
@@ -1095,6 +1120,17 @@ private:
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_hitFlashEffectSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_smearEffectSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_thrustEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_explosionEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_fireBreathEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_magicMirrorEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_energyImpactEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_crystalEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_airBurstEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_thunderSplashEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_waterBallImpactEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_smokeDustEffectSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_playerMotionSheet;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_enemyMotionSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_uiAtlas;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_bossCutin;
     bool m_comInitialized = false;
@@ -1201,6 +1237,7 @@ private:
     float m_demoSpawnTimer = 0.0f;
     float m_demoWalletTimer = 0.0f;
     float m_resetConfirmTimer = 0.0f;
+    float m_deleteConfirmTimer = 0.0f;
     float m_autoSaveNoticeTimer = 0.0f;
     // 화면이 바뀌면 자동으로 켜지는 짧은 페이드 연출 타이머다.
     float m_sceneTransitionTimer = 0.0f;

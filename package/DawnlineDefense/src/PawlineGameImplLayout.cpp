@@ -78,9 +78,14 @@ D2D1_RECT_F PawlineGameImpl::OptionsLoadProgressButtonRect() const
     return D2D1::RectF(642.0f, 654.0f, 790.0f, 700.0f);
 }
 
+D2D1_RECT_F PawlineGameImpl::OptionsDeleteProgressButtonRect() const
+{
+    return D2D1::RectF(490.0f, 708.0f, 638.0f, 746.0f);
+}
+
 D2D1_RECT_F PawlineGameImpl::OptionsResetProgressButtonRect() const
 {
-    return D2D1::RectF(490.0f, 708.0f, 790.0f, 746.0f);
+    return D2D1::RectF(642.0f, 708.0f, 790.0f, 746.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsBackButtonRect() const

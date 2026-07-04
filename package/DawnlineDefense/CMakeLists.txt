@@ -12,6 +12,7 @@ add_executable(DawnlineDefense WIN32
     src/PawlineGameImplLayout.cpp
     src/PawlineGameImplRender.cpp
     src/GameData.cpp
+    src/framework/GameFramework.cpp
     src/framework/DeltaTimer.cpp
 )
 

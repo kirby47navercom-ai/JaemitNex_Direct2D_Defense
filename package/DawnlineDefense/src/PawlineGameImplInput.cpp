@@ -346,6 +346,19 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
         SetMessage(SaveSlotLabel() + L"에서 불러왔어.");
         return;
     }
+    if (Contains(OptionsDeleteProgressButtonRect(), pos))
+    {
+        if (m_deleteConfirmTimer > 0.0f)
+        {
+            DeleteSelectedSaveSlot();
+        }
+        else
+        {
+            m_deleteConfirmTimer = 5.0f;
+            SetMessage(SaveSlotLabel() + L"을 한 번 더 누르면 삭제돼.");
+        }
+        return;
+    }
     if (Contains(OptionsResetProgressButtonRect(), pos))
     {
         if (m_resetConfirmTimer > 0.0f)
@@ -679,6 +692,18 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
             LoadProgress();
             UpdateViewMetrics();
             SetMessage(SaveSlotLabel() + L"에서 불러왔어.");
+        }
+        else if (key == 'D')
+        {
+            if (m_deleteConfirmTimer > 0.0f)
+            {
+                DeleteSelectedSaveSlot();
+            }
+            else
+            {
+                m_deleteConfirmTimer = 5.0f;
+                SetMessage(SaveSlotLabel() + L"을 D로 한 번 더 누르면 삭제돼.");
+            }
         }
         else if (key == 'X')
         {

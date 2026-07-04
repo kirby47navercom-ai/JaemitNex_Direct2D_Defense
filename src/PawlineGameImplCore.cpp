@@ -421,6 +421,17 @@ void PawlineGameImpl::LoadBitmapAssets()
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\hit_flash_sheet.png"), m_hitFlashEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\smear_horizontal_sheet.png"), m_smearEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\thrust_sheet.png"), m_thrustEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\explosion_large_sheet.png"), m_explosionEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\fire_breath_sheet.png"), m_fireBreathEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\magic_mirror_sheet.png"), m_magicMirrorEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\energy_impact_sheet.png"), m_energyImpactEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\crystal_sheet.png"), m_crystalEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\air_burst_sheet.png"), m_airBurstEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\thunder_splash_sheet.png"), m_thunderSplashEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\water_ball_impact_sheet.png"), m_waterBallImpactEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\vfx\\smoke_dust_sheet.png"), m_smokeDustEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\sprites\\gameart2d_catdog\\cat_motion_sheet.png"), m_playerMotionSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\sprites\\gameart2d_catdog\\dog_motion_sheet.png"), m_enemyMotionSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\ui\\pawline_ui_atlas.png"), m_uiAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\cutins\\solar_gatekeeper_cutin.png"), m_bossCutin.ReleaseAndGetAddressOf());
 
@@ -456,6 +467,17 @@ void PawlineGameImpl::DiscardBitmapAssets()
     m_hitFlashEffectSheet.Reset();
     m_smearEffectSheet.Reset();
     m_thrustEffectSheet.Reset();
+    m_explosionEffectSheet.Reset();
+    m_fireBreathEffectSheet.Reset();
+    m_magicMirrorEffectSheet.Reset();
+    m_energyImpactEffectSheet.Reset();
+    m_crystalEffectSheet.Reset();
+    m_airBurstEffectSheet.Reset();
+    m_thunderSplashEffectSheet.Reset();
+    m_waterBallImpactEffectSheet.Reset();
+    m_smokeDustEffectSheet.Reset();
+    m_playerMotionSheet.Reset();
+    m_enemyMotionSheet.Reset();
     m_uiAtlas.Reset();
     m_bossCutin.Reset();
     for (auto& bitmap : m_backgroundBitmaps)
@@ -833,6 +855,8 @@ void PawlineGameImpl::SelectSaveSlot(int slot)
     }
 
     m_saveSlot = safeSlot;
+    m_resetConfirmTimer = 0.0f;
+    m_deleteConfirmTimer = 0.0f;
     std::wifstream check(ProgressPath(m_saveSlot));
     if (!check && m_saveSlot == 0)
     {
@@ -845,9 +869,10 @@ void PawlineGameImpl::SelectSaveSlot(int slot)
     SetMessage(hasSave ? SaveSlotLabel() + L" 불러오기 완료." : SaveSlotLabel() + L"은 아직 비어 있어.");
 }
 
-void PawlineGameImpl::ResetProgressData()
+void PawlineGameImpl::ResetProgressMemory()
 {
-    // 제출 전 테스트 중에도 안전하게 처음 상태로 되돌릴 수 있는 진행 초기화다.
+    // 저장 파일을 쓰지 않고 메모리 안의 진행 상태만 기본값으로 되돌린다.
+    // 슬롯 삭제와 전체 초기화가 같은 기본 상태를 공유하도록 분리해 둔다.
     m_lumen = 0;
     m_unitUnlocked = {
         true, true, true, true, true,
@@ -865,6 +890,30 @@ void PawlineGameImpl::ResetProgressData()
     m_selectedLoadoutSlot = 0;
     m_shopSelectedUnit = 0;
     m_resetConfirmTimer = 0.0f;
+    m_deleteConfirmTimer = 0.0f;
+}
+
+void PawlineGameImpl::DeleteSelectedSaveSlot()
+{
+    // 현재 선택된 슬롯 파일만 삭제한다. 다른 슬롯은 건드리지 않는다.
+    const std::wstring path = ProgressPath(m_saveSlot);
+    const bool deleted = DeleteFileW(path.c_str()) != 0;
+    if (m_saveSlot == 0)
+    {
+        DeleteFileW(LegacyProgressPath().c_str());
+    }
+
+    ResetProgressMemory();
+    UpdateViewMetrics();
+    m_autoSaveNotice = L"슬롯 삭제됨  " + SaveSlotLabel();
+    m_autoSaveNoticeTimer = 1.85f;
+    SetMessage(deleted ? SaveSlotLabel() + L" 저장 데이터를 삭제했어." : SaveSlotLabel() + L"에 삭제할 저장 파일이 없어.");
+}
+
+void PawlineGameImpl::ResetProgressData()
+{
+    // 제출 전 테스트 중에도 안전하게 처음 상태로 되돌릴 수 있는 전체 진행 초기화다.
+    ResetProgressMemory();
     SaveProgress();
     SetMessage(L"진행 데이터를 처음 상태로 돌렸어.");
 }
@@ -894,6 +943,7 @@ void PawlineGameImpl::ResetToTitle()
     m_demoSpawnTimer = 0.0f;
     m_demoWalletTimer = 0.0f;
     m_resetConfirmTimer = 0.0f;
+    m_deleteConfirmTimer = 0.0f;
     m_message.clear();
     m_messageTimer = 0.0f;
 }
@@ -923,6 +973,7 @@ void PawlineGameImpl::ResetToMenu()
     m_demoSpawnTimer = 0.0f;
     m_demoWalletTimer = 0.0f;
     m_resetConfirmTimer = 0.0f;
+    m_deleteConfirmTimer = 0.0f;
     m_message.clear();
     m_messageTimer = 0.0f;
 }
@@ -1040,6 +1091,10 @@ void PawlineGameImpl::Update(float dt)
     if (m_resetConfirmTimer > 0.0f)
     {
         m_resetConfirmTimer = std::max(0.0f, m_resetConfirmTimer - dt);
+    }
+    if (m_deleteConfirmTimer > 0.0f)
+    {
+        m_deleteConfirmTimer = std::max(0.0f, m_deleteConfirmTimer - dt);
     }
     if (m_stageGimmickPulse > 0.0f)
     {

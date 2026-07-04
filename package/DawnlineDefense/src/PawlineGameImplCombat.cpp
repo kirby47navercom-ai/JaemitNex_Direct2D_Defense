@@ -11,16 +11,19 @@ ImageVfxKind UnitImageVfxKind(const Unit& unit)
         switch (static_cast<PlayerUnit>(unit.kind))
         {
         case PlayerUnit::Spark:
-            return ImageVfxKind::Thunder;
+            return ImageVfxKind::ThunderSplash;
         case PlayerUnit::Frost:
             return ImageVfxKind::Ice;
         case PlayerUnit::Comet:
+            return ImageVfxKind::FireBreath;
         case PlayerUnit::Solar:
-            return ImageVfxKind::Fire;
+            return ImageVfxKind::Explosion;
         case PlayerUnit::Bell:
+            return ImageVfxKind::EnergyImpact;
         case PlayerUnit::Orbit:
+            return ImageVfxKind::Crystal;
         case PlayerUnit::Prism:
-            return ImageVfxKind::Holy;
+            return ImageVfxKind::MagicMirror;
         case PlayerUnit::Nebula:
             return ImageVfxKind::Dark;
         case PlayerUnit::Mint:
@@ -49,16 +52,18 @@ ImageVfxKind UnitImageVfxKind(const Unit& unit)
     case EnemyUnit::Frost:
         return ImageVfxKind::Ice;
     case EnemyUnit::Tide:
-        return ImageVfxKind::Water;
+        return ImageVfxKind::WaterBallImpact;
     case EnemyUnit::Void:
     case EnemyUnit::Boss:
         return ImageVfxKind::Dark;
     case EnemyUnit::Flare:
+        return ImageVfxKind::FireBreath;
     case EnemyUnit::Comet:
-        return ImageVfxKind::Fire;
+        return ImageVfxKind::Explosion;
     case EnemyUnit::Ring:
+        return ImageVfxKind::Crystal;
     case EnemyUnit::Mirror:
-        return ImageVfxKind::Holy;
+        return ImageVfxKind::MagicMirror;
     case EnemyUnit::Brute:
     case EnemyUnit::Rust:
     case EnemyUnit::Storm:
@@ -79,13 +84,16 @@ ImageVfxKind ProjectileImageVfxKind(ProjectileVisual visual, Team team)
     switch (visual)
     {
     case ProjectileVisual::Bolt:
-        return ImageVfxKind::Thunder;
+        return ImageVfxKind::ThunderSplash;
     case ProjectileVisual::BellWave:
+        return ImageVfxKind::EnergyImpact;
     case ProjectileVisual::OrbitStar:
+        return ImageVfxKind::Crystal;
     case ProjectileVisual::PrismShard:
     case ProjectileVisual::MirrorShard:
+        return ImageVfxKind::MagicMirror;
     case ProjectileVisual::SolarSpark:
-        return ImageVfxKind::Holy;
+        return ImageVfxKind::Explosion;
     case ProjectileVisual::NebulaOrb:
     case ProjectileVisual::VoidOrb:
         return ImageVfxKind::Dark;
@@ -97,10 +105,28 @@ ImageVfxKind ProjectileImageVfxKind(ProjectileVisual visual, Team team)
     case ProjectileVisual::SporeSeed:
         return ImageVfxKind::Acid;
     case ProjectileVisual::TideWave:
-        return ImageVfxKind::Water;
+        return ImageVfxKind::WaterBallImpact;
     default:
         return team == Team::Player ? ImageVfxKind::WindHit : ImageVfxKind::HitFlash;
     }
+}
+
+bool IsArmoredEnemy(EnemyUnit unit)
+{
+    return unit == EnemyUnit::Brute || unit == EnemyUnit::Rust || unit == EnemyUnit::Storm ||
+           unit == EnemyUnit::Void || unit == EnemyUnit::Quake || unit == EnemyUnit::Boss;
+}
+
+bool IsRushEnemy(EnemyUnit unit)
+{
+    return unit == EnemyUnit::Skitter || unit == EnemyUnit::Frost ||
+           unit == EnemyUnit::Flare || unit == EnemyUnit::Comet;
+}
+
+bool IsRangedEnemy(EnemyUnit unit)
+{
+    return unit == EnemyUnit::Sulfur || unit == EnemyUnit::Ring || unit == EnemyUnit::Tide ||
+           unit == EnemyUnit::Spore || unit == EnemyUnit::Mirror || unit == EnemyUnit::Boss;
 }
 }
 
@@ -343,6 +369,34 @@ std::wstring PawlineGameImpl::StageEnemySummary() const
         return L"공허 / 지진 / 녹슨";
     default:
         return L"플레어 / 혜성 / 태양";
+    }
+}
+
+std::wstring PawlineGameImpl::CounterPlanSummary() const
+{
+    // 출격 전에 어떤 역할을 가져가야 하는지 한 줄로 알려주는 전략 힌트다.
+    switch (m_selectedStage)
+    {
+    case 0:
+        return L"추천: 기본냥으로 잡병 처리, 방패냥으로 가시러너 차단";
+    case 1:
+        return L"추천: 질주/혜성으로 원거리 사수 급습, 민트로 산성 대응";
+    case 2:
+        return L"추천: 민트와 범위형 딜러로 포자 계열을 빠르게 정리";
+    case 3:
+        return L"추천: 드릴/거대냥으로 장갑형을 뚫고 질주냥으로 빈틈 압박";
+    case 4:
+        return L"추천: 드릴/태양검냥으로 중장갑 카운터, 방패로 전선 유지";
+    case 5:
+        return L"추천: 전기/프리즘으로 고리사수 견제, 방패로 돌격 차단";
+    case 6:
+        return L"추천: 얼음방패로 빠른 적을 묶고 궤도/프리즘으로 후방 처리";
+    case 7:
+        return L"추천: 전기/프리즘으로 원거리 견제, 성운포로 공허 장갑 처리";
+    case 8:
+        return L"추천: 드릴/태양검냥으로 중장갑, 종냥/성운포로 공허 대응";
+    default:
+        return L"추천: 태양검냥+종냥으로 캐논 시너지, 드릴로 보스 장갑 관통";
     }
 }
 
@@ -920,13 +974,13 @@ float PawlineGameImpl::ThreatLevel() const
 
 float PawlineGameImpl::MaxEnergy() const
 {
-    return 520.0f + static_cast<float>(m_walletLevel - 1) * 230.0f;
+    return 500.0f + static_cast<float>(m_walletLevel - 1) * 255.0f;
 }
 
 float PawlineGameImpl::EnergyRegen() const
 {
-    const float medicBoost = HasLoadoutUnit(PlayerUnit::Mint) ? 4.0f : 0.0f;
-    return 34.0f + static_cast<float>(m_walletLevel - 1) * 15.0f + medicBoost;
+    const float medicBoost = HasLoadoutUnit(PlayerUnit::Mint) ? 5.0f : 0.0f;
+    return 29.0f + static_cast<float>(m_walletLevel - 1) * 18.0f + medicBoost;
 }
 
 int PawlineGameImpl::WalletUpgradeCost() const
@@ -935,18 +989,18 @@ int PawlineGameImpl::WalletUpgradeCost() const
     {
         return 0;
     }
-    return 180 + m_walletLevel * 145;
+    return 170 + m_walletLevel * 155;
 }
 
 float PawlineGameImpl::WalletUnitBoost() const
 {
-    return 1.0f + static_cast<float>(m_walletLevel - 1) * 0.05f;
+    return 1.0f + static_cast<float>(m_walletLevel - 1) * 0.06f;
 }
 
 int PawlineGameImpl::UnitEnergyCost(PlayerUnit unit) const
 {
     const UnitStats stats = PlayerStats(unit);
-    const float discount = std::max(0.78f, 1.0f - static_cast<float>(m_walletLevel - 1) * 0.045f);
+    const float discount = std::max(0.80f, 1.0f - static_cast<float>(m_walletLevel - 1) * 0.040f);
     return std::max(20, static_cast<int>(std::ceil(static_cast<float>(stats.cost) * discount)));
 }
 
@@ -959,7 +1013,7 @@ float PawlineGameImpl::UnitCooldown(PlayerUnit unit) const
 
 float PawlineGameImpl::WalletPulseInterval() const
 {
-    return std::max(8.0f, 18.0f - static_cast<float>(m_walletLevel - 1) * 2.2f);
+    return std::max(7.2f, 18.0f - static_cast<float>(m_walletLevel - 1) * 2.5f);
 }
 
 bool PawlineGameImpl::HasLoadoutUnit(PlayerUnit unit) const
@@ -1191,7 +1245,7 @@ void PawlineGameImpl::UpdateWalletPulse(float dt)
 
 void PawlineGameImpl::TriggerWalletPulse(bool upgradeBurst)
 {
-    const float energyGain = (upgradeBurst ? 72.0f : 34.0f) + static_cast<float>(m_walletLevel) * (upgradeBurst ? 18.0f : 14.0f);
+    const float energyGain = (upgradeBurst ? 82.0f : 38.0f) + static_cast<float>(m_walletLevel) * (upgradeBurst ? 22.0f : 16.0f);
     const float heal = ((upgradeBurst ? 14.0f : 5.0f) + static_cast<float>(m_walletLevel) * 6.0f) * (HasLoadoutUnit(PlayerUnit::Mint) ? 1.18f : 1.0f);
     m_energy = std::min(MaxEnergy(), m_energy + energyGain);
     m_cannonCharge = std::min(100.0f, m_cannonCharge + 3.0f + static_cast<float>(m_walletLevel) * 1.4f);
@@ -1561,8 +1615,13 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
     const Vec2 muzzle = attacker.pos + dir * (attacker.radius + 10.0f);
     const ImageVfxKind imageKind = UnitImageVfxKind(attacker);
     const Vec2 imagePos = attacker.ranged ? muzzle : targetPos;
-    AddImageVfx(imageKind, imagePos, attacker.ranged ? 72.0f : 82.0f + attacker.radius * 0.65f,
-                attacker.ranged ? 0.26f : 0.22f, FadeColor(color, 0.82f), attacker.attackDir);
+    const float imageSize = attacker.ranged ? 104.0f : 118.0f + attacker.radius * 0.72f;
+    const float imageLife = attacker.ranged ? 0.34f : 0.30f;
+    AddImageVfx(imageKind, imagePos, imageSize, imageLife, FadeColor(color, 0.96f), attacker.attackDir);
+    if (!attacker.ranged)
+    {
+        AddImageVfx(ImageVfxKind::HitFlash, targetPos + Vec2{0.0f, -4.0f}, 84.0f, 0.20f, FadeColor(color, 0.76f), attacker.attackDir);
+    }
 
     if (attacker.team == Team::Player)
     {
@@ -1718,6 +1777,86 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
     }
 }
 
+float PawlineGameImpl::AttackMatchupMultiplier(Team attackerTeam, int attackerKind, const Unit& target) const
+{
+    // 전략성의 핵심 판정. 유닛의 역할이 맞아떨어지면 작지만 확실한 보너스를 준다.
+    if (attackerTeam == Team::Player && target.team == Team::Enemy)
+    {
+        const PlayerUnit player = static_cast<PlayerUnit>(attackerKind);
+        const EnemyUnit enemy = static_cast<EnemyUnit>(target.kind);
+        float multiplier = 1.0f;
+
+        if ((player == PlayerUnit::Drill || player == PlayerUnit::Titan || player == PlayerUnit::Solar) && IsArmoredEnemy(enemy))
+        {
+            multiplier = std::max(multiplier, 1.22f);
+        }
+        if ((player == PlayerUnit::Spark || player == PlayerUnit::Prism || player == PlayerUnit::Orbit) && IsRangedEnemy(enemy))
+        {
+            multiplier = std::max(multiplier, 1.18f);
+        }
+        if ((player == PlayerUnit::Dash || player == PlayerUnit::Comet) && IsRangedEnemy(enemy))
+        {
+            multiplier = std::max(multiplier, 1.14f);
+        }
+        if ((player == PlayerUnit::Frost || player == PlayerUnit::Box) && IsRushEnemy(enemy))
+        {
+            multiplier = std::max(multiplier, 1.16f);
+        }
+        if (player == PlayerUnit::Mint && (enemy == EnemyUnit::Moss || enemy == EnemyUnit::Spore || enemy == EnemyUnit::Sulfur))
+        {
+            multiplier = std::max(multiplier, 1.12f);
+        }
+        if ((player == PlayerUnit::Bell || player == PlayerUnit::Nebula) &&
+            (enemy == EnemyUnit::Ring || enemy == EnemyUnit::Mirror || enemy == EnemyUnit::Void || enemy == EnemyUnit::Boss))
+        {
+            multiplier = std::max(multiplier, 1.16f);
+        }
+        if (player == PlayerUnit::Paw && (enemy == EnemyUnit::Dust || enemy == EnemyUnit::Skitter))
+        {
+            multiplier = std::max(multiplier, 1.10f);
+        }
+        return multiplier;
+    }
+
+    if (attackerTeam == Team::Enemy && target.team == Team::Player)
+    {
+        const EnemyUnit enemy = static_cast<EnemyUnit>(attackerKind);
+        const PlayerUnit player = static_cast<PlayerUnit>(target.kind);
+        if ((player == PlayerUnit::Box || player == PlayerUnit::Frost || player == PlayerUnit::Titan) && IsRushEnemy(enemy))
+        {
+            return 0.82f;
+        }
+        if ((player == PlayerUnit::Box || player == PlayerUnit::Titan) && IsArmoredEnemy(enemy))
+        {
+            return 0.90f;
+        }
+        if ((player == PlayerUnit::Spark || player == PlayerUnit::Prism || player == PlayerUnit::Mint) && IsRushEnemy(enemy))
+        {
+            return 1.10f;
+        }
+    }
+
+    return 1.0f;
+}
+
+void PawlineGameImpl::AddCounterFloatText(const Unit& target, float multiplier)
+{
+    if (multiplier > 1.08f)
+    {
+        AddFloatText(target.pos + Vec2{0.0f, -target.radius - 46.0f},
+                     L"COUNTER x" + ToWideFloat(multiplier, 2),
+                     D2D1::ColorF(0xF6FF83),
+                     0.72f);
+    }
+    else if (multiplier < 0.92f)
+    {
+        AddFloatText(target.pos + Vec2{0.0f, -target.radius - 46.0f},
+                     L"GUARD",
+                     D2D1::ColorF(0xB8FF89),
+                     0.66f);
+    }
+}
+
 void PawlineGameImpl::AttackUnit(Unit& attacker, Unit& target)
 {
     const D2D1_COLOR_F hitColor = attacker.team == Team::Player ? D2D1::ColorF(0x65B8FF) : D2D1::ColorF(0xFF9BA8);
@@ -1730,7 +1869,13 @@ void PawlineGameImpl::AttackUnit(Unit& attacker, Unit& target)
         return;
     }
 
-    DamageUnit(target, attacker.damage, attacker.team);
+    const float matchup = AttackMatchupMultiplier(attacker.team, attacker.kind, target);
+    AddCounterFloatText(target, matchup);
+    DamageUnit(target, attacker.damage * matchup, attacker.team);
+    if (attacker.team == Team::Player && static_cast<PlayerUnit>(attacker.kind) == PlayerUnit::Frost && matchup > 1.05f)
+    {
+        target.stunTimer = std::max(target.stunTimer, 0.18f);
+    }
     AddMeleeClashVfx(attacker, target.pos, hitColor);
     AddBeam(attacker.pos, target.pos, 4.0f, 0.11f, hitColor);
     AddHitEffects(target.pos, hitColor);
@@ -1763,6 +1908,7 @@ void PawlineGameImpl::FireProjectile(Unit& attacker, const Unit& target)
     projectile.lastPos = muzzle;
     projectile.targetId = target.id;
     projectile.sourceId = attacker.id;
+    projectile.sourceKind = attacker.kind;
     projectile.team = attacker.team;
     projectile.targetBase = false;
     projectile.damage = attacker.damage;
@@ -1784,6 +1930,7 @@ void PawlineGameImpl::FireProjectileAtBase(Unit& attacker)
     projectile.lastPos = muzzle;
     projectile.targetId = -1;
     projectile.sourceId = attacker.id;
+    projectile.sourceKind = attacker.kind;
     projectile.team = attacker.team;
     projectile.targetBase = true;
     projectile.damage = attacker.damage;
@@ -2015,9 +2162,13 @@ void PawlineGameImpl::AddProjectileImpact(const Projectile& projectile)
     const bool healingVisual = imageKind == ImageVfxKind::Heal || imageKind == ImageVfxKind::HealSoft;
     const bool largeVisual = imageKind == ImageVfxKind::Water || imageKind == ImageVfxKind::Fire ||
                              imageKind == ImageVfxKind::Dark || imageKind == ImageVfxKind::Wind ||
-                             imageKind == ImageVfxKind::Thrust;
-    AddImageVfx(imageKind, pos, healingVisual ? 92.0f : (largeVisual ? 92.0f : 66.0f + projectile.radius * 3.0f),
-                healingVisual ? 0.38f : 0.24f, projectile.color, projectile.team == Team::Player ? 1.0f : -1.0f);
+                             imageKind == ImageVfxKind::Thrust || imageKind == ImageVfxKind::Explosion ||
+                             imageKind == ImageVfxKind::EnergyImpact || imageKind == ImageVfxKind::MagicMirror ||
+                             imageKind == ImageVfxKind::WaterBallImpact || imageKind == ImageVfxKind::ThunderSplash;
+    AddImageVfx(imageKind, pos, healingVisual ? 108.0f : (largeVisual ? 124.0f : 86.0f + projectile.radius * 4.0f),
+                healingVisual ? 0.42f : 0.32f, FadeColor(projectile.color, 0.98f), projectile.team == Team::Player ? 1.0f : -1.0f);
+    AddImageVfx(ImageVfxKind::HitFlash, pos, 76.0f + projectile.radius * 2.2f, 0.18f, FadeColor(projectile.color, 0.72f),
+                projectile.team == Team::Player ? 1.0f : -1.0f);
 
     switch (projectile.visual)
     {
@@ -2192,7 +2343,9 @@ void PawlineGameImpl::UpdateProjectiles(float dt)
             {
                 ShakeUnitById(projectile.sourceId, 0.15f);
                 AddProjectileImpact(projectile);
-                DamageUnit(target->get(), projectile.damage, projectile.team);
+                const float matchup = AttackMatchupMultiplier(projectile.team, projectile.sourceKind, target->get());
+                AddCounterFloatText(target->get(), matchup);
+                DamageUnit(target->get(), projectile.damage * matchup, projectile.team);
                 AddHitEffects(projectile.pos, projectile.color);
             }
             projectile.life = 0.0f;
@@ -2682,16 +2835,17 @@ void PawlineGameImpl::AddDeathBurst(const Unit& unit)
     }
     AddDustPuff({unit.pos.x, unit.pos.y + unit.radius * 0.78f}, smoke, unit.elite ? 18 : 10);
     AddRing(unit.pos, unit.elite ? 92.0f : 56.0f, 0.30f, D2D1::ColorF(color.r, color.g, color.b, 0.44f), unit.elite ? 3.8f : 2.5f);
-    AddImageVfx(ImageVfxKind::Smoke, {unit.pos.x, unit.pos.y + unit.radius * 0.35f}, unit.elite ? 116.0f : 82.0f,
+    AddImageVfx(ImageVfxKind::SmokeDust, {unit.pos.x, unit.pos.y + unit.radius * 0.35f}, unit.elite ? 132.0f : 102.0f,
                 unit.elite ? 0.46f : 0.34f, FadeColor(smoke, 0.84f), unit.attackDir);
-    AddImageVfx(UnitImageVfxKind(unit), unit.pos, unit.elite ? 96.0f : 68.0f, 0.24f, FadeColor(color, 0.76f), unit.attackDir);
+    AddImageVfx(UnitImageVfxKind(unit), unit.pos, unit.elite ? 122.0f : 92.0f, 0.30f, FadeColor(color, 0.86f), unit.attackDir);
     AddParticleEx(unit.pos, {0.0f, -18.0f}, unit.radius * 1.1f, 0.40f, D2D1::ColorF(color.r, color.g, color.b, 0.40f), ParticleKind::Glow, 0.0f, 0.92f, 42.0f);
 }
 
 void PawlineGameImpl::AddHitEffects(Vec2 pos, D2D1_COLOR_F color)
 {
     AddBurst(pos, color, 8);
-    AddImageVfx(ImageVfxKind::Slash, pos, 72.0f, 0.20f, FadeColor(color, 0.86f), 1.0f);
+    AddImageVfx(ImageVfxKind::HitFlash, pos, 88.0f, 0.22f, FadeColor(color, 0.92f), 1.0f);
+    AddImageVfx(ImageVfxKind::AirBurst, pos + Vec2{0.0f, -3.0f}, 96.0f, 0.24f, FadeColor(color, 0.72f), 1.0f);
     AddRing(pos, 54.0f, 0.28f, D2D1::ColorF(color.r, color.g, color.b, 0.48f), 2.6f);
     AddDustPuff({pos.x, pos.y + 12.0f}, D2D1::ColorF(color.r, color.g, color.b, 0.28f), 4);
 }

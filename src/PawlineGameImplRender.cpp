@@ -146,6 +146,24 @@ ImageVfxSheetSpec ImageVfxSpec(ImageVfxKind kind)
         return {1, 3, 64.0f, 64.0f};
     case ImageVfxKind::Smear:
         return {5, 1, 48.0f, 48.0f};
+    case ImageVfxKind::Explosion:
+        return {18, 1, 48.0f, 48.0f};
+    case ImageVfxKind::FireBreath:
+        return {8, 3, 48.0f, 48.0f};
+    case ImageVfxKind::MagicMirror:
+        return {1, 5, 128.0f, 128.0f};
+    case ImageVfxKind::EnergyImpact:
+        return {1, 8, 128.0f, 128.0f};
+    case ImageVfxKind::Crystal:
+        return {6, 1, 128.0f, 128.0f};
+    case ImageVfxKind::AirBurst:
+        return {3, 3, 48.0f, 48.0f};
+    case ImageVfxKind::ThunderSplash:
+        return {14, 1, 48.0f, 48.0f};
+    case ImageVfxKind::WaterBallImpact:
+        return {4, 4, 64.0f, 64.0f};
+    case ImageVfxKind::SmokeDust:
+        return {15, 1, 48.0f, 64.0f};
     default:
         return {};
     }
@@ -629,6 +647,33 @@ void PawlineGameImpl::DrawImageVfxFrame(ImageVfxKind kind, int frame, Vec2 cente
     case ImageVfxKind::Thrust:
         sheet = m_thrustEffectSheet.Get();
         break;
+    case ImageVfxKind::Explosion:
+        sheet = m_explosionEffectSheet.Get();
+        break;
+    case ImageVfxKind::FireBreath:
+        sheet = m_fireBreathEffectSheet.Get();
+        break;
+    case ImageVfxKind::MagicMirror:
+        sheet = m_magicMirrorEffectSheet.Get();
+        break;
+    case ImageVfxKind::EnergyImpact:
+        sheet = m_energyImpactEffectSheet.Get();
+        break;
+    case ImageVfxKind::Crystal:
+        sheet = m_crystalEffectSheet.Get();
+        break;
+    case ImageVfxKind::AirBurst:
+        sheet = m_airBurstEffectSheet.Get();
+        break;
+    case ImageVfxKind::ThunderSplash:
+        sheet = m_thunderSplashEffectSheet.Get();
+        break;
+    case ImageVfxKind::WaterBallImpact:
+        sheet = m_waterBallImpactEffectSheet.Get();
+        break;
+    case ImageVfxKind::SmokeDust:
+        sheet = m_smokeDustEffectSheet.Get();
+        break;
     }
 
     if (!sheet)
@@ -645,7 +690,7 @@ void PawlineGameImpl::DrawImageVfxFrame(ImageVfxKind kind, int frame, Vec2 cente
     const float aspect = spec.frameWidth / spec.frameHeight;
     const D2D1_RECT_F destination = D2D1::RectF(center.x - size * aspect * 0.5f, center.y - size * 0.5f,
                                                 center.x + size * aspect * 0.5f, center.y + size * 0.5f);
-    DrawBitmap(sheet, destination, opacity, &source);
+    DrawBitmap(sheet, destination, std::min(1.0f, opacity * 1.35f), &source);
 }
 
 void PawlineGameImpl::DrawImageVfxSprites()
@@ -655,7 +700,7 @@ void PawlineGameImpl::DrawImageVfxSprites()
         const float alpha = Clamp01(effect.life / effect.maxLife);
         const float progress = 1.0f - alpha;
         const bool heal = effect.kind == ImageVfxKind::Heal || effect.kind == ImageVfxKind::HealSoft;
-        const bool smoke = effect.kind == ImageVfxKind::Smoke;
+        const bool smoke = effect.kind == ImageVfxKind::Smoke || effect.kind == ImageVfxKind::SmokeDust;
         const int frameCount = ImageVfxFrameCount(effect.kind);
         const int frame = std::clamp(static_cast<int>((progress + effect.frameOffset) * static_cast<float>(frameCount)), 0, frameCount - 1);
         const float pulse = std::sin(progress * kPi);
@@ -986,8 +1031,8 @@ void PawlineGameImpl::DrawOptions()
     DrawString(L"화면이 잘리면 값을 낮춰줘.", D2D1::RectF(442.0f, 630.0f, 838.0f, 650.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
     DrawButton(OptionsSaveProgressButtonRect(), L"저장 S", true, D2D1::ColorF(0x283B27));
     DrawButton(OptionsLoadProgressButtonRect(), L"불러오기 L", true, D2D1::ColorF(0x22323F));
-    DrawButton(OptionsResetProgressButtonRect(), m_resetConfirmTimer > 0.0f ? L"정말 초기화하기" : L"진행 데이터 초기화", true, m_resetConfirmTimer > 0.0f ? D2D1::ColorF(0x4B232D) : D2D1::ColorF(0x302735));
-    DrawString(L"X", D2D1::RectF(OptionsResetProgressButtonRect().right + 16.0f, OptionsResetProgressButtonRect().top + 7.0f, OptionsResetProgressButtonRect().right + 56.0f, OptionsResetProgressButtonRect().bottom), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+    DrawButton(OptionsDeleteProgressButtonRect(), m_deleteConfirmTimer > 0.0f ? L"정말 삭제 D" : L"슬롯 삭제 D", true, m_deleteConfirmTimer > 0.0f ? D2D1::ColorF(0x4B232D) : D2D1::ColorF(0x302735));
+    DrawButton(OptionsResetProgressButtonRect(), m_resetConfirmTimer > 0.0f ? L"정말 초기화 X" : L"전체 초기화 X", true, m_resetConfirmTimer > 0.0f ? D2D1::ColorF(0x4B232D) : D2D1::ColorF(0x302735));
 
     DrawButton(OptionsBackButtonRect(), L"뒤로", true, D2D1::ColorF(0x173C4B));
     DrawString(L"Esc / Backspace", D2D1::RectF(OptionsBackButtonRect().right + 12.0f, OptionsBackButtonRect().top + 7.0f, OptionsBackButtonRect().right + 150.0f, OptionsBackButtonRect().bottom), m_smallFormat, D2D1::ColorF(0x8EA9B8));
@@ -1215,6 +1260,11 @@ void PawlineGameImpl::DrawBriefing()
     DrawString(L"Start Energy  " + ToWideInt(static_cast<int>(stage.startEnergy)), D2D1::RectF(862.0f, 374.0f, 1088.0f, 398.0f), m_smallFormat, D2D1::ColorF(0xB8FF89));
     DrawString(L"Boss First  " + ToWideInt(static_cast<int>(stage.bossFirstTime)) + L"s", D2D1::RectF(622.0f, 400.0f, 836.0f, 424.0f), m_smallFormat, D2D1::ColorF(0xFFB347));
     DrawString(L"Event Every  " + ToWideInt(static_cast<int>(GimmickInterval())) + L"s", D2D1::RectF(862.0f, 400.0f, 1088.0f, 424.0f), m_smallFormat, D2D1::ColorF(0xF6FF83));
+    DrawOutlinedString(CounterPlanSummary(),
+                       D2D1::RectF(622.0f, 436.0f, 1156.0f, 464.0f),
+                       m_smallFormat,
+                       D2D1::ColorF(0xEAF7FF),
+                       0.76f);
 
     DrawPixelText(L"DIFFICULTY", {604.0f, 490.0f}, 2.2f, D2D1::ColorF(0xEAF7FF));
     const std::array<std::wstring, 3> labels = {L"EASY", L"NORMAL", L"HARD"};
@@ -2506,6 +2556,88 @@ void PawlineGameImpl::DrawUnitIdentityMark(const Unit& unit, Vec2 pos, D2D1_COLO
     }
 }
 
+bool PawlineGameImpl::DrawUnitCharacterSprite(const Unit& unit, Vec2 pos, D2D1_COLOR_F accent)
+{
+    // GameArt2D Cat/Dog 무료 CC0 프레임을 10열 x 7행 시트로 묶어 사용한다.
+    // 행 순서: idle, walk, run, hurt, dead, jump, slide.
+    ID2D1Bitmap* sheet = unit.team == Team::Player ? m_playerMotionSheet.Get() : m_enemyMotionSheet.Get();
+    if (!sheet)
+    {
+        return false;
+    }
+
+    int row = 0;
+    if (!unit.alive || unit.animState == UnitAnimState::Death)
+    {
+        row = 4;
+    }
+    else if (unit.hitFlash > 0.0f || unit.animState == UnitAnimState::Hit)
+    {
+        row = 3;
+    }
+    else if (unit.animState == UnitAnimState::Windup)
+    {
+        row = 5;
+    }
+    else if (unit.animState == UnitAnimState::Attack || unit.animState == UnitAnimState::Recover)
+    {
+        row = 6;
+    }
+    else if (unit.animState == UnitAnimState::Move)
+    {
+        row = unit.speed > 86.0f ? 2 : 1;
+    }
+
+    const std::array<int, 7> frameCounts = {10, 10, 8, 10, 10, 8, 10};
+    const int frameCount = frameCounts[static_cast<size_t>(row)];
+    int frame = 0;
+    if (row == 5 || row == 6)
+    {
+        frame = std::clamp(static_cast<int>(AttackProgress(unit) * static_cast<float>(frameCount)), 0, frameCount - 1);
+    }
+    else
+    {
+        const float frameRate = row == 2 ? 13.0f : (row == 1 ? 9.0f : 6.5f);
+        frame = static_cast<int>(std::floor((unit.stateTime + unit.shakePhase * 0.01f) * frameRate)) % frameCount;
+    }
+
+    constexpr float kCellW = 192.0f;
+    constexpr float kCellH = 168.0f;
+    const D2D1_RECT_F source = D2D1::RectF(static_cast<float>(frame) * kCellW,
+                                           static_cast<float>(row) * kCellH,
+                                           static_cast<float>(frame + 1) * kCellW,
+                                           static_cast<float>(row + 1) * kCellH);
+
+    const float roleScale = unit.team == Team::Player ? 4.95f : 4.70f;
+    const float eliteScale = unit.boss ? 1.28f : (unit.elite ? 1.14f : 1.0f);
+    const float height = std::clamp(unit.radius * roleScale * eliteScale, 62.0f, unit.boss ? 190.0f : 148.0f);
+    const float width = height * (kCellW / kCellH);
+    const float bottom = pos.y + unit.radius + 21.0f;
+    const D2D1_RECT_F destination = D2D1::RectF(pos.x - width * 0.5f,
+                                                bottom - height,
+                                                pos.x + width * 0.5f,
+                                                bottom);
+
+    FillEllipse({pos.x, pos.y + unit.radius + 10.0f}, width * 0.30f, 7.0f,
+                D2D1::ColorF(0x000000, unit.team == Team::Player ? 0.26f : 0.32f));
+    FillEllipse({pos.x, pos.y - unit.radius * 0.18f}, width * 0.32f, height * 0.33f,
+                D2D1::ColorF(accent.r, accent.g, accent.b, 0.055f + AttackIntensity(unit) * 0.045f));
+    DrawBitmap(sheet, destination, unit.team == Team::Player ? 0.94f : 0.90f, &source);
+
+    if (unit.hitFlash > 0.0f)
+    {
+        FillEllipse({pos.x, pos.y - unit.radius * 0.14f}, width * 0.34f, height * 0.32f,
+                    D2D1::ColorF(0xFFFFFF, 0.12f));
+    }
+    if (unit.elite || unit.boss)
+    {
+        StrokeEllipse({pos.x, pos.y - unit.radius * 0.06f}, width * 0.31f, height * 0.28f,
+                      unit.boss ? D2D1::ColorF(0xFF9BA8, 0.58f) : D2D1::ColorF(accent.r, accent.g, accent.b, 0.46f),
+                      unit.boss ? 3.0f : 2.0f);
+    }
+    return true;
+}
+
 void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
 {
     const PlayerUnit playerType = static_cast<PlayerUnit>(unit.kind);
@@ -2579,14 +2711,18 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
         }
     }
 
+    const bool spriteDrawn = DrawUnitCharacterSprite(unit, pos, stats.accent);
     DrawPlayerWeapon(unit, pos, stats, windup, strike, recoil);
     DrawUnitActionLines(unit, pos, stats.accent);
 
-    FillEllipse({pos.x - unit.radius * 0.34f, pos.y - unit.radius * 0.12f}, 2.6f, 4.2f, D2D1::ColorF(0x071017));
-    FillEllipse({pos.x + unit.radius * 0.34f, pos.y - unit.radius * 0.12f}, 2.6f, 4.2f, D2D1::ColorF(0x071017));
-    DrawLine({pos.x - unit.radius * 0.25f, pos.y + unit.radius * 0.32f},
-             {pos.x + unit.radius * 0.25f, pos.y + unit.radius * 0.32f},
-             D2D1::ColorF(0x071017), 1.8f);
+    if (!spriteDrawn)
+    {
+        FillEllipse({pos.x - unit.radius * 0.34f, pos.y - unit.radius * 0.12f}, 2.6f, 4.2f, D2D1::ColorF(0x071017));
+        FillEllipse({pos.x + unit.radius * 0.34f, pos.y - unit.radius * 0.12f}, 2.6f, 4.2f, D2D1::ColorF(0x071017));
+        DrawLine({pos.x - unit.radius * 0.25f, pos.y + unit.radius * 0.32f},
+                 {pos.x + unit.radius * 0.25f, pos.y + unit.radius * 0.32f},
+                 D2D1::ColorF(0x071017), 1.8f);
+    }
 
     if (attack > 0.0f)
     {
@@ -2786,13 +2922,17 @@ void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
         FillEllipse(clawGlow, unit.radius * (0.66f + strike * 0.32f), unit.radius * (0.22f + strike * 0.16f),
                     D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.06f + strike * 0.12f + windup * 0.03f));
     }
+    const bool spriteDrawn = DrawUnitCharacterSprite(unit, pos, stats.accent);
     DrawEnemyWeapon(unit, pos, stats, windup, strike, recoil);
     DrawUnitActionLines(unit, pos, stats.accent);
-    FillEllipse({pos.x - unit.radius * 0.32f, pos.y - unit.radius * 0.12f}, 3.0f, 4.6f, stats.accent);
-    FillEllipse({pos.x + unit.radius * 0.32f, pos.y - unit.radius * 0.12f}, 3.0f, 4.6f, stats.accent);
-    DrawLine({pos.x - unit.radius * 0.30f, pos.y + unit.radius * 0.34f},
-             {pos.x + unit.radius * 0.30f, pos.y + unit.radius * 0.25f},
-             stats.accent, 2.0f);
+    if (!spriteDrawn)
+    {
+        FillEllipse({pos.x - unit.radius * 0.32f, pos.y - unit.radius * 0.12f}, 3.0f, 4.6f, stats.accent);
+        FillEllipse({pos.x + unit.radius * 0.32f, pos.y - unit.radius * 0.12f}, 3.0f, 4.6f, stats.accent);
+        DrawLine({pos.x - unit.radius * 0.30f, pos.y + unit.radius * 0.34f},
+                 {pos.x + unit.radius * 0.30f, pos.y + unit.radius * 0.25f},
+                 stats.accent, 2.0f);
+    }
 
     if (attack > 0.0f)
     {
@@ -3264,7 +3404,10 @@ void PawlineGameImpl::DrawShaderPostProcess()
         const float pulse = std::sin((1.0f - alpha) * kPi);
         const float strongKind = effect.kind == ImageVfxKind::Fire || effect.kind == ImageVfxKind::Thunder ||
                                  effect.kind == ImageVfxKind::Holy || effect.kind == ImageVfxKind::Wind ||
-                                 effect.kind == ImageVfxKind::Thrust ? 1.0f : 0.72f;
+                                 effect.kind == ImageVfxKind::Thrust || effect.kind == ImageVfxKind::Explosion ||
+                                 effect.kind == ImageVfxKind::FireBreath || effect.kind == ImageVfxKind::EnergyImpact ||
+                                 effect.kind == ImageVfxKind::MagicMirror || effect.kind == ImageVfxKind::ThunderSplash ||
+                                 effect.kind == ImageVfxKind::WaterBallImpact ? 1.0f : 0.72f;
         FillEllipse(screen, effect.size * (0.82f + pulse * 0.28f), effect.size * (0.38f + pulse * 0.16f),
                     D2D1::ColorF(effect.color.r, effect.color.g, effect.color.b, effect.color.a * alpha * (0.022f + feedback * 0.014f) * strongKind));
         FillEllipse({screen.x, screen.y + effect.size * 0.22f}, effect.size * 0.42f, effect.size * 0.08f,
