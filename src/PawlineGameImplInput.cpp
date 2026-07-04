@@ -193,7 +193,71 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
     // PawlineGameImplLayout.cpp, so render and input stay pixel-aligned.
     if (IsInteractivePoint(pos))
     {
-        AddUiPulse(pos, D2D1::ColorF(0x65B8FF, 0.72f));
+        auto centerOf = [](D2D1_RECT_F rect) {
+            return Vec2{(rect.left + rect.right) * 0.5f, (rect.top + rect.bottom) * 0.5f};
+        };
+
+        // 큰 선택 펄스는 유닛 슬롯에만 사용한다. 일반 버튼은 작은 클릭 반응만 남겨
+        // 유닛을 고른 것처럼 오해되는 상황을 줄인다.
+        bool unitSlotPulse = false;
+        if (m_screen == GameScreen::Playing)
+        {
+            for (int i = 0; i < kLoadoutSize; ++i)
+            {
+                const D2D1_RECT_F rect = CardRect(i);
+                if (Contains(rect, pos))
+                {
+                    AddUiPulse(centerOf(rect), PlayerStats(m_loadout[i]).accent, 54.0f, 0.36f);
+                    unitSlotPulse = true;
+                    break;
+                }
+            }
+        }
+        else if (m_screen == GameScreen::Menu)
+        {
+            for (int i = 0; i < kLoadoutSize; ++i)
+            {
+                const D2D1_RECT_F rect = MenuLoadoutSlotRect(i);
+                if (Contains(rect, pos))
+                {
+                    AddUiPulse(centerOf(rect), PlayerStats(m_loadout[i]).accent, 48.0f, 0.34f);
+                    unitSlotPulse = true;
+                    break;
+                }
+            }
+            if (!unitSlotPulse)
+            {
+                for (int i = 0; i < kRosterCount; ++i)
+                {
+                    const D2D1_RECT_F rect = RosterCardRect(i);
+                    if (Contains(rect, pos))
+                    {
+                        const PlayerUnit unit = static_cast<PlayerUnit>(i);
+                        AddUiPulse(centerOf(rect), PlayerStats(unit).accent, 42.0f, 0.30f);
+                        unitSlotPulse = true;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (m_screen == GameScreen::Briefing)
+        {
+            for (int i = 0; i < kLoadoutSize; ++i)
+            {
+                const D2D1_RECT_F rect = BriefingLoadoutSlotRect(i);
+                if (Contains(rect, pos))
+                {
+                    AddUiPulse(centerOf(rect), PlayerStats(m_loadout[i]).accent, 48.0f, 0.34f);
+                    unitSlotPulse = true;
+                    break;
+                }
+            }
+        }
+
+        if (!unitSlotPulse)
+        {
+            AddUiPulse(pos, D2D1::ColorF(0x65B8FF, 0.46f), 26.0f, 0.22f);
+        }
         PlaySfx(SfxKind::Ui, 0.025f);
     }
     if (m_escapeMenuOpen)

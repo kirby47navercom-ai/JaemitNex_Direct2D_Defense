@@ -2911,13 +2911,13 @@ void PawlineGameImpl::AddFloatText(Vec2 pos, const std::wstring& text, D2D1_COLO
     m_floatTexts.push_back(item);
 }
 
-void PawlineGameImpl::AddUiPulse(Vec2 pos, D2D1_COLOR_F color)
+void PawlineGameImpl::AddUiPulse(Vec2 pos, D2D1_COLOR_F color, float maxRadius, float life)
 {
     UiPulse pulse;
     pulse.pos = pos;
     pulse.radius = 8.0f;
-    pulse.maxRadius = 52.0f;
-    pulse.life = 0.34f;
+    pulse.maxRadius = std::max(8.0f, maxRadius);
+    pulse.life = std::max(0.05f, life);
     pulse.maxLife = pulse.life;
     pulse.color = color;
     m_uiPulses.push_back(pulse);

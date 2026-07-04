@@ -40,8 +40,10 @@ constexpr float kCameraMaxX = kWorldWidth - kWidth;
 constexpr float kPi = 3.14159265358979323846f;
 constexpr int kMaxUnitLevel = 5;
 constexpr int kSaveSlotCount = 3;
-constexpr size_t kSfxThrottleVoices = 6;
-constexpr size_t kAttackSfxThrottleVoices = 4;
+// 같은 종류의 효과음이 짧은 시간에 몰려도 일부는 살아남도록 둔 가상 음성 슬롯 수다.
+// 실제 동시 재생은 FMOD 빌드에서 가장 안정적이고, 기본 WinMM 빌드는 OS 믹서 한계가 있다.
+constexpr size_t kSfxThrottleVoices = 10;
+constexpr size_t kAttackSfxThrottleVoices = 8;
 
 struct Vec2
 {
@@ -784,7 +786,7 @@ private:
 
     void AddFloatText(Vec2 pos, const std::wstring& text, D2D1_COLOR_F color, float life);
 
-    void AddUiPulse(Vec2 pos, D2D1_COLOR_F color);
+    void AddUiPulse(Vec2 pos, D2D1_COLOR_F color, float maxRadius = 52.0f, float life = 0.34f);
 
     void SetMessage(const std::wstring& message);
 

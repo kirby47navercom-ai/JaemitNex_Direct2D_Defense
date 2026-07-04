@@ -51,6 +51,7 @@ bool AudioManager::Initialize()
         return false;
     }
 
+    // 전투 중 여러 유닛이 동시에 공격해도 효과음이 쉽게 잘리지 않도록 채널 예산을 넉넉히 둔다.
     system->setSoftwareChannels(kFmodChannelBudget);
     if (system->init(kFmodChannelBudget, FMOD_INIT_3D_RIGHTHANDED, nullptr) != FMOD_OK)
     {

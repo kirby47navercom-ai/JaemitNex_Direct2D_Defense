@@ -198,6 +198,64 @@ float UnitDeathPose(const Unit& unit)
     }
     return Smooth01(unit.stateTime / 0.55f);
 }
+
+std::wstring UnitRoleLabel(PlayerUnit unit, const UnitStats& stats)
+{
+    // 카드와 브리핑에서 유닛 역할을 같은 기준으로 보여주기 위한 분류다.
+    // 실제 수치 데이터는 GameData.cpp에 두고, 화면용 역할명만 여기서 해석한다.
+    switch (unit)
+    {
+    case PlayerUnit::Box:
+    case PlayerUnit::Frost:
+    case PlayerUnit::Titan:
+        return L"TANK";
+    case PlayerUnit::Dash:
+    case PlayerUnit::Comet:
+        return L"RUSH";
+    case PlayerUnit::Bell:
+    case PlayerUnit::Mint:
+        return L"AURA";
+    case PlayerUnit::Drill:
+    case PlayerUnit::Solar:
+        return L"SIEGE";
+    case PlayerUnit::Spark:
+    case PlayerUnit::Orbit:
+    case PlayerUnit::Prism:
+    case PlayerUnit::Nebula:
+        return L"RANGE";
+    case PlayerUnit::Paw:
+    default:
+        return stats.ranged ? L"RANGE" : L"MELEE";
+    }
+}
+
+D2D1_COLOR_F UnitRoleColor(PlayerUnit unit, const UnitStats& stats)
+{
+    // 역할 배지는 작은 UI라서 유닛 고유색보다 더 또렷한 계열색을 쓴다.
+    switch (unit)
+    {
+    case PlayerUnit::Box:
+    case PlayerUnit::Frost:
+    case PlayerUnit::Titan:
+        return D2D1::ColorF(0x65B8FF);
+    case PlayerUnit::Dash:
+    case PlayerUnit::Comet:
+        return D2D1::ColorF(0x62DD88);
+    case PlayerUnit::Bell:
+    case PlayerUnit::Mint:
+        return D2D1::ColorF(0xF6FF83);
+    case PlayerUnit::Drill:
+    case PlayerUnit::Solar:
+        return D2D1::ColorF(0xFFB347);
+    default:
+        return stats.ranged ? D2D1::ColorF(0xBA7BFF) : stats.accent;
+    }
+}
+
+float MissingHpRatio(float hp, float maxHp)
+{
+    return 1.0f - Clamp01(hp / std::max(1.0f, maxHp));
+}
 }
 
 // Direct2D drawing, including the shader-style procedural VFX pass.
@@ -1254,7 +1312,7 @@ void PawlineGameImpl::DrawBriefing()
     DrawString(L"Enemy Base HP  " + ToWideInt(static_cast<int>(stage.enemyHp)), D2D1::RectF(infoBand.left + 18.0f, infoBand.top + 34.0f, infoBand.left + 250.0f, infoBand.bottom - 6.0f), m_smallFormat, D2D1::ColorF(0xFFB6C2));
     DrawString(L"Start Energy  " + ToWideInt(static_cast<int>(stage.startEnergy)), D2D1::RectF(infoBand.left + 292.0f, infoBand.top + 34.0f, infoBand.left + 520.0f, infoBand.bottom - 6.0f), m_smallFormat, D2D1::ColorF(0xB8FF89));
     DrawString(L"Boss First  " + ToWideInt(static_cast<int>(stage.bossFirstTime)) + L"s", D2D1::RectF(infoBand.left + 562.0f, infoBand.top + 34.0f, infoBand.left + 744.0f, infoBand.bottom - 6.0f), m_smallFormat, D2D1::ColorF(0xFFB347));
-    DrawString(L"Event Every  " + ToWideInt(static_cast<int>(GimmickInterval())) + L"s", D2D1::RectF(infoBand.left + 778.0f, infoBand.top + 34.0f, infoBand.right - 18.0f, infoBand.bottom - 6.0f), m_smallFormat, D2D1::ColorF(0xF6FF83));
+    DrawString(L"Event  " + ToWideInt(static_cast<int>(GimmickInterval())) + L"s", D2D1::RectF(infoBand.left + 778.0f, infoBand.top + 34.0f, infoBand.right - 18.0f, infoBand.bottom - 6.0f), m_smallFormat, D2D1::ColorF(0xF6FF83));
 
     DrawPixelTextCentered(L"LOADOUT CHECK", D2D1::RectF(mainPanel.left + 120.0f, 374.0f, mainPanel.right - 120.0f, 400.0f), 2.35f, D2D1::ColorF(0xEAF7FF), 1.0f);
     for (int i = 0; i < kLoadoutSize; ++i)
@@ -1265,6 +1323,14 @@ void PawlineGameImpl::DrawBriefing()
         const bool hover = Contains(rect, m_mouse);
         DrawCartoonPanel(rect, hover ? D2D1::ColorF(0x123044, 0.99f) : D2D1::ColorF(0x06131C, 0.99f), stats.accent, hover);
         DrawPlayerIcon(unit, {rect.left + 48.0f, rect.top + 34.0f}, 0.72f, true);
+        FillRoundRect(D2D1::RectF(rect.right - 49.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 23.0f),
+                      5.0f,
+                      D2D1::ColorF(UnitRoleColor(unit, stats).r, UnitRoleColor(unit, stats).g, UnitRoleColor(unit, stats).b, 0.22f));
+        DrawPixelTextCentered(UnitRoleLabel(unit, stats),
+                              D2D1::RectF(rect.right - 48.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 23.0f),
+                              0.92f,
+                              UnitRoleColor(unit, stats),
+                              0.96f);
         DrawPixelTextCentered(stats.name, D2D1::RectF(rect.left + 6.0f, rect.top + 68.0f, rect.right - 6.0f, rect.top + 91.0f), 1.45f, D2D1::ColorF(0xFFFFFF), 1.0f);
         DrawPixelTextCentered(L"KEY " + ToWideInt(i + 1), D2D1::RectF(rect.left + 8.0f, rect.bottom - 22.0f, rect.right - 8.0f, rect.bottom - 6.0f), 1.35f, D2D1::ColorF(0xE5F6FF), 1.0f);
     }
@@ -1874,6 +1940,57 @@ void PawlineGameImpl::DrawBases()
         DrawLine({enemy.x - 18.0f, enemy.y - 34.0f}, {enemy.x - 98.0f, enemy.y - 34.0f}, D2D1::ColorF(0xFFDB7A, 0.88f), 8.0f);
         break;
     }
+
+    auto drawBaseDamage = [&](Vec2 base, float missing, D2D1_COLOR_F accent, bool enemySide) {
+        // 체력바만 보면 전황이 늦게 읽히기 때문에, 기지 자체에 파손 단계를 올려준다.
+        // missing 값은 0.0(멀쩡함)에서 1.0(파괴 직전)까지의 비율이다.
+        if (missing <= 0.16f)
+        {
+            return;
+        }
+
+        const float side = enemySide ? -1.0f : 1.0f;
+        const int crackCount = missing > 0.72f ? 5 : (missing > 0.42f ? 3 : 2);
+        const D2D1_COLOR_F crackColor = D2D1::ColorF(0x02070A, 0.44f + missing * 0.28f);
+        for (int i = 0; i < crackCount; ++i)
+        {
+            const float row = static_cast<float>(i);
+            const float ox = -30.0f + std::fmod(row * 31.0f, 62.0f);
+            const float oy = -55.0f + row * 23.0f;
+            const Vec2 a = {base.x + ox, base.y + oy};
+            const Vec2 b = {a.x + side * (16.0f + missing * 28.0f), a.y + 10.0f + std::sin(row * 1.7f) * 8.0f};
+            const Vec2 c = {b.x - side * (9.0f + row * 2.0f), b.y + 12.0f};
+            DrawLine(a, b, crackColor, 2.2f);
+            DrawLine(b, c, crackColor, 1.45f);
+        }
+
+        if (missing > 0.44f)
+        {
+            for (int i = 0; i < 4; ++i)
+            {
+                const float seed = static_cast<float>(i);
+                const float rise = std::fmod(m_stageTime * (18.0f + seed * 5.0f), 54.0f);
+                const Vec2 smoke = {base.x - side * (38.0f + seed * 12.0f), base.y - 82.0f - rise};
+                const float puff = 10.0f + seed * 2.0f + missing * 8.0f;
+                FillEllipse(smoke, puff, puff * 0.64f, D2D1::ColorF(0xD9E5F2, (0.07f + missing * 0.05f) * (1.0f - rise / 64.0f)));
+            }
+        }
+
+        if (missing > 0.70f)
+        {
+            const float pulse = 0.45f + 0.55f * std::abs(std::sin(m_stageTime * 9.0f));
+            FillEllipse({base.x, base.y - 14.0f}, 108.0f, 112.0f, D2D1::ColorF(0xFF4A6E, 0.045f + pulse * 0.045f));
+            StrokeEllipse({base.x, base.y - 14.0f}, 88.0f + pulse * 10.0f, 92.0f + pulse * 10.0f, D2D1::ColorF(accent.r, accent.g, accent.b, 0.42f), 2.4f);
+            DrawPixelTextCentered(L"CRITICAL",
+                                  D2D1::RectF(base.x - 76.0f, base.y - 142.0f, base.x + 76.0f, base.y - 118.0f),
+                                  1.65f,
+                                  D2D1::ColorF(0xFFCAD1),
+                                  0.84f + pulse * 0.16f);
+        }
+    };
+
+    drawBaseDamage(player, MissingHpRatio(m_playerBaseHp, m_playerBaseMaxHp), D2D1::ColorF(0x65B8FF), false);
+    drawBaseDamage(enemy, MissingHpRatio(m_enemyBaseHp, m_enemyBaseMaxHp), towerLine, true);
 
     DrawBaseHp(player, m_playerBaseHp, m_playerBaseMaxHp, D2D1::ColorF(0x65B8FF));
     DrawBaseHp(enemy, m_enemyBaseHp, m_enemyBaseMaxHp, towerLine);
@@ -3828,20 +3945,54 @@ void PawlineGameImpl::DrawTelegraphs()
             FillEllipse(telegraph.start, telegraph.radius, telegraph.radius * 0.58f, fill);
             StrokeEllipse(telegraph.start, telegraph.radius, telegraph.radius * 0.58f, stroke, 2.4f + pct * 3.0f);
             StrokeEllipse(telegraph.start, telegraph.radius * (0.42f + pct * 0.20f), telegraph.radius * (0.25f + pct * 0.10f), D2D1::ColorF(0xFFFFFF, 0.16f + pct * 0.22f), 1.4f);
+            for (int i = 0; i < 8; ++i)
+            {
+                const float angle = static_cast<float>(i) / 8.0f * kPi * 2.0f + m_stageTime * 1.5f;
+                const Vec2 outer = {telegraph.start.x + std::cos(angle) * telegraph.radius,
+                                    telegraph.start.y + std::sin(angle) * telegraph.radius * 0.58f};
+                const Vec2 inner = {telegraph.start.x + std::cos(angle) * telegraph.radius * (0.84f - pct * 0.14f),
+                                    telegraph.start.y + std::sin(angle) * telegraph.radius * (0.49f - pct * 0.08f)};
+                DrawLine(inner, outer, D2D1::ColorF(0xFFFFFF, 0.20f + pct * 0.24f), 1.6f);
+            }
         }
         else if (telegraph.shape == TelegraphShape::Line)
         {
             DrawLine(telegraph.start, telegraph.end, D2D1::ColorF(telegraph.color.r, telegraph.color.g, telegraph.color.b, alpha * 0.46f), telegraph.width);
             DrawLine(telegraph.start, telegraph.end, stroke, 3.0f + pct * 4.0f);
             DrawLine(telegraph.start, telegraph.end, D2D1::ColorF(0xFFFFFF, 0.20f + pct * 0.22f), 1.2f + pct * 1.4f);
+            for (int i = 0; i < 5; ++i)
+            {
+                const float t = (static_cast<float>(i) + 0.5f) / 5.0f;
+                const Vec2 mark = telegraph.start + (telegraph.end - telegraph.start) * t;
+                StrokeEllipse(mark, 12.0f + pct * 7.0f, 5.0f + pct * 3.0f, D2D1::ColorF(0xFFFFFF, 0.16f + pct * 0.24f), 1.2f);
+            }
         }
         else
         {
             FillRoundRect(D2D1::RectF(kPlayerBaseX + 28.0f, kLaneY - kLaneHalfHeight - 18.0f, kEnemyBaseX - 28.0f, kLaneY + kLaneHalfHeight + 18.0f), 18.0f, fill);
             StrokeRoundRect(D2D1::RectF(kPlayerBaseX + 28.0f, kLaneY - kLaneHalfHeight - 18.0f, kEnemyBaseX - 28.0f, kLaneY + kLaneHalfHeight + 18.0f), 18.0f, stroke, 2.0f + pct * 2.6f);
+            DrawLine({kPlayerBaseX + 54.0f, kLaneY - kLaneHalfHeight + 4.0f},
+                     {kEnemyBaseX - 54.0f, kLaneY - kLaneHalfHeight + 4.0f},
+                     D2D1::ColorF(0xFFFFFF, 0.16f + pct * 0.16f),
+                     1.4f);
+            DrawLine({kPlayerBaseX + 54.0f, kLaneY + kLaneHalfHeight - 4.0f},
+                     {kEnemyBaseX - 54.0f, kLaneY + kLaneHalfHeight - 4.0f},
+                     D2D1::ColorF(0xFFFFFF, 0.16f + pct * 0.16f),
+                     1.4f);
         }
 
-        DrawPixelTextCentered(L"WARNING", D2D1::RectF(telegraph.start.x - 72.0f, telegraph.start.y - telegraph.radius * 0.62f - 32.0f, telegraph.start.x + 72.0f, telegraph.start.y - telegraph.radius * 0.62f - 8.0f), 1.8f, D2D1::ColorF(0xF3FBFF), 0.70f + pct * 0.30f);
+        const float labelLift = telegraph.shape == TelegraphShape::Circle ? telegraph.radius * 0.62f + 42.0f : 52.0f;
+        const Vec2 labelCenter = telegraph.shape == TelegraphShape::Line ? (telegraph.start + telegraph.end) * 0.5f : telegraph.start;
+        DrawPixelTextCentered(L"WARNING",
+                              D2D1::RectF(labelCenter.x - 78.0f, labelCenter.y - labelLift, labelCenter.x + 78.0f, labelCenter.y - labelLift + 24.0f),
+                              1.8f,
+                              D2D1::ColorF(0xF3FBFF),
+                              0.70f + pct * 0.30f);
+        DrawPixelTextCentered(ToWideFloat(std::max(0.0f, telegraph.life), 1) + L"S",
+                              D2D1::RectF(labelCenter.x - 46.0f, labelCenter.y - labelLift + 25.0f, labelCenter.x + 46.0f, labelCenter.y - labelLift + 45.0f),
+                              1.45f,
+                              D2D1::ColorF(0xF6FF83),
+                              0.74f + pct * 0.26f);
     }
 }
 
@@ -3856,6 +4007,16 @@ void PawlineGameImpl::DrawStageGimmickOverlay()
     const float interval = std::max(0.1f, GimmickInterval());
     const float ready = 1.0f - Clamp01(m_stageGimmickTimer / interval);
     const D2D1_RECT_F meter = D2D1::RectF(470.0f, 84.0f, 810.0f, 93.0f);
+    DrawPixelTextCentered(L"EVENT",
+                          D2D1::RectF(meter.left - 118.0f, meter.top - 9.0f, meter.left - 14.0f, meter.bottom + 10.0f),
+                          1.55f,
+                          D2D1::ColorF(0xEAF7FF),
+                          0.96f);
+    DrawPixelTextCentered(ToWideInt(static_cast<int>(std::ceil(std::max(0.0f, m_stageGimmickTimer)))) + L"S",
+                          D2D1::RectF(meter.right + 14.0f, meter.top - 9.0f, meter.right + 86.0f, meter.bottom + 10.0f),
+                          1.45f,
+                          D2D1::ColorF(0xF6FF83),
+                          0.96f);
     FillRoundRect(meter, 4.0f, D2D1::ColorF(0x061019, 0.70f));
     FillRoundRect(D2D1::RectF(meter.left, meter.top, meter.left + (meter.right - meter.left) * ready, meter.bottom), 4.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.62f));
     StrokeRoundRect(meter, 4.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.56f), 1.0f);
@@ -4330,6 +4491,15 @@ void PawlineGameImpl::DrawUnitCard(int index)
     }
 
     DrawPlayerIcon(type, {rect.left + 59.0f, rect.top + 37.0f}, 0.82f, affordable);
+    const D2D1_COLOR_F roleColor = UnitRoleColor(type, stats);
+    FillRoundRect(D2D1::RectF(rect.right - 58.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 24.0f),
+                  5.0f,
+                  D2D1::ColorF(roleColor.r, roleColor.g, roleColor.b, affordable ? 0.24f : 0.12f));
+    DrawPixelTextCentered(UnitRoleLabel(type, stats),
+                          D2D1::RectF(rect.right - 57.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 24.0f),
+                          0.88f,
+                          affordable ? roleColor : D2D1::ColorF(0x7E919C),
+                          1.0f);
 
     DrawPixelTextCentered(stats.name, D2D1::RectF(rect.left + 6.0f, rect.top + 73.0f, rect.right - 6.0f, rect.top + 95.0f), 1.75f, affordable ? D2D1::ColorF(0xFFFFFF) : D2D1::ColorF(0xB5C1C8), 1.0f);
     DrawPixelTextCentered(L"LV." + ToWideInt(UnitLevel(type)) + L" COST " + ToWideInt(cost), D2D1::RectF(rect.left + 6.0f, rect.top + 101.0f, rect.right - 6.0f, rect.top + 122.0f), 1.55f, affordable ? D2D1::ColorF(0xC6FF9B) : D2D1::ColorF(0xFFB6C2), 1.0f);
