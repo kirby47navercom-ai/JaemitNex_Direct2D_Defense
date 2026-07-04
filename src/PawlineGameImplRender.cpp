@@ -960,16 +960,16 @@ void PawlineGameImpl::DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, fl
     const float height = area.bottom - area.top;
 
     FillRect(area, D2D1::ColorF(stage.backColor.r + 0.020f, stage.backColor.g + 0.026f, stage.backColor.b + 0.036f, 1.0f));
-    if (m_backgroundBitmaps[safeStage])
+    if (m_deepSpaceBitmap)
     {
-        DrawBitmap(m_backgroundBitmaps[safeStage].Get(), area, 0.72f);
+        DrawBitmap(m_deepSpaceBitmap.Get(), area, 0.92f);
     }
-    FillRect(area, D2D1::ColorF(0x02070C, 0.18f));
+    FillRect(area, D2D1::ColorF(0x02070C, 0.22f));
     DrawSpaceDepthGrid(area, safeStage, time, cameraX);
 
-    for (int layer = 0; layer < 3; ++layer)
+    for (int layer = 0; layer < 2; ++layer)
     {
-        const int count = 54 + layer * 36;
+        const int count = 18 + layer * 12;
         const float depth = 0.38f + static_cast<float>(layer) * 0.36f;
         const float drift = time * (4.0f + static_cast<float>(layer) * 7.0f) - cameraX * (0.012f + depth * 0.018f);
         for (int i = 0; i < count; ++i)
@@ -980,21 +980,10 @@ void PawlineGameImpl::DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, fl
             const float y = area.top + 12.0f + std::fmod(rawY + std::sin(time * 0.18f + rawX) * 8.0f, height - 24.0f);
             const float twinkle = 0.45f + 0.55f * Hash01(static_cast<float>(i), static_cast<float>(layer + safeStage), std::floor(time * (1.6f + depth)));
             const float radius = (0.75f + static_cast<float>((i + layer) % 5) * 0.32f) * (0.72f + depth);
-            const float alpha = (0.08f + depth * 0.11f) * twinkle;
+            const float alpha = (0.025f + depth * 0.035f) * twinkle;
             FillEllipse({x, y}, radius, radius, D2D1::ColorF(0xEAF7FF, alpha));
-            if ((i + layer * 7) % 29 == 0)
-            {
-                DrawLine({x - radius * 4.0f, y}, {x + radius * 4.0f, y}, D2D1::ColorF(0xFFFFFF, alpha * 0.48f), 1.0f);
-                DrawLine({x, y - radius * 4.0f}, {x, y + radius * 4.0f}, D2D1::ColorF(0xFFFFFF, alpha * 0.36f), 1.0f);
-            }
         }
     }
-
-    const Vec2 largePlanet = {area.left + width * (0.80f + std::sin(time * 0.07f) * 0.018f), area.top + height * 0.24f};
-    const Vec2 smallPlanet = {area.left + width * (0.18f + std::cos(time * 0.09f) * 0.015f), area.top + height * 0.72f};
-    DrawOrbitalPlanet(largePlanet, std::min(width, height) * 0.17f, safeStage, 0.82f, time);
-    DrawOrbitalPlanet(smallPlanet, std::min(width, height) * 0.075f, (safeStage + 3) % kStageCount, 0.58f, time * 1.24f);
-    DrawAsteroidField(area, safeStage, time, cameraX);
 
     if (showRoute)
     {
@@ -1134,9 +1123,7 @@ void PawlineGameImpl::DrawMenu()
 {
     const StageDefinition menuStage = CurrentStage();
     DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), m_selectedStage, m_uiTime, 0.0f, true);
-    DrawOrbitalPlanet({1038.0f, 206.0f}, 260.0f, m_selectedStage, 0.68f, m_uiTime * 0.82f);
-    StrokeEllipse({1038.0f, 206.0f}, 390.0f, 76.0f, D2D1::ColorF(menuStage.lineColor.r, menuStage.lineColor.g, menuStage.lineColor.b, 0.18f), 2.4f);
-    DrawOrbitalPlanet({210.0f, 622.0f}, 92.0f, (m_selectedStage + 4) % kStageCount, 0.36f, m_uiTime * 1.18f);
+    DrawLine({86.0f, 638.0f}, {1162.0f, 698.0f}, D2D1::ColorF(menuStage.lineColor.r, menuStage.lineColor.g, menuStage.lineColor.b, 0.18f), 1.8f);
     for (float y = 30.0f; y < kHeight; y += 44.0f)
     {
         DrawLine({24.0f, y}, {1256.0f, y}, D2D1::ColorF(0x17303C, 0.24f), 1.0f);
@@ -1288,7 +1275,6 @@ void PawlineGameImpl::DrawBriefing()
 {
     const StageDefinition stage = CurrentStage();
     DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), m_selectedStage, m_uiTime, 0.0f, false);
-    DrawOrbitalPlanet({1040.0f, 554.0f}, 156.0f, m_selectedStage, 0.42f, m_uiTime * 0.72f);
     for (int i = 0; i < 120; ++i)
     {
         const float x = 34.0f + std::fmod(static_cast<float>(i * 127 + m_selectedStage * 31), 1212.0f);
@@ -1567,9 +1553,6 @@ void PawlineGameImpl::DrawArena()
         DrawLine({x, kBattleTop + 10.0f}, {x, kBattleBottom - 10.0f}, D2D1::ColorF(0x27475B, 0.13f), 1.0f);
     }
 
-    DrawStageDecorations();
-    DrawLongRangeDecorations();
-
     FillRoundRect(D2D1::RectF(48.0f, kLaneY - kLaneHalfHeight, kWorldWidth - 48.0f, kLaneY + kLaneHalfHeight), 18.0f, D2D1::ColorF(stage.laneColor.r, stage.laneColor.g, stage.laneColor.b, 0.82f));
     FillRoundRect(D2D1::RectF(58.0f, kLaneY - kLaneHalfHeight + 14.0f, kWorldWidth - 58.0f, kLaneY + kLaneHalfHeight - 14.0f), 16.0f, D2D1::ColorF(stage.laneInnerColor.r + 0.02f, stage.laneInnerColor.g + 0.025f, stage.laneInnerColor.b + 0.035f, 0.90f));
     FillRoundRect(D2D1::RectF(58.0f, kLaneY - kLaneHalfHeight + 14.0f, kWorldWidth - 58.0f, kLaneY - 14.0f), 16.0f, D2D1::ColorF(0xFFFFFF, 0.035f));
@@ -1594,27 +1577,16 @@ void PawlineGameImpl::DrawSpaceBackdrop()
     const D2D1_RECT_F arena = D2D1::RectF(24.0f, kBattleTop, kWorldWidth - 24.0f, kBattleBottom);
 
     DrawDeepSpaceBackdrop(arena, m_selectedStage, m_stageTime, m_cameraX, false);
-    DrawOrbitalPlanet({m_cameraX + 1040.0f, 176.0f}, 124.0f, m_selectedStage, 0.56f, m_stageTime * 0.84f);
-    DrawOrbitalPlanet({m_cameraX + 212.0f, 512.0f}, 58.0f, (m_selectedStage + 6) % kStageCount, 0.38f, m_stageTime * 1.12f);
 
-    for (int i = 0; i < 220; ++i)
+    for (int i = 0; i < 36; ++i)
     {
         const float x = 48.0f + std::fmod(static_cast<float>(i * 157 + m_selectedStage * 71), kWorldWidth - 96.0f);
         const float y = kBattleTop + 24.0f + std::fmod(static_cast<float>(i * 89 + m_selectedStage * 43), kBattleBottom - kBattleTop - 48.0f);
         const float twinkle = 0.42f + 0.58f * Hash01(static_cast<float>(i), static_cast<float>(m_selectedStage), std::floor(m_stageTime * 2.0f));
         const float radius = 0.85f + static_cast<float>(i % 5) * 0.32f;
         D2D1_COLOR_F star = (i % 7 == 0) ? D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.16f * twinkle)
-                                         : D2D1::ColorF(0xEAF7FF, 0.10f + 0.12f * twinkle);
+                                         : D2D1::ColorF(0xEAF7FF, 0.035f + 0.045f * twinkle);
         FillEllipse({x, y}, radius, radius, star);
-        if (i % 19 == 0)
-        {
-            DrawLine({x - 5.0f, y}, {x + 5.0f, y}, D2D1::ColorF(0xFFFFFF, 0.10f * twinkle), 1.0f);
-            DrawLine({x, y - 5.0f}, {x, y + 5.0f}, D2D1::ColorF(0xFFFFFF, 0.08f * twinkle), 1.0f);
-        }
-        if (i % 41 == 0)
-        {
-            FillEllipse({x + 14.0f, y - 4.0f}, radius * 3.0f, radius * 1.2f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.035f * twinkle));
-        }
     }
 
     for (int i = 0; i < 12; ++i)

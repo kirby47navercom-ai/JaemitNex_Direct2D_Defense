@@ -707,6 +707,7 @@ void PawlineGameImpl::LoadBitmapAssets()
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\thunder_splash_sheet.png"), m_thunderSplashEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\water_ball_impact_sheet.png"), m_waterBallImpactEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\smoke_dust_sheet.png"), m_smokeDustEffectSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\backgrounds\\deep_space_hudf.jpg"), m_deepSpaceBitmap.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\sprites\\kenney_toon_units\\player_unit_atlas.png"), m_playerUnitAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\sprites\\kenney_toon_units\\enemy_unit_atlas.png"), m_enemyUnitAtlas.ReleaseAndGetAddressOf());
     const std::array<const wchar_t*, kRosterCount> playerWeapons = {
@@ -772,6 +773,7 @@ void PawlineGameImpl::DiscardBitmapAssets()
     m_thunderSplashEffectSheet.Reset();
     m_waterBallImpactEffectSheet.Reset();
     m_smokeDustEffectSheet.Reset();
+    m_deepSpaceBitmap.Reset();
     m_playerUnitAtlas.Reset();
     m_enemyUnitAtlas.Reset();
     for (auto& bitmap : m_playerWeaponBitmaps)

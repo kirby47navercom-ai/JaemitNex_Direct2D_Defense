@@ -1146,6 +1146,7 @@ private:
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_smallFormat;
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_buttonFormat;
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_centerFormat;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_deepSpaceBitmap;
     std::array<Microsoft::WRL::ComPtr<ID2D1Bitmap>, kStageCount> m_backgroundBitmaps;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_vfxAtlas;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_slashEffectSheet;
