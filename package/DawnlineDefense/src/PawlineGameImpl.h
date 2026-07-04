@@ -1192,7 +1192,7 @@ private:
     bool m_comInitialized = false;
     bool m_bitmapAssetsLoaded = false;
     bool m_privateFontLoaded = false;
-    std::wstring m_privateFontPath;
+    std::vector<std::wstring> m_privateFontPaths;
 
     // 프레임 시간과 랜덤 연출 생성기.
     DeltaTimer m_timer;

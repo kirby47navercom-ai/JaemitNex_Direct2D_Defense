@@ -213,50 +213,54 @@ LRESULT PawlineGameImpl::HandleMessage(UINT message, WPARAM wParam, LPARAM lPara
 
 HRESULT PawlineGameImpl::CreateTextFormats()
 {
-    const wchar_t* uiFont = m_privateFontLoaded ? L"Galmuri11" : L"Segoe UI";
+    const bool hasGyeonggiFont = std::any_of(m_privateFontPaths.begin(), m_privateFontPaths.end(), [](const std::wstring& path) {
+        return path.find(L"Gyeonggi") != std::wstring::npos;
+    });
+    const wchar_t* titleFont = hasGyeonggiFont ? L"GyeonggiTitleOTF" : L"Segoe UI";
+    const wchar_t* bodyFont = hasGyeonggiFont ? L"GyeonggiBatangOTF" : L"Segoe UI";
     HRESULT hr = m_writeFactory->CreateTextFormat(
-        uiFont, nullptr, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 32.0f, L"en-us", m_titleFormat.GetAddressOf());
+        titleFont, nullptr, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 32.0f, L"ko-kr", m_titleFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
     }
 
     hr = m_writeFactory->CreateTextFormat(
-        uiFont, nullptr, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 18.0f, L"en-us", m_headerFormat.GetAddressOf());
+        titleFont, nullptr, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 18.0f, L"ko-kr", m_headerFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
     }
 
     hr = m_writeFactory->CreateTextFormat(
-        uiFont, nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 15.0f, L"en-us", m_bodyFormat.GetAddressOf());
+        bodyFont, nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 15.0f, L"ko-kr", m_bodyFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
     }
 
     hr = m_writeFactory->CreateTextFormat(
-        uiFont, nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 12.5f, L"en-us", m_smallFormat.GetAddressOf());
+        bodyFont, nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 12.5f, L"ko-kr", m_smallFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
     }
 
     hr = m_writeFactory->CreateTextFormat(
-        uiFont, nullptr, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 15.0f, L"en-us", m_buttonFormat.GetAddressOf());
+        titleFont, nullptr, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 15.0f, L"ko-kr", m_buttonFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
     }
 
     hr = m_writeFactory->CreateTextFormat(
-        uiFont, nullptr, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 18.0f, L"en-us", m_centerFormat.GetAddressOf());
+        titleFont, nullptr, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 18.0f, L"ko-kr", m_centerFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -307,21 +311,43 @@ void PawlineGameImpl::DiscardDeviceResources()
 
 void PawlineGameImpl::RegisterPrivateFonts()
 {
-    m_privateFontPath = AssetPath(L"assets\\fonts\\Galmuri11.ttf");
-    if (GetFileAttributesW(m_privateFontPath.c_str()) == INVALID_FILE_ATTRIBUTES)
+    // 픽셀 글자는 직접 그리지만, 일반 UI 문장에는 패키지에 포함한 경기천년체를 사용한다.
+    const std::array<std::wstring, 6> fontFiles = {
+        L"assets\\fonts\\Galmuri11.ttf",
+        L"assets\\fonts\\GyeonggiTitle_Bold.otf",
+        L"assets\\fonts\\GyeonggiTitle_Medium.otf",
+        L"assets\\fonts\\GyeonggiTitle_Light.otf",
+        L"assets\\fonts\\GyeonggiBatang_Regular.otf",
+        L"assets\\fonts\\GyeonggiBatang_Bold.otf",
+    };
+
+    m_privateFontPaths.clear();
+    for (const std::wstring& relativePath : fontFiles)
     {
-        return;
+        const std::wstring fontPath = AssetPath(relativePath);
+        if (GetFileAttributesW(fontPath.c_str()) == INVALID_FILE_ATTRIBUTES)
+        {
+            continue;
+        }
+        if (AddFontResourceExW(fontPath.c_str(), FR_PRIVATE, nullptr) > 0)
+        {
+            m_privateFontPaths.push_back(fontPath);
+        }
     }
-    m_privateFontLoaded = AddFontResourceExW(m_privateFontPath.c_str(), FR_PRIVATE, nullptr) > 0;
+    m_privateFontLoaded = !m_privateFontPaths.empty();
 }
 
 void PawlineGameImpl::UnregisterPrivateFonts()
 {
-    if (!m_privateFontLoaded || m_privateFontPath.empty())
+    if (!m_privateFontLoaded)
     {
         return;
     }
-    RemoveFontResourceExW(m_privateFontPath.c_str(), FR_PRIVATE, nullptr);
+    for (const std::wstring& fontPath : m_privateFontPaths)
+    {
+        RemoveFontResourceExW(fontPath.c_str(), FR_PRIVATE, nullptr);
+    }
+    m_privateFontPaths.clear();
     m_privateFontLoaded = false;
 }
 

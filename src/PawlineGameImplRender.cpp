@@ -1345,7 +1345,9 @@ void PawlineGameImpl::DrawBriefing()
                        D2D1::ColorF(0xEAF7FF),
                        0.76f);
 
-    DrawPixelText(L"DIFFICULTY", {604.0f, 622.0f}, 2.2f, D2D1::ColorF(0xEAF7FF));
+    const D2D1_RECT_F difficultyPanel = D2D1::RectF(594.0f, 616.0f, 1068.0f, 710.0f);
+    DrawCartoonPanel(difficultyPanel, D2D1::ColorF(0x07131C, 0.90f), D2D1::ColorF(0x476779));
+    DrawPixelText(L"DIFFICULTY", {612.0f, 628.0f}, 2.05f, D2D1::ColorF(0xEAF7FF));
     const std::array<std::wstring, 3> labels = {L"EASY", L"NORMAL", L"HARD"};
     for (int i = 0; i < 3; ++i)
     {
