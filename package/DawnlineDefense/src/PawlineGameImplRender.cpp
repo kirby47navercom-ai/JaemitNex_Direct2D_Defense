@@ -910,13 +910,14 @@ void PawlineGameImpl::DrawSpaceDepthGrid(D2D1_RECT_F area, int stageIndex, float
         DrawLine({area.left - 20.0f, y}, {area.right + 20.0f, y}, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, alpha), 1.0f + curve * 1.8f);
     }
 
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < 6; ++i)
     {
-        const float orbit = static_cast<float>(i) / 4.0f;
-        const float cx = vanishing.x + std::sin(time * (0.10f + orbit * 0.07f) + static_cast<float>(i)) * width * (0.05f + orbit * 0.10f);
-        const float cy = horizon - 32.0f - orbit * height * 0.12f;
-        StrokeEllipse({cx, cy}, width * (0.11f + orbit * 0.13f), height * (0.028f + orbit * 0.030f),
-                      D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.055f + orbit * 0.045f), 1.1f);
+        const float drift = std::sin(time * (0.18f + static_cast<float>(i) * 0.03f) + static_cast<float>(i)) * width * 0.035f;
+        const float y = horizon - 26.0f - static_cast<float>(i) * height * 0.035f;
+        DrawLine({area.left + width * 0.14f + drift, y},
+                 {area.left + width * 0.86f + drift * 0.35f, y + height * 0.018f},
+                 D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.030f),
+                 1.0f);
     }
 }
 
@@ -961,11 +962,9 @@ void PawlineGameImpl::DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, fl
     FillRect(area, D2D1::ColorF(stage.backColor.r + 0.020f, stage.backColor.g + 0.026f, stage.backColor.b + 0.036f, 1.0f));
     if (m_backgroundBitmaps[safeStage])
     {
-        DrawBitmap(m_backgroundBitmaps[safeStage].Get(), area, 0.34f);
+        DrawBitmap(m_backgroundBitmaps[safeStage].Get(), area, 0.72f);
     }
-    FillEllipse({area.left + width * 0.22f - cameraX * 0.015f, area.top + height * 0.22f}, width * 0.34f, height * 0.20f, D2D1::ColorF(0x325D86, 0.13f));
-    FillEllipse({area.left + width * 0.78f - cameraX * 0.010f, area.top + height * 0.76f}, width * 0.42f, height * 0.24f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.105f));
-    FillEllipse({area.left + width * 0.52f + std::sin(time * 0.15f) * width * 0.025f, area.top + height * 0.46f}, width * 0.54f, height * 0.28f, D2D1::ColorF(0x7B63CC, 0.080f));
+    FillRect(area, D2D1::ColorF(0x02070C, 0.18f));
     DrawSpaceDepthGrid(area, safeStage, time, cameraX);
 
     for (int layer = 0; layer < 3; ++layer)
@@ -991,10 +990,10 @@ void PawlineGameImpl::DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, fl
         }
     }
 
-    const Vec2 largePlanet = {area.left + width * (0.82f + std::sin(time * 0.07f) * 0.018f), area.top + height * 0.24f};
-    const Vec2 smallPlanet = {area.left + width * (0.18f + std::cos(time * 0.09f) * 0.015f), area.top + height * 0.73f};
-    DrawOrbitalPlanet(largePlanet, std::min(width, height) * 0.12f, safeStage, 0.66f, time);
-    DrawOrbitalPlanet(smallPlanet, std::min(width, height) * 0.052f, (safeStage + 3) % kStageCount, 0.48f, time * 1.24f);
+    const Vec2 largePlanet = {area.left + width * (0.80f + std::sin(time * 0.07f) * 0.018f), area.top + height * 0.24f};
+    const Vec2 smallPlanet = {area.left + width * (0.18f + std::cos(time * 0.09f) * 0.015f), area.top + height * 0.72f};
+    DrawOrbitalPlanet(largePlanet, std::min(width, height) * 0.17f, safeStage, 0.82f, time);
+    DrawOrbitalPlanet(smallPlanet, std::min(width, height) * 0.075f, (safeStage + 3) % kStageCount, 0.58f, time * 1.24f);
     DrawAsteroidField(area, safeStage, time, cameraX);
 
     if (showRoute)
@@ -1135,11 +1134,9 @@ void PawlineGameImpl::DrawMenu()
 {
     const StageDefinition menuStage = CurrentStage();
     DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), m_selectedStage, m_uiTime, 0.0f, true);
-    FillEllipse({1038.0f, 206.0f}, 300.0f, 300.0f, D2D1::ColorF(menuStage.laneColor.r, menuStage.laneColor.g, menuStage.laneColor.b, 0.30f));
-    FillEllipse({956.0f, 128.0f}, 110.0f, 64.0f, D2D1::ColorF(0xFFFFFF, 0.060f));
-    StrokeEllipse({1038.0f, 206.0f}, 300.0f, 300.0f, D2D1::ColorF(menuStage.lineColor.r, menuStage.lineColor.g, menuStage.lineColor.b, 0.24f), 4.0f);
+    DrawOrbitalPlanet({1038.0f, 206.0f}, 260.0f, m_selectedStage, 0.68f, m_uiTime * 0.82f);
     StrokeEllipse({1038.0f, 206.0f}, 390.0f, 76.0f, D2D1::ColorF(menuStage.lineColor.r, menuStage.lineColor.g, menuStage.lineColor.b, 0.18f), 2.4f);
-    FillEllipse({210.0f, 622.0f}, 360.0f, 178.0f, D2D1::ColorF(0x325D86, 0.13f));
+    DrawOrbitalPlanet({210.0f, 622.0f}, 92.0f, (m_selectedStage + 4) % kStageCount, 0.36f, m_uiTime * 1.18f);
     for (float y = 30.0f; y < kHeight; y += 44.0f)
     {
         DrawLine({24.0f, y}, {1256.0f, y}, D2D1::ColorF(0x17303C, 0.24f), 1.0f);
@@ -1291,8 +1288,7 @@ void PawlineGameImpl::DrawBriefing()
 {
     const StageDefinition stage = CurrentStage();
     DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), m_selectedStage, m_uiTime, 0.0f, false);
-    FillEllipse({250.0f, 184.0f}, 360.0f, 170.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.10f));
-    FillEllipse({1040.0f, 554.0f}, 420.0f, 210.0f, D2D1::ColorF(stage.laneColor.r, stage.laneColor.g, stage.laneColor.b, 0.30f));
+    DrawOrbitalPlanet({1040.0f, 554.0f}, 156.0f, m_selectedStage, 0.42f, m_uiTime * 0.72f);
     for (int i = 0; i < 120; ++i)
     {
         const float x = 34.0f + std::fmod(static_cast<float>(i * 127 + m_selectedStage * 31), 1212.0f);
@@ -1306,9 +1302,7 @@ void PawlineGameImpl::DrawBriefing()
 
     const D2D1_RECT_F planet = D2D1::RectF(78.0f, 136.0f, 516.0f, 500.0f);
     DrawCartoonPanel(planet, D2D1::ColorF(0x0D1821, 0.96f), stage.lineColor);
-    FillEllipse({208.0f, 282.0f}, 84.0f, 84.0f, D2D1::ColorF(stage.laneColor.r, stage.laneColor.g, stage.laneColor.b, 0.92f));
-    FillEllipse({176.0f, 246.0f}, 34.0f, 16.0f, D2D1::ColorF(0xFFFFFF, 0.10f));
-    StrokeEllipse({208.0f, 282.0f}, 84.0f, 84.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.92f), 4.0f);
+    DrawOrbitalPlanet({208.0f, 282.0f}, 86.0f, m_selectedStage, 0.96f, m_uiTime);
     if (m_selectedStage == 5)
     {
         StrokeEllipse({208.0f, 282.0f}, 138.0f, 42.0f, D2D1::ColorF(0xE6D392, 0.62f), 4.0f);
@@ -1600,13 +1594,8 @@ void PawlineGameImpl::DrawSpaceBackdrop()
     const D2D1_RECT_F arena = D2D1::RectF(24.0f, kBattleTop, kWorldWidth - 24.0f, kBattleBottom);
 
     DrawDeepSpaceBackdrop(arena, m_selectedStage, m_stageTime, m_cameraX, false);
-    FillEllipse({320.0f + m_cameraX * 0.08f, 166.0f}, 520.0f, 230.0f, D2D1::ColorF(0x325D86, 0.18f));
-    FillEllipse({920.0f + m_cameraX * 0.05f, 535.0f}, 640.0f, 240.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.145f));
-    FillEllipse({1640.0f - m_cameraX * 0.04f, 214.0f}, 720.0f, 274.0f, D2D1::ColorF(0x7B63CC, 0.125f));
-    FillEllipse({2140.0f, 480.0f}, 540.0f, 200.0f, D2D1::ColorF(0x46B5B9, 0.095f));
-    FillEllipse({kWorldWidth - 260.0f, 150.0f}, 260.0f, 260.0f, D2D1::ColorF(stage.laneColor.r, stage.laneColor.g, stage.laneColor.b, 0.095f));
-    StrokeEllipse({kWorldWidth - 260.0f, 150.0f}, 260.0f, 260.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.18f), 3.0f);
-    FillEllipse({220.0f, 92.0f}, 320.0f, 92.0f, D2D1::ColorF(0xFFFFFF, 0.035f));
+    DrawOrbitalPlanet({m_cameraX + 1040.0f, 176.0f}, 124.0f, m_selectedStage, 0.56f, m_stageTime * 0.84f);
+    DrawOrbitalPlanet({m_cameraX + 212.0f, 512.0f}, 58.0f, (m_selectedStage + 6) % kStageCount, 0.38f, m_stageTime * 1.12f);
 
     for (int i = 0; i < 220; ++i)
     {
@@ -1646,9 +1635,10 @@ void PawlineGameImpl::DrawSpaceBackdrop()
 
 void PawlineGameImpl::DrawCrater(Vec2 center, float rx, float ry, D2D1_COLOR_F rim, D2D1_COLOR_F shade)
 {
-    FillEllipse(center, rx, ry, shade);
-    StrokeEllipse(center, rx, ry, rim, 1.3f);
-    FillEllipse({center.x - rx * 0.25f, center.y - ry * 0.22f}, rx * 0.34f, ry * 0.28f, D2D1::ColorF(0xFFFFFF, 0.08f));
+    const float visualRy = std::max(ry, rx * 0.62f);
+    FillEllipse(center, rx, visualRy, shade);
+    StrokeEllipse(center, rx, visualRy, rim, 1.3f);
+    FillEllipse({center.x - rx * 0.25f, center.y - visualRy * 0.22f}, rx * 0.34f, visualRy * 0.28f, D2D1::ColorF(0xFFFFFF, 0.08f));
 }
 
 void PawlineGameImpl::DrawCloudCluster(Vec2 center, float scale, D2D1_COLOR_F color)

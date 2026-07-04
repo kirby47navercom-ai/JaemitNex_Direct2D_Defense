@@ -1,7 +1,10 @@
 #include "AudioManager.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cmath>
+#include <fstream>
+#include <vector>
 #include <windows.h>
 #include <mmsystem.h>
 
@@ -106,6 +109,116 @@ float AudioManager::Volume() const
     return m_volume;
 }
 
+float AudioManager::EffectGainFor(const std::wstring& absolutePath) const
+{
+    const auto cached = m_effectGainCache.find(absolutePath);
+    if (cached != m_effectGainCache.end())
+    {
+        return cached->second;
+    }
+
+    float gain = 1.0f;
+    std::ifstream file(absolutePath, std::ios::binary);
+    if (file)
+    {
+        char riff[4] = {};
+        char wave[4] = {};
+        std::uint32_t riffSize = 0;
+        file.read(riff, 4);
+        file.read(reinterpret_cast<char*>(&riffSize), sizeof(riffSize));
+        file.read(wave, 4);
+
+        std::uint16_t formatTag = 0;
+        std::uint16_t bitsPerSample = 0;
+        std::vector<char> sampleData;
+
+        while (file)
+        {
+            char chunkId[4] = {};
+            std::uint32_t chunkSize = 0;
+            file.read(chunkId, 4);
+            file.read(reinterpret_cast<char*>(&chunkSize), sizeof(chunkSize));
+            if (!file)
+            {
+                break;
+            }
+
+            const std::string id(chunkId, chunkId + 4);
+            const std::streamoff paddedSize = static_cast<std::streamoff>(chunkSize + (chunkSize & 1U));
+            const std::streampos nextChunk = file.tellg() + paddedSize;
+            if (id == "fmt " && chunkSize >= 16)
+            {
+                std::uint16_t channelCount = 0;
+                std::uint32_t sampleRate = 0;
+                std::uint32_t byteRate = 0;
+                std::uint16_t blockAlign = 0;
+                file.read(reinterpret_cast<char*>(&formatTag), sizeof(formatTag));
+                file.read(reinterpret_cast<char*>(&channelCount), sizeof(channelCount));
+                file.read(reinterpret_cast<char*>(&sampleRate), sizeof(sampleRate));
+                file.read(reinterpret_cast<char*>(&byteRate), sizeof(byteRate));
+                file.read(reinterpret_cast<char*>(&blockAlign), sizeof(blockAlign));
+                file.read(reinterpret_cast<char*>(&bitsPerSample), sizeof(bitsPerSample));
+            }
+            else if (id == "data" && chunkSize > 0)
+            {
+                sampleData.resize(chunkSize);
+                file.read(sampleData.data(), static_cast<std::streamsize>(sampleData.size()));
+            }
+            file.seekg(nextChunk);
+        }
+
+        if (formatTag == 1 && !sampleData.empty())
+        {
+            double sumSquares = 0.0;
+            double peak = 0.0;
+            std::size_t activeSamples = 0;
+
+            if (bitsPerSample == 16)
+            {
+                for (std::size_t i = 0; i + 1 < sampleData.size(); i += 2)
+                {
+                    const auto lo = static_cast<unsigned char>(sampleData[i]);
+                    const auto hi = static_cast<unsigned char>(sampleData[i + 1]);
+                    const auto sample = static_cast<std::int16_t>(static_cast<std::uint16_t>(lo | (hi << 8)));
+                    const double normalized = std::abs(static_cast<double>(sample) / 32768.0);
+                    if (normalized > 0.003)
+                    {
+                        sumSquares += normalized * normalized;
+                        peak = std::max(peak, normalized);
+                        ++activeSamples;
+                    }
+                }
+            }
+            else if (bitsPerSample == 8)
+            {
+                for (char raw : sampleData)
+                {
+                    const double normalized = std::abs((static_cast<int>(static_cast<unsigned char>(raw)) - 128) / 128.0);
+                    if (normalized > 0.003)
+                    {
+                        sumSquares += normalized * normalized;
+                        peak = std::max(peak, normalized);
+                        ++activeSamples;
+                    }
+                }
+            }
+
+            if (activeSamples > 0)
+            {
+                const double rms = std::sqrt(sumSquares / static_cast<double>(activeSamples));
+                const double loudness = std::max(rms, peak * 0.18);
+                if (loudness > 0.001)
+                {
+                    gain = std::clamp(static_cast<float>(0.145 / loudness), 0.58f, 1.72f);
+                }
+            }
+        }
+    }
+
+    m_effectGainCache.emplace(absolutePath, gain);
+    return gain;
+}
+
 bool AudioManager::PlayEffect(const std::wstring& absolutePath) const
 {
     if (m_volume <= 0.001f)
@@ -129,14 +242,14 @@ bool AudioManager::PlayEffect(const std::wstring& absolutePath) const
         }
         if (channel)
         {
-            channel->setVolume(m_volume);
+            channel->setVolume(std::clamp(m_volume * EffectGainFor(absolutePath), 0.0f, 1.0f));
         }
         return true;
     }
 #endif
 
     // PlaySoundW는 개별 채널 볼륨이 없어서, 재생 직전에 wave 출력 볼륨을 맞춘다.
-    const DWORD channelVolume = static_cast<DWORD>(std::clamp(m_volume, 0.0f, 1.0f) * 0xFFFF);
+    const DWORD channelVolume = static_cast<DWORD>(std::clamp(m_volume * EffectGainFor(absolutePath), 0.0f, 1.0f) * 0xFFFF);
     waveOutSetVolume(nullptr, channelVolume | (channelVolume << 16));
     return PlaySoundW(absolutePath.c_str(), nullptr, SND_FILENAME | SND_ASYNC | SND_NODEFAULT) != FALSE;
 }
@@ -152,6 +265,7 @@ bool AudioManager::PlayEffectAt(const std::wstring& absolutePath, float worldX, 
     const float normalized = std::clamp((worldX - m_listenerX) / halfWidth, -1.0f, 1.0f);
     const float distance = std::abs(normalized);
     const float attenuation = std::clamp(1.0f - distance * 0.48f, 0.34f, 1.0f) * std::clamp(volumeScale, 0.0f, 1.8f);
+    const float fileGain = EffectGainFor(absolutePath);
 
 #if defined(PAWLINE_WITH_FMOD)
     if (m_fmodSystem)
@@ -173,7 +287,7 @@ bool AudioManager::PlayEffectAt(const std::wstring& absolutePath, float worldX, 
             FMOD_VECTOR velocity = {0.0f, 0.0f, 0.0f};
             channel->set3DAttributes(&position, &velocity);
             channel->set3DMinMaxDistance(0.9f, 18.0f);
-            channel->setVolume(m_volume * attenuation);
+            channel->setVolume(std::clamp(m_volume * attenuation * fileGain, 0.0f, 1.0f));
             channel->setPaused(false);
         }
         return true;
@@ -183,8 +297,8 @@ bool AudioManager::PlayEffectAt(const std::wstring& absolutePath, float worldX, 
     const float pan = normalized;
     const float left = std::clamp(attenuation * (pan > 0.0f ? 1.0f - pan * 0.72f : 1.0f), 0.0f, 1.0f);
     const float right = std::clamp(attenuation * (pan < 0.0f ? 1.0f + pan * 0.72f : 1.0f), 0.0f, 1.0f);
-    const DWORD leftVolume = static_cast<DWORD>(std::clamp(m_volume * left, 0.0f, 1.0f) * 0xFFFF);
-    const DWORD rightVolume = static_cast<DWORD>(std::clamp(m_volume * right, 0.0f, 1.0f) * 0xFFFF);
+    const DWORD leftVolume = static_cast<DWORD>(std::clamp(m_volume * left * fileGain, 0.0f, 1.0f) * 0xFFFF);
+    const DWORD rightVolume = static_cast<DWORD>(std::clamp(m_volume * right * fileGain, 0.0f, 1.0f) * 0xFFFF);
     waveOutSetVolume(nullptr, leftVolume | (rightVolume << 16));
     return PlaySoundW(absolutePath.c_str(), nullptr, SND_FILENAME | SND_ASYNC | SND_NODEFAULT) != FALSE;
 }

@@ -600,14 +600,14 @@ void PawlineGameImpl::PlayAttackSfxAt(const Unit& attacker, float minGapSeconds)
     }
     *lastPlayed = m_uiTime;
 
-    float volumeScale = attacker.ranged ? 1.14f : 1.04f;
+    float volumeScale = attacker.ranged ? 1.04f : 0.98f;
     if (attacker.team == Team::Enemy)
     {
-        volumeScale += 0.06f;
+        volumeScale += 0.02f;
     }
     if (attacker.boss)
     {
-        volumeScale = 1.46f;
+        volumeScale = 1.14f;
     }
 
     m_audio.SetVolume(m_sfxVolume);
