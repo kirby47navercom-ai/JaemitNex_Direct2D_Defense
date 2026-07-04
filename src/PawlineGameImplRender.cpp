@@ -1761,6 +1761,8 @@ void PawlineGameImpl::DrawStageLanePattern()
 
 void PawlineGameImpl::DrawBases()
 {
+    const StageDefinition stage = CurrentStage();
+    const D2D1_COLOR_F enemyStageColor = stage.lineColor;
     const float playerShake = m_playerBaseShake > 0.0f ? std::sin(m_stageTime * 94.0f) * 4.0f : 0.0f;
     const float enemyShake = m_enemyBaseShake > 0.0f ? std::sin(m_stageTime * 94.0f) * 4.0f : 0.0f;
     Vec2 player = {kPlayerBaseX + playerShake, kLaneY};
@@ -1786,14 +1788,88 @@ void PawlineGameImpl::DrawBases()
     DrawLine({player.x + 48.0f, player.y - 58.0f}, {player.x + 72.0f, player.y - 76.0f}, D2D1::ColorF(0x65B8FF), 7.0f);
 
     FillEllipse({enemy.x, enemy.y + 60.0f}, 70.0f, 18.0f, D2D1::ColorF(0x000000, 0.32f));
-    FillRoundRect(D2D1::RectF(enemy.x - 62.0f, enemy.y - 72.0f, enemy.x + 62.0f, enemy.y + 60.0f), 10.0f, D2D1::ColorF(0x342731));
-    StrokeRoundRect(D2D1::RectF(enemy.x - 62.0f, enemy.y - 72.0f, enemy.x + 62.0f, enemy.y + 60.0f), 10.0f, D2D1::ColorF(0xFF9BA8), 2.5f);
-    FillRect(D2D1::RectF(enemy.x - 36.0f, enemy.y - 36.0f, enemy.x - 10.0f, enemy.y + 4.0f), D2D1::ColorF(0xFF9BA8));
-    FillRect(D2D1::RectF(enemy.x + 10.0f, enemy.y - 36.0f, enemy.x + 36.0f, enemy.y + 4.0f), D2D1::ColorF(0xFF9BA8));
-    DrawLine({enemy.x - 30.0f, enemy.y + 30.0f}, {enemy.x + 30.0f, enemy.y + 30.0f}, D2D1::ColorF(0xFF9BA8), 4.0f);
+    FillRoundRect(D2D1::RectF(enemy.x - 64.0f, enemy.y - 74.0f, enemy.x + 64.0f, enemy.y + 62.0f), 10.0f, D2D1::ColorF(0x1B2028));
+    StrokeRoundRect(D2D1::RectF(enemy.x - 64.0f, enemy.y - 74.0f, enemy.x + 64.0f, enemy.y + 62.0f), 10.0f, D2D1::ColorF(enemyStageColor.r, enemyStageColor.g, enemyStageColor.b, 0.78f), 2.7f);
+    FillRoundRect(D2D1::RectF(enemy.x - 50.0f, enemy.y + 22.0f, enemy.x + 50.0f, enemy.y + 47.0f), 6.0f, D2D1::ColorF(0x071017, 0.80f));
+    StrokeRoundRect(D2D1::RectF(enemy.x - 50.0f, enemy.y + 22.0f, enemy.x + 50.0f, enemy.y + 47.0f), 6.0f, D2D1::ColorF(enemyStageColor.r, enemyStageColor.g, enemyStageColor.b, 0.42f), 1.5f);
+
+    // 적 포탑은 스테이지마다 다른 실루엣을 주어 행성별 방어선을 구분한다.
+    const D2D1_COLOR_F towerGlow = D2D1::ColorF(enemyStageColor.r, enemyStageColor.g, enemyStageColor.b, 0.30f + enemyPulse * 0.16f);
+    const D2D1_COLOR_F towerLine = D2D1::ColorF(enemyStageColor.r, enemyStageColor.g, enemyStageColor.b, 0.86f);
+    const Vec2 turret = {enemy.x - 8.0f, enemy.y - 30.0f};
+    FillEllipse(turret, 46.0f, 24.0f, towerGlow);
+    switch (m_selectedStage)
+    {
+    case 0:
+        FillRoundRect(D2D1::RectF(enemy.x - 38.0f, enemy.y - 45.0f, enemy.x + 28.0f, enemy.y - 2.0f), 8.0f, D2D1::ColorF(0x5B4B3A, 0.84f));
+        DrawLine({enemy.x - 20.0f, enemy.y - 42.0f}, {enemy.x - 88.0f, enemy.y - 55.0f}, towerLine, 8.0f);
+        DrawLine({enemy.x - 18.0f, enemy.y - 20.0f}, {enemy.x - 82.0f, enemy.y - 18.0f}, D2D1::ColorF(0xD9FFF8, 0.62f), 5.0f);
+        StrokeEllipse({enemy.x - 6.0f, enemy.y - 20.0f}, 31.0f, 14.0f, D2D1::ColorF(0xD8A66A, 0.72f), 2.0f);
+        break;
+    case 1:
+        FillEllipse({enemy.x - 4.0f, enemy.y - 35.0f}, 42.0f, 29.0f, D2D1::ColorF(0xFFB6E8, 0.34f));
+        StrokeEllipse({enemy.x - 4.0f, enemy.y - 35.0f}, 42.0f, 29.0f, towerLine, 2.3f);
+        DrawLine({enemy.x - 34.0f, enemy.y - 28.0f}, {enemy.x - 90.0f, enemy.y - 28.0f}, D2D1::ColorF(0xFFD27A, 0.74f), 7.0f);
+        FillEllipse({enemy.x - 92.0f, enemy.y - 28.0f}, 9.0f, 9.0f, D2D1::ColorF(0xFFD27A, 0.72f));
+        break;
+    case 2:
+        FillRoundRect(D2D1::RectF(enemy.x - 34.0f, enemy.y - 56.0f, enemy.x + 32.0f, enemy.y + 5.0f), 9.0f, D2D1::ColorF(0x204839, 0.84f));
+        DrawLine({enemy.x - 10.0f, enemy.y - 40.0f}, {enemy.x - 82.0f, enemy.y - 60.0f}, D2D1::ColorF(0xB8FF89, 0.86f), 7.0f);
+        FillEllipse({enemy.x + 18.0f, enemy.y - 54.0f}, 17.0f, 9.0f, D2D1::ColorF(0xB8FF89, 0.42f));
+        DrawLine({enemy.x - 28.0f, enemy.y - 4.0f}, {enemy.x + 32.0f, enemy.y - 30.0f}, towerLine, 3.0f);
+        break;
+    case 3:
+        FillRoundRect(D2D1::RectF(enemy.x - 42.0f, enemy.y - 50.0f, enemy.x + 32.0f, enemy.y + 8.0f), 6.0f, D2D1::ColorF(0x4B2725, 0.88f));
+        DrawLine({enemy.x - 15.0f, enemy.y - 43.0f}, {enemy.x - 94.0f, enemy.y - 66.0f}, D2D1::ColorF(0xFF8B60, 0.86f), 9.0f);
+        DrawLine({enemy.x - 13.0f, enemy.y - 19.0f}, {enemy.x - 88.0f, enemy.y - 20.0f}, D2D1::ColorF(0xFFDB7A, 0.66f), 6.0f);
+        FillEllipse({enemy.x - 94.0f, enemy.y - 66.0f}, 8.0f, 8.0f, D2D1::ColorF(0xFFDB7A, 0.78f));
+        break;
+    case 4:
+        FillEllipse({enemy.x - 2.0f, enemy.y - 34.0f}, 48.0f, 31.0f, D2D1::ColorF(0xD8A66A, 0.34f));
+        StrokeEllipse({enemy.x - 2.0f, enemy.y - 34.0f}, 48.0f, 31.0f, towerLine, 2.3f);
+        FillEllipse({enemy.x - 20.0f, enemy.y - 35.0f}, 16.0f, 9.0f, D2D1::ColorF(0xFF9BA8, 0.42f));
+        DrawLine({enemy.x - 36.0f, enemy.y - 35.0f}, {enemy.x - 96.0f, enemy.y - 38.0f}, D2D1::ColorF(0xFFF0B5, 0.76f), 8.0f);
+        break;
+    case 5:
+        FillEllipse({enemy.x - 3.0f, enemy.y - 31.0f}, 36.0f, 25.0f, D2D1::ColorF(0xE6D392, 0.28f));
+        StrokeEllipse({enemy.x - 3.0f, enemy.y - 31.0f}, 56.0f, 17.0f, D2D1::ColorF(0xE6D392, 0.76f), 3.2f);
+        DrawLine({enemy.x - 12.0f, enemy.y - 30.0f}, {enemy.x - 88.0f, enemy.y - 45.0f}, towerLine, 7.0f);
+        FillEllipse({enemy.x + 18.0f, enemy.y - 18.0f}, 9.0f, 9.0f, D2D1::ColorF(0xFFF0B5, 0.72f));
+        break;
+    case 6:
+        FillRoundRect(D2D1::RectF(enemy.x - 28.0f, enemy.y - 62.0f, enemy.x + 35.0f, enemy.y + 5.0f), 7.0f, D2D1::ColorF(0xD9FFF8, 0.22f));
+        DrawLine({enemy.x + 16.0f, enemy.y - 56.0f}, {enemy.x - 74.0f, enemy.y - 36.0f}, D2D1::ColorF(0xD9FFF8, 0.88f), 8.0f);
+        DrawLine({enemy.x + 28.0f, enemy.y - 7.0f}, {enemy.x - 62.0f, enemy.y - 28.0f}, D2D1::ColorF(0x75A7FF, 0.58f), 5.0f);
+        StrokeEllipse({enemy.x + 2.0f, enemy.y - 30.0f}, 35.0f, 28.0f, towerLine, 2.2f);
+        break;
+    case 7:
+        FillEllipse({enemy.x - 3.0f, enemy.y - 33.0f}, 40.0f, 27.0f, D2D1::ColorF(0x75A7FF, 0.25f));
+        DrawLine({enemy.x - 22.0f, enemy.y - 42.0f}, {enemy.x - 95.0f, enemy.y - 60.0f}, D2D1::ColorF(0xBFD9FF, 0.80f), 7.0f);
+        DrawLine({enemy.x - 18.0f, enemy.y - 18.0f}, {enemy.x - 91.0f, enemy.y - 14.0f}, D2D1::ColorF(0x65D8FF, 0.66f), 6.0f);
+        StrokeEllipse({enemy.x - 31.0f, enemy.y - 30.0f}, 28.0f, 14.0f, towerLine, 2.0f);
+        break;
+    case 8:
+        FillEllipse({enemy.x - 2.0f, enemy.y - 32.0f}, 42.0f, 32.0f, D2D1::ColorF(0xC8B7FF, 0.22f));
+        StrokeEllipse({enemy.x - 2.0f, enemy.y - 32.0f}, 42.0f, 32.0f, towerLine, 2.4f);
+        StrokeEllipse({enemy.x - 28.0f, enemy.y - 33.0f}, 42.0f, 14.0f, D2D1::ColorF(0xF7D6FF, 0.48f), 2.2f);
+        DrawLine({enemy.x - 18.0f, enemy.y - 35.0f}, {enemy.x - 86.0f, enemy.y - 45.0f}, D2D1::ColorF(0xC8B7FF, 0.74f), 7.0f);
+        break;
+    default:
+        FillEllipse({enemy.x - 4.0f, enemy.y - 35.0f}, 48.0f, 48.0f, D2D1::ColorF(0xFFB347, 0.24f));
+        StrokeEllipse({enemy.x - 4.0f, enemy.y - 35.0f}, 48.0f, 48.0f, D2D1::ColorF(0xFFE66D, 0.88f), 2.7f);
+        for (int i = 0; i < 8; ++i)
+        {
+            const float a = static_cast<float>(i) / 8.0f * (kPi * 2.0f) + m_stageTime * 0.4f;
+            const Vec2 ray = {enemy.x - 4.0f + std::cos(a) * 42.0f, enemy.y - 35.0f + std::sin(a) * 42.0f};
+            const Vec2 tip = {enemy.x - 4.0f + std::cos(a) * 66.0f, enemy.y - 35.0f + std::sin(a) * 66.0f};
+            DrawLine(ray, tip, D2D1::ColorF(0xFFE66D, 0.42f), 3.0f);
+        }
+        DrawLine({enemy.x - 18.0f, enemy.y - 34.0f}, {enemy.x - 98.0f, enemy.y - 34.0f}, D2D1::ColorF(0xFFDB7A, 0.88f), 8.0f);
+        break;
+    }
 
     DrawBaseHp(player, m_playerBaseHp, m_playerBaseMaxHp, D2D1::ColorF(0x65B8FF));
-    DrawBaseHp(enemy, m_enemyBaseHp, m_enemyBaseMaxHp, D2D1::ColorF(0xFF9BA8));
+    DrawBaseHp(enemy, m_enemyBaseHp, m_enemyBaseMaxHp, towerLine);
 }
 
 void PawlineGameImpl::DrawBaseHp(Vec2 base, float hp, float maxHp, D2D1_COLOR_F color)
@@ -2115,9 +2191,14 @@ void PawlineGameImpl::DrawUnitActionLines(const Unit& unit, Vec2 pos, D2D1_COLOR
         const Vec2 front = {pos.x + dir * (unit.radius + 34.0f + strike * 28.0f), pos.y - 2.0f};
         const ImageVfxKind kind = unit.team == Team::Player ? ImageVfxKind::Slash : ImageVfxKind::EnemySlash;
         const int frame = std::clamp(static_cast<int>(AttackProgress(unit) * 8.0f), 0, 7);
-        FillEllipse(front, 32.0f + strike * 22.0f, 16.0f + strike * 11.0f, D2D1::ColorF(accent.r, accent.g, accent.b, 0.16f * strike));
-        DrawImageVfxFrame(kind, frame, front, 82.0f + strike * 52.0f, 0.60f * strike);
-        DrawVfxAtlasTile(unit.team == Team::Player ? 0 : 1, 1, front, 86.0f + strike * 36.0f, 0.16f * strike);
+        FillEllipse(front, 40.0f + strike * 32.0f, 19.0f + strike * 15.0f, D2D1::ColorF(accent.r, accent.g, accent.b, 0.22f * strike));
+        DrawImageVfxFrame(kind, frame, front, 96.0f + strike * 72.0f, 0.72f * strike);
+        DrawVfxAtlasTile(unit.team == Team::Player ? 0 : 1, 1, front, 104.0f + strike * 58.0f, 0.24f * strike);
+        StrokeEllipse(front,
+                      30.0f + strike * 34.0f,
+                      12.0f + strike * 15.0f,
+                      D2D1::ColorF(0xFFFFFF, 0.18f * strike),
+                      1.5f + strike * 1.4f);
     }
 
     if (recoil > 0.0f)
@@ -2232,8 +2313,9 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
     frontLift = ranged ? handLift : frontLift;
     const Vec2 hand = {pos.x + dir * handForward, pos.y + handLift};
     const Vec2 front = {pos.x + dir * (unit.radius + frontForward + reach), pos.y + frontLift};
-    const Vec2 weaponCenter = {hand.x + dir * (weaponForward + reach * reachWeight),
-                               hand.y + weaponLift + recoil * 3.0f};
+    const float gripCenterOffset = weaponForward * (ranged ? 0.42f : 0.50f);
+    const Vec2 weaponCenter = {hand.x + dir * (gripCenterOffset + reach * reachWeight * 0.64f),
+                               hand.y + weaponLift * 0.54f + recoil * 2.0f};
     const float weaponAngle = (dir >= 0.0f ? angleBase : -angleBase) + dir * (strike * strikeAngle - windup * windupAngle + recoil * recoilAngle);
     const float action = Clamp01(windup + strike + recoil);
     const float glowAlpha = 0.10f + action * 0.18f;
@@ -2320,6 +2402,24 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
                      weaponAngle,
                      0.88f,
                      dir < 0.0f);
+
+    const Vec2 shoulder = {pos.x + dir * (unit.radius * 0.16f - windup * 2.0f),
+                           pos.y - unit.radius * (ranged ? 0.28f : 0.02f)};
+    const Vec2 grip = {hand.x + dir * (strike * 4.0f - recoil * 2.0f), hand.y + recoil * 1.2f};
+    DrawLine(shoulder, grip, D2D1::ColorF(0x071017, 0.86f), 6.2f);
+    DrawLine(shoulder, grip, D2D1::ColorF(stats.color.r, stats.color.g, stats.color.b, 0.82f), 3.8f);
+    FillEllipse(grip, 8.0f + action * 2.2f, 5.4f + action * 1.2f, D2D1::ColorF(0x071017, 0.92f));
+    FillEllipse({grip.x + dir * 1.4f, grip.y - 0.8f},
+                5.5f + action * 1.5f,
+                3.9f + action * 0.9f,
+                D2D1::ColorF(stats.color.r, stats.color.g, stats.color.b, 0.96f));
+    if (strike > 0.0f)
+    {
+        FillEllipse({grip.x + dir * 10.0f, grip.y - 2.0f},
+                    14.0f + strike * 10.0f,
+                    5.5f + strike * 4.0f,
+                    D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.16f + strike * 0.24f));
+    }
 
     if (recoil > 0.0f)
     {
@@ -2417,8 +2517,9 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
     frontLift = ranged ? handLift : frontLift;
     const Vec2 hand = {pos.x + dir * handForward, pos.y + handLift};
     const Vec2 front = {pos.x + dir * (unit.radius + frontForward + reach), pos.y + frontLift};
-    const Vec2 weaponCenter = {hand.x + dir * (weaponForward + reach * reachWeight),
-                               hand.y + weaponLift + recoil * 3.0f};
+    const float gripCenterOffset = weaponForward * (ranged ? 0.42f : 0.50f);
+    const Vec2 weaponCenter = {hand.x + dir * (gripCenterOffset + reach * reachWeight * 0.64f),
+                               hand.y + weaponLift * 0.54f + recoil * 2.0f};
     const float weaponAngle = (dir >= 0.0f ? angleBase : -angleBase) + dir * (strike * strikeAngle - windup * windupAngle + recoil * recoilAngle);
     const float action = Clamp01(windup + strike + recoil);
     ImageVfxKind vfx = ImageVfxKind::EnemySlash;
@@ -2511,6 +2612,24 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
                      weaponAngle,
                      0.88f,
                      dir < 0.0f);
+
+    const Vec2 shoulder = {pos.x + dir * (unit.radius * 0.16f - windup * 2.0f),
+                           pos.y - unit.radius * (ranged ? 0.24f : 0.00f)};
+    const Vec2 grip = {hand.x + dir * (strike * 4.0f - recoil * 2.0f), hand.y + recoil * 1.2f};
+    DrawLine(shoulder, grip, D2D1::ColorF(0x05070B, 0.88f), 6.2f);
+    DrawLine(shoulder, grip, D2D1::ColorF(stats.color.r, stats.color.g, stats.color.b, 0.80f), 3.8f);
+    FillEllipse(grip, 8.0f + action * 2.2f, 5.4f + action * 1.2f, D2D1::ColorF(0x05070B, 0.94f));
+    FillEllipse({grip.x + dir * 1.4f, grip.y - 0.8f},
+                5.6f + action * 1.4f,
+                3.9f + action * 0.9f,
+                D2D1::ColorF(stats.color.r, stats.color.g, stats.color.b, 0.94f));
+    if (strike > 0.0f)
+    {
+        FillEllipse({grip.x + dir * 10.0f, grip.y - 2.0f},
+                    14.0f + strike * 10.0f,
+                    5.5f + strike * 4.0f,
+                    D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.15f + strike * 0.22f));
+    }
 
     if (recoil > 0.0f)
     {

@@ -1641,18 +1641,26 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
     const VfxCombo combo = UnitVfxCombo(attacker);
     const ImageVfxKind imageKind = combo.primary;
     const Vec2 imagePos = attacker.ranged ? muzzle : targetPos;
-    const float imageSize = attacker.ranged ? 132.0f : 148.0f + attacker.radius * 0.86f;
-    const float imageLife = attacker.ranged ? 0.46f : 0.40f;
+    const float punchScale = attacker.boss ? 1.34f : (attacker.elite ? 1.16f : 1.0f);
+    const float imageSize = (attacker.ranged ? 146.0f : 164.0f + attacker.radius * 0.96f) * punchScale;
+    const float imageLife = attacker.ranged ? 0.52f : 0.46f;
     AddImageVfx(imageKind, imagePos, imageSize, imageLife, FadeColor(color, 1.0f), attacker.attackDir);
     const Vec2 impactPos = targetPos + Vec2{0.0f, attacker.ranged ? -2.0f : -5.0f};
-    AddImageVfx(combo.secondary, impactPos, attacker.ranged ? 112.0f : 122.0f + attacker.radius * 0.56f,
-                attacker.ranged ? 0.34f : 0.30f, FadeColor(color, 0.74f), attacker.attackDir);
+    AddImageVfx(combo.secondary, impactPos, (attacker.ranged ? 124.0f : 138.0f + attacker.radius * 0.62f) * punchScale,
+                attacker.ranged ? 0.40f : 0.36f, FadeColor(color, 0.80f), attacker.attackDir);
     AddImageVfx(combo.accent, attacker.ranged ? muzzle : impactPos + dir * 8.0f,
-                attacker.ranged ? 88.0f : 96.0f + attacker.radius * 0.34f,
-                attacker.ranged ? 0.28f : 0.24f, FadeColor(color, 0.58f), attacker.attackDir);
+                (attacker.ranged ? 102.0f : 112.0f + attacker.radius * 0.38f) * punchScale,
+                attacker.ranged ? 0.32f : 0.28f, FadeColor(color, 0.64f), attacker.attackDir);
     if (!attacker.ranged)
     {
-        AddImageVfx(ImageVfxKind::HitFlash, targetPos + Vec2{0.0f, -4.0f}, 108.0f, 0.28f, FadeColor(color, 0.88f), attacker.attackDir);
+        AddImageVfx(ImageVfxKind::HitFlash, targetPos + Vec2{0.0f, -4.0f}, 124.0f * punchScale, 0.32f, FadeColor(color, 0.92f), attacker.attackDir);
+    }
+    AddRing(muzzle, attacker.ranged ? 30.0f * punchScale : 24.0f * punchScale, 0.16f, FadeColor(color, 0.24f), 1.6f);
+    AddRing(impactPos, (attacker.ranged ? 48.0f : 58.0f + attacker.radius * 0.46f) * punchScale, 0.24f, FadeColor(color, 0.34f), attacker.ranged ? 2.2f : 2.8f);
+    AddSparkLines(impactPos, FadeColor(color, 0.92f), attacker.ranged ? 7 : 10);
+    if (attacker.boss || attacker.elite)
+    {
+        AddBurst(impactPos, FadeColor(color, 0.82f), attacker.boss ? 18 : 12);
     }
 
     if (attacker.team == Team::Player)
