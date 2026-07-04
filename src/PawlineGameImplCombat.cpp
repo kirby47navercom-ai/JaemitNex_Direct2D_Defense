@@ -1285,6 +1285,7 @@ void PawlineGameImpl::SpawnPlayer(PlayerUnit type)
     unit.team = Team::Player;
     unit.kind = static_cast<int>(type);
     unit.pos = {kPlayerBaseX + 54.0f, RandomLaneY()};
+    unit.attackDir = 1.0f;
     unit.hp = stats.hp * walletBoost;
     unit.maxHp = unit.hp;
     unit.damage = stats.damage * walletBoost;
@@ -1318,6 +1319,7 @@ void PawlineGameImpl::SpawnEnemy(EnemyUnit type, bool elite)
     unit.team = Team::Enemy;
     unit.kind = static_cast<int>(type);
     unit.pos = {kEnemyBaseX - 58.0f, RandomLaneY()};
+    unit.attackDir = -1.0f;
     unit.hp = elite ? stats.hp * 1.85f : stats.hp;
     unit.maxHp = unit.hp;
     unit.damage = elite ? stats.damage * 1.25f : stats.damage;
@@ -1636,20 +1638,20 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
         {
         case PlayerUnit::Paw:
             AddSparkLines(targetPos, D2D1::ColorF(0xEAF7FF), 5);
-            AddBeam(attacker.pos + dir * 18.0f, targetPos, 2.6f, 0.10f, D2D1::ColorF(0xEAF7FF, 0.48f));
+            if (attacker.ranged) { AddBeam(attacker.pos + dir * 18.0f, targetPos, 2.6f, 0.10f, D2D1::ColorF(0xEAF7FF, 0.48f)); }
             AddRing(targetPos, 34.0f, 0.18f, D2D1::ColorF(0x65B8FF, 0.28f), 1.8f);
             break;
         case PlayerUnit::Spark:
-            AddBeam(muzzle + Vec2{0.0f, -26.0f}, targetPos, 4.8f, 0.18f, D2D1::ColorF(0xF6FF83, 0.76f));
+            if (attacker.ranged) { AddBeam(muzzle + Vec2{0.0f, -26.0f}, targetPos, 4.8f, 0.18f, D2D1::ColorF(0xF6FF83, 0.76f)); }
             AddSparkLines(targetPos, D2D1::ColorF(0xF6FF83), 16);
             AddRing(attacker.pos + Vec2{0.0f, -34.0f}, 42.0f, 0.22f, D2D1::ColorF(0xF6FF83, 0.34f), 2.0f);
             break;
         case PlayerUnit::Dash:
-            AddBeam(attacker.pos - dir * 34.0f, targetPos, 4.8f, 0.13f, D2D1::ColorF(0xB8FF89, 0.66f));
+            if (attacker.ranged) { AddBeam(attacker.pos - dir * 34.0f, targetPos, 4.8f, 0.13f, D2D1::ColorF(0xB8FF89, 0.66f)); }
             AddSparkLines(targetPos, D2D1::ColorF(0xB8FF89), 9);
             break;
         case PlayerUnit::Comet:
-            AddBeam(attacker.pos - dir * 58.0f, targetPos + dir * 16.0f, 6.2f, 0.18f, D2D1::ColorF(0xFFCA7A, 0.72f));
+            if (attacker.ranged) { AddBeam(attacker.pos - dir * 58.0f, targetPos + dir * 16.0f, 6.2f, 0.18f, D2D1::ColorF(0xFFCA7A, 0.72f)); }
             AddRing(targetPos, 48.0f, 0.22f, D2D1::ColorF(0xFFB347, 0.34f), 2.4f);
             AddSparkLines(targetPos, D2D1::ColorF(0xFFCA7A), 12);
             break;
@@ -1665,42 +1667,42 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
         case PlayerUnit::Bell:
             AddRing(attacker.pos, 62.0f, 0.30f, D2D1::ColorF(0xF6FF83, 0.30f), 2.2f);
             AddRing(targetPos, 74.0f, 0.32f, D2D1::ColorF(0xF6FF83, 0.34f), 2.4f);
-            AddBeam(muzzle, targetPos, 2.8f, 0.14f, D2D1::ColorF(0xF6FF83, 0.42f));
+            if (attacker.ranged) { AddBeam(muzzle, targetPos, 2.8f, 0.14f, D2D1::ColorF(0xF6FF83, 0.42f)); }
             break;
         case PlayerUnit::Orbit:
             AddRing(attacker.pos, 86.0f, 0.34f, D2D1::ColorF(0xC7D8FF, 0.36f), 2.2f);
-            AddBeam(muzzle, targetPos, 4.2f, 0.18f, D2D1::ColorF(0xC7D8FF, 0.70f));
+            if (attacker.ranged) { AddBeam(muzzle, targetPos, 4.2f, 0.18f, D2D1::ColorF(0xC7D8FF, 0.70f)); }
             AddSparkLines(targetPos, D2D1::ColorF(0xC7D8FF), 8);
             break;
         case PlayerUnit::Nebula:
             AddRing(attacker.pos, 104.0f, 0.40f, D2D1::ColorF(0xC8B7FF, 0.38f), 2.8f);
-            AddBeam(muzzle, targetPos, 5.8f, 0.22f, D2D1::ColorF(0xC8B7FF, 0.76f));
+            if (attacker.ranged) { AddBeam(muzzle, targetPos, 5.8f, 0.22f, D2D1::ColorF(0xC8B7FF, 0.76f)); }
             AddRing(targetPos, 78.0f, 0.34f, D2D1::ColorF(0xF7D6FF, 0.34f), 2.8f);
             break;
         case PlayerUnit::Frost:
-            AddBeam(muzzle, targetPos, 4.8f, 0.18f, D2D1::ColorF(0xD9FFF8, 0.72f));
+            if (attacker.ranged) { AddBeam(muzzle, targetPos, 4.8f, 0.18f, D2D1::ColorF(0xD9FFF8, 0.72f)); }
             AddRing(targetPos, 62.0f, 0.32f, D2D1::ColorF(0xB9FFF5, 0.40f), 2.7f);
             break;
         case PlayerUnit::Drill:
-            AddBeam(attacker.pos, targetPos + dir * 18.0f, 7.0f, 0.15f, D2D1::ColorF(0xFFF0C8, 0.76f));
+            if (attacker.ranged) { AddBeam(attacker.pos, targetPos + dir * 18.0f, 7.0f, 0.15f, D2D1::ColorF(0xFFF0C8, 0.76f)); }
             AddSparkLines(targetPos, D2D1::ColorF(0xFFF0C8), 14);
             break;
         case PlayerUnit::Prism:
-            AddBeam(muzzle, targetPos, 7.5f, 0.22f, D2D1::ColorF(0xF7D6FF, 0.80f));
+            if (attacker.ranged) { AddBeam(muzzle, targetPos, 7.5f, 0.22f, D2D1::ColorF(0xF7D6FF, 0.80f)); }
             AddRing(targetPos, 66.0f, 0.30f, D2D1::ColorF(0xF7D6FF, 0.42f), 2.5f);
             break;
         case PlayerUnit::Solar:
-            AddBeam(attacker.pos, targetPos, 8.0f, 0.20f, D2D1::ColorF(0xFFB347, 0.82f));
+            if (attacker.ranged) { AddBeam(attacker.pos, targetPos, 8.0f, 0.20f, D2D1::ColorF(0xFFB347, 0.82f)); }
             AddRing(targetPos, 92.0f, 0.38f, D2D1::ColorF(0xFFE66D, 0.46f), 4.5f);
             AddRing(attacker.pos, 74.0f, 0.28f, D2D1::ColorF(0xFFE66D, 0.34f), 3.4f);
             break;
         case PlayerUnit::Mint:
-            AddBeam(muzzle, targetPos, 3.2f, 0.16f, D2D1::ColorF(0xD8FFF3, 0.58f));
+            if (attacker.ranged) { AddBeam(muzzle, targetPos, 3.2f, 0.16f, D2D1::ColorF(0xD8FFF3, 0.58f)); }
             AddRing(targetPos, 48.0f, 0.25f, D2D1::ColorF(0xD8FFF3, 0.35f), 2.0f);
             AddSparkLines(targetPos, D2D1::ColorF(0xD8FFF3), 7);
             break;
         default:
-            AddBeam(attacker.pos, targetPos, 3.8f, 0.12f, D2D1::ColorF(color.r, color.g, color.b, 0.62f));
+            if (attacker.ranged) { AddBeam(attacker.pos, targetPos, 3.8f, 0.12f, D2D1::ColorF(color.r, color.g, color.b, 0.62f)); }
             AddSparkLines(targetPos, color, 6);
             break;
         }
@@ -1712,14 +1714,14 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
     {
     case EnemyUnit::Dust:
         AddSparkLines(targetPos, D2D1::ColorF(0xFF9BA8), 5);
-        AddBeam(muzzle, targetPos, 2.4f, 0.10f, D2D1::ColorF(0xFF9BA8, 0.42f));
+        if (attacker.ranged) { AddBeam(muzzle, targetPos, 2.4f, 0.10f, D2D1::ColorF(0xFF9BA8, 0.42f)); }
         break;
     case EnemyUnit::Brute:
         AddRing(targetPos, 70.0f, 0.32f, D2D1::ColorF(0xD8A66A, 0.38f), 4.0f);
         AddBurst(targetPos, D2D1::ColorF(0xD8A66A), 9);
         break;
     case EnemyUnit::Skitter:
-        AddBeam(attacker.pos - dir * 22.0f, targetPos, 3.4f, 0.12f, D2D1::ColorF(0xFFB6C2, 0.60f));
+        if (attacker.ranged) { AddBeam(attacker.pos - dir * 22.0f, targetPos, 3.4f, 0.12f, D2D1::ColorF(0xFFB6C2, 0.60f)); }
         AddSparkLines(targetPos, D2D1::ColorF(0xFFB6C2), 8);
         break;
     case EnemyUnit::Sulfur:
@@ -1731,7 +1733,7 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
         AddSparkLines(targetPos, D2D1::ColorF(0x6BAA5C), 8);
         break;
     case EnemyUnit::Rust:
-        AddBeam(muzzle, targetPos, 4.0f, 0.13f, D2D1::ColorF(0xD77A5C, 0.64f));
+        if (attacker.ranged) { AddBeam(muzzle, targetPos, 4.0f, 0.13f, D2D1::ColorF(0xD77A5C, 0.64f)); }
         AddSparkLines(targetPos, D2D1::ColorF(0xD77A5C), 9);
         break;
     case EnemyUnit::Storm:
@@ -1739,23 +1741,23 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
         AddRing(targetPos, 68.0f, 0.34f, D2D1::ColorF(0xF1D09A, 0.32f), 3.0f);
         break;
     case EnemyUnit::Ring:
-        AddBeam(muzzle, targetPos, 4.6f, 0.18f, D2D1::ColorF(0xE6D392, 0.72f));
+        if (attacker.ranged) { AddBeam(muzzle, targetPos, 4.6f, 0.18f, D2D1::ColorF(0xE6D392, 0.72f)); }
         AddRing(targetPos, 58.0f, 0.26f, D2D1::ColorF(0xE6D392, 0.30f), 2.4f);
         break;
     case EnemyUnit::Frost:
-        AddBeam(muzzle, targetPos, 4.2f, 0.16f, D2D1::ColorF(0xD9FFF8, 0.68f));
+        if (attacker.ranged) { AddBeam(muzzle, targetPos, 4.2f, 0.16f, D2D1::ColorF(0xD9FFF8, 0.68f)); }
         AddRing(targetPos, 56.0f, 0.30f, D2D1::ColorF(0xB9FFF5, 0.34f), 2.4f);
         break;
     case EnemyUnit::Tide:
         AddRing(targetPos, 70.0f, 0.34f, D2D1::ColorF(0x75A7FF, 0.30f), 3.0f);
-        AddBeam(muzzle, targetPos, 4.0f, 0.18f, D2D1::ColorF(0xBFD9FF, 0.58f));
+        if (attacker.ranged) { AddBeam(muzzle, targetPos, 4.0f, 0.18f, D2D1::ColorF(0xBFD9FF, 0.58f)); }
         break;
     case EnemyUnit::Void:
         AddRing(attacker.pos, 92.0f, 0.38f, D2D1::ColorF(0xC8B7FF, 0.32f), 2.8f);
-        AddBeam(muzzle, targetPos, 5.2f, 0.22f, D2D1::ColorF(0xC8B7FF, 0.70f));
+        if (attacker.ranged) { AddBeam(muzzle, targetPos, 5.2f, 0.22f, D2D1::ColorF(0xC8B7FF, 0.70f)); }
         break;
     case EnemyUnit::Flare:
-        AddBeam(attacker.pos - dir * 40.0f, targetPos, 5.4f, 0.16f, D2D1::ColorF(0xFFDB7A, 0.70f));
+        if (attacker.ranged) { AddBeam(attacker.pos - dir * 40.0f, targetPos, 5.4f, 0.16f, D2D1::ColorF(0xFFDB7A, 0.70f)); }
         AddSparkLines(targetPos, D2D1::ColorF(0xFFDB7A), 10);
         break;
     case EnemyUnit::Spore:
@@ -1767,17 +1769,17 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
         AddBurst(targetPos, color, 9);
         break;
     case EnemyUnit::Mirror:
-        AddBeam(muzzle, targetPos, 3.6f, 0.16f, D2D1::ColorF(0xEAF7FF, 0.52f));
+        if (attacker.ranged) { AddBeam(muzzle, targetPos, 3.6f, 0.16f, D2D1::ColorF(0xEAF7FF, 0.52f)); }
         AddRing(attacker.pos, 58.0f, 0.28f, D2D1::ColorF(0xEAF7FF, 0.28f), 2.2f);
         break;
     case EnemyUnit::Comet:
-        AddBeam(attacker.pos - dir * 56.0f, targetPos + dir * 18.0f, 5.8f, 0.17f, D2D1::ColorF(0xFFDB7A, 0.72f));
+        if (attacker.ranged) { AddBeam(attacker.pos - dir * 56.0f, targetPos + dir * 18.0f, 5.8f, 0.17f, D2D1::ColorF(0xFFDB7A, 0.72f)); }
         AddSparkLines(targetPos, D2D1::ColorF(0xFFDB7A), 11);
         break;
     case EnemyUnit::Boss:
         AddRing(targetPos, 122.0f, 0.42f, D2D1::ColorF(0xFFB347, 0.44f), 5.0f);
         AddRing(attacker.pos, 128.0f, 0.44f, D2D1::ColorF(0xFF9BA8, 0.34f), 3.4f);
-        AddBeam(muzzle, targetPos, 8.0f, 0.24f, D2D1::ColorF(0xFFB347, 0.78f));
+        if (attacker.ranged) { AddBeam(muzzle, targetPos, 8.0f, 0.24f, D2D1::ColorF(0xFFB347, 0.78f)); }
         AddBurst(targetPos, D2D1::ColorF(0xFFB347), 18);
         break;
     }
@@ -1884,7 +1886,7 @@ void PawlineGameImpl::AttackUnit(Unit& attacker, Unit& target)
         target.stunTimer = std::max(target.stunTimer, 0.18f);
     }
     AddMeleeClashVfx(attacker, target.pos, hitColor);
-    AddBeam(attacker.pos, target.pos, 4.0f, 0.11f, hitColor);
+    AddImageVfx(UnitImageVfxKind(attacker), target.pos + Vec2{0.0f, -4.0f}, 96.0f + attacker.radius * 1.1f, 0.24f, FadeColor(hitColor, 0.88f), attacker.attackDir);
     AddHitEffects(target.pos, hitColor);
 }
 
@@ -1903,7 +1905,7 @@ void PawlineGameImpl::AttackBase(Unit& attacker)
     }
 
     AddMeleeClashVfx(attacker, baseHit, hitColor);
-    AddBeam(attacker.pos, baseHit, 4.6f, 0.13f, hitColor);
+    AddImageVfx(UnitImageVfxKind(attacker), baseHit + Vec2{0.0f, -8.0f}, 108.0f + attacker.radius * 1.2f, 0.28f, FadeColor(hitColor, 0.90f), attacker.attackDir);
     DamageBase(attacker.team == Team::Player ? Team::Enemy : Team::Player, attacker.damage, attacker.pos);
 }
 
@@ -1956,9 +1958,9 @@ Vec2 PawlineGameImpl::ProjectileMuzzle(const Unit& attacker, Vec2 targetPos) con
     const Vec2 dir = Normalize(targetPos - attacker.pos);
     const float side = attacker.team == Team::Player ? 1.0f : -1.0f;
     const Vec2 normal = {-dir.y, dir.x};
-    float lift = -attacker.radius * 0.38f;
+    float lift = -attacker.radius * 0.58f - 10.0f;
     float sideOffset = 0.0f;
-    float reach = attacker.radius + 18.0f;
+    float reach = attacker.radius + 42.0f;
 
     if (attacker.team == Team::Player)
     {
@@ -1967,14 +1969,14 @@ Vec2 PawlineGameImpl::ProjectileMuzzle(const Unit& attacker, Vec2 targetPos) con
         case PlayerUnit::Spark:
             lift = -attacker.radius - 26.0f;
             sideOffset = 6.0f;
-            reach += 8.0f;
+            reach += 14.0f;
             break;
         case PlayerUnit::Bell:
-            lift = -attacker.radius - 4.0f;
+            lift = -attacker.radius - 10.0f;
             sideOffset = -10.0f;
             break;
         case PlayerUnit::Orbit:
-            lift = -attacker.radius * 0.25f;
+            lift = -attacker.radius * 0.44f - 6.0f;
             sideOffset = 20.0f;
             reach += 12.0f;
             break;
@@ -1984,7 +1986,7 @@ Vec2 PawlineGameImpl::ProjectileMuzzle(const Unit& attacker, Vec2 targetPos) con
             reach += 16.0f;
             break;
         case PlayerUnit::Nebula:
-            lift = -attacker.radius * 0.20f;
+            lift = -attacker.radius * 0.42f - 8.0f;
             reach += 20.0f;
             break;
         case PlayerUnit::Mint:
@@ -2000,11 +2002,11 @@ Vec2 PawlineGameImpl::ProjectileMuzzle(const Unit& attacker, Vec2 targetPos) con
         switch (static_cast<EnemyUnit>(attacker.kind))
         {
         case EnemyUnit::Sulfur:
-            lift = -attacker.radius * 0.15f;
+            lift = -attacker.radius * 0.46f - 6.0f;
             sideOffset = 10.0f;
             break;
         case EnemyUnit::Ring:
-            lift = -attacker.radius * 0.55f;
+            lift = -attacker.radius * 0.70f - 8.0f;
             sideOffset = -16.0f;
             reach += 10.0f;
             break;
@@ -2013,12 +2015,12 @@ Vec2 PawlineGameImpl::ProjectileMuzzle(const Unit& attacker, Vec2 targetPos) con
             reach += 8.0f;
             break;
         case EnemyUnit::Tide:
-            lift = -attacker.radius * 0.18f;
+            lift = -attacker.radius * 0.48f - 6.0f;
             reach += 12.0f;
             break;
         case EnemyUnit::Void:
         case EnemyUnit::Boss:
-            lift = -attacker.radius * 0.28f;
+            lift = -attacker.radius * 0.48f - 8.0f;
             reach += 20.0f;
             break;
         case EnemyUnit::Mirror:

@@ -2255,17 +2255,22 @@ void PawlineGameImpl::DrawUnitActionLines(const Unit& unit, Vec2 pos, D2D1_COLOR
 void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitStats& stats, float windup, float strike, float recoil)
 {
     const PlayerUnit type = static_cast<PlayerUnit>(unit.kind);
+    const bool ranged = unit.ranged;
     const float dir = unit.attackDir;
-    const float reach = strike * 22.0f - windup * 8.0f + recoil * 4.0f;
-    const Vec2 hand = {pos.x + dir * (unit.radius * 0.72f), pos.y + 2.0f};
-    const Vec2 front = {pos.x + dir * (unit.radius + 40.0f + reach), pos.y - 5.0f};
+    const float reach = ranged ? (strike * 7.0f - windup * 5.0f + recoil * 4.0f) : (strike * 34.0f - windup * 18.0f + recoil * 7.0f);
+    const float handLift = ranged ? (-unit.radius * 0.58f - 11.0f) : (-unit.radius * 0.16f - 4.0f);
+    const Vec2 hand = {pos.x + dir * (unit.radius * (ranged ? 0.52f : 0.68f)), pos.y + handLift};
+    const Vec2 front = {pos.x + dir * (unit.radius + (ranged ? 50.0f : 46.0f) + reach), pos.y + (ranged ? handLift : -5.0f)};
     const int weaponIndex = std::clamp(static_cast<int>(type), 0, kRosterCount - 1);
-    const Vec2 weaponCenter = {hand.x + dir * (38.0f + reach * 0.60f), hand.y - 12.0f + recoil * 3.0f};
-    const float weaponAngle = (dir >= 0.0f ? -5.0f : 5.0f) + dir * (strike * 16.0f - windup * 10.0f);
+    const Vec2 weaponCenter = {hand.x + dir * ((ranged ? 36.0f : 42.0f) + reach * (ranged ? 0.45f : 0.68f)),
+                               hand.y + (ranged ? 0.0f : -7.0f) + recoil * 3.0f};
+    const float weaponAngle = ranged
+                                  ? ((dir >= 0.0f ? -2.0f : 2.0f) + dir * (strike * 3.0f - windup * 5.0f + recoil * 2.0f))
+                                  : ((dir >= 0.0f ? -18.0f : 18.0f) + dir * (strike * 48.0f - windup * 38.0f + recoil * 17.0f));
     const float action = Clamp01(windup + strike + recoil);
     const float glowAlpha = 0.10f + action * 0.18f;
     ImageVfxKind vfx = ImageVfxKind::HitFlash;
-    float vfxSize = 66.0f + strike * 40.0f;
+    float vfxSize = (ranged ? 58.0f : 76.0f) + strike * (ranged ? 24.0f : 48.0f);
 
     // 실제 무기는 PNG만 사용하고, 아래 switch는 유닛별 공격 빛과 충격 모양만 고른다.
     switch (type)
@@ -2325,18 +2330,26 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
         break;
     }
 
-    FillEllipse(weaponCenter, 42.0f + action * 28.0f, 18.0f + action * 10.0f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, glowAlpha));
+    FillEllipse(weaponCenter,
+                (ranged ? 36.0f : 46.0f) + action * (ranged ? 16.0f : 28.0f),
+                (ranged ? 14.0f : 19.0f) + action * (ranged ? 7.0f : 10.0f),
+                D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, glowAlpha));
     if (strike > 0.0f)
     {
         const int frame = std::clamp(static_cast<int>(AttackProgress(unit) * 8.0f), 0, 7);
-        DrawImageVfxFrame(vfx, frame, front, vfxSize, 0.56f * strike);
-        StrokeEllipse(front, 28.0f + strike * 34.0f, 12.0f + strike * 14.0f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.24f + strike * 0.28f), 2.2f + strike * 1.4f);
+        DrawImageVfxFrame(vfx, frame, front, vfxSize, (ranged ? 0.42f : 0.60f) * strike);
+        StrokeEllipse(front,
+                      (ranged ? 18.0f : 28.0f) + strike * (ranged ? 18.0f : 34.0f),
+                      (ranged ? 8.0f : 12.0f) + strike * (ranged ? 8.0f : 14.0f),
+                      D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.22f + strike * 0.26f),
+                      2.0f + strike * 1.2f);
     }
 
+    const float heavy = (type == PlayerUnit::Titan || type == PlayerUnit::Solar || type == PlayerUnit::Drill || type == PlayerUnit::Nebula) ? 1.0f : 0.0f;
     DrawWeaponBitmap(m_playerWeaponBitmaps[static_cast<size_t>(weaponIndex)].Get(),
                      weaponCenter,
-                     62.0f + unit.radius * 0.34f + strike * 10.0f,
-                     38.0f + unit.radius * 0.16f,
+                     (ranged ? 66.0f : 74.0f) + unit.radius * (ranged ? 0.30f : 0.40f) + strike * (ranged ? 4.0f : 13.0f) + heavy * 8.0f,
+                     (ranged ? 42.0f : 48.0f) + unit.radius * (ranged ? 0.14f : 0.18f) + heavy * 4.0f,
                      weaponAngle,
                      0.88f,
                      dir < 0.0f);
@@ -2352,16 +2365,21 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
 void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStats& stats, float windup, float strike, float recoil)
 {
     const EnemyUnit type = static_cast<EnemyUnit>(unit.kind);
+    const bool ranged = unit.ranged;
     const float dir = unit.attackDir;
-    const float reach = strike * 22.0f - windup * 7.0f + recoil * 4.0f;
-    const Vec2 hand = {pos.x + dir * (unit.radius * 0.68f), pos.y + 4.0f};
-    const Vec2 front = {pos.x + dir * (unit.radius + 38.0f + reach), pos.y - 2.0f};
+    const float reach = ranged ? (strike * 7.0f - windup * 4.0f + recoil * 4.0f) : (strike * 32.0f - windup * 16.0f + recoil * 7.0f);
+    const float handLift = ranged ? (-unit.radius * 0.52f - 9.0f) : (-unit.radius * 0.10f - 3.0f);
+    const Vec2 hand = {pos.x + dir * (unit.radius * (ranged ? 0.52f : 0.66f)), pos.y + handLift};
+    const Vec2 front = {pos.x + dir * (unit.radius + (ranged ? 48.0f : 44.0f) + reach), pos.y + (ranged ? handLift : -3.0f)};
     const int weaponIndex = std::clamp(static_cast<int>(type), 0, kEnemyCount - 1);
-    const Vec2 weaponCenter = {hand.x + dir * (39.0f + reach * 0.58f), hand.y - 10.0f + recoil * 3.0f};
-    const float weaponAngle = (dir >= 0.0f ? -4.0f : 4.0f) + dir * (strike * 15.0f - windup * 9.0f);
+    const Vec2 weaponCenter = {hand.x + dir * ((ranged ? 35.0f : 40.0f) + reach * (ranged ? 0.45f : 0.66f)),
+                               hand.y + (ranged ? 0.0f : -6.0f) + recoil * 3.0f};
+    const float weaponAngle = ranged
+                                  ? ((dir >= 0.0f ? -2.0f : 2.0f) + dir * (strike * 3.0f - windup * 4.0f + recoil * 2.0f))
+                                  : ((dir >= 0.0f ? -16.0f : 16.0f) + dir * (strike * 46.0f - windup * 36.0f + recoil * 16.0f));
     const float action = Clamp01(windup + strike + recoil);
     ImageVfxKind vfx = ImageVfxKind::EnemySlash;
-    float vfxSize = 64.0f + strike * 36.0f;
+    float vfxSize = (ranged ? 58.0f : 72.0f) + strike * (ranged ? 22.0f : 44.0f);
 
     // 적도 PNG 무기를 주역으로 쓰고, 타입별 차이는 색과 VFX로만 더한다.
     switch (type)
@@ -2428,18 +2446,26 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
         break;
     }
 
-    FillEllipse(weaponCenter, 42.0f + action * 26.0f, 17.0f + action * 10.0f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.10f + action * 0.18f));
+    FillEllipse(weaponCenter,
+                (ranged ? 34.0f : 44.0f) + action * (ranged ? 15.0f : 26.0f),
+                (ranged ? 13.0f : 18.0f) + action * (ranged ? 7.0f : 10.0f),
+                D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.10f + action * 0.18f));
     if (strike > 0.0f)
     {
         const int frame = std::clamp(static_cast<int>(AttackProgress(unit) * 8.0f), 0, 7);
-        DrawImageVfxFrame(vfx, frame, front, vfxSize, 0.52f * strike);
-        StrokeEllipse(front, 26.0f + strike * 32.0f, 12.0f + strike * 13.0f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.24f + strike * 0.26f), 2.0f + strike * 1.2f);
+        DrawImageVfxFrame(vfx, frame, front, vfxSize, (ranged ? 0.40f : 0.56f) * strike);
+        StrokeEllipse(front,
+                      (ranged ? 18.0f : 26.0f) + strike * (ranged ? 18.0f : 32.0f),
+                      (ranged ? 8.0f : 12.0f) + strike * (ranged ? 8.0f : 13.0f),
+                      D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.22f + strike * 0.25f),
+                      2.0f + strike * 1.2f);
     }
 
+    const float heavy = (type == EnemyUnit::Brute || type == EnemyUnit::Storm || type == EnemyUnit::Quake || type == EnemyUnit::Boss) ? 1.0f : 0.0f;
     DrawWeaponBitmap(m_enemyWeaponBitmaps[static_cast<size_t>(weaponIndex)].Get(),
                      weaponCenter,
-                     64.0f + unit.radius * 0.36f + strike * 10.0f,
-                     39.0f + unit.radius * 0.17f,
+                     (ranged ? 66.0f : 74.0f) + unit.radius * (ranged ? 0.30f : 0.40f) + strike * (ranged ? 4.0f : 13.0f) + heavy * 8.0f,
+                     (ranged ? 42.0f : 48.0f) + unit.radius * (ranged ? 0.14f : 0.18f) + heavy * 4.0f,
                      weaponAngle,
                      0.88f,
                      dir < 0.0f);

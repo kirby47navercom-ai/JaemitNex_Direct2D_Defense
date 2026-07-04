@@ -669,23 +669,23 @@ void PawlineGameImpl::LoadBitmapAssets()
     LoadBitmapFromFile(AssetPath(L"assets\\sprites\\kenney_toon_units\\player_unit_atlas.png"), m_playerUnitAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\sprites\\kenney_toon_units\\enemy_unit_atlas.png"), m_enemyUnitAtlas.ReleaseAndGetAddressOf());
     const std::array<const wchar_t*, kRosterCount> playerWeapons = {
-        L"blaster-a.png", L"target-small.png", L"blaster-q.png", L"blaster-b.png", L"blaster-n.png",
-        L"blaster-r.png", L"blaster-m.png", L"blaster-c.png", L"blaster-o.png", L"blaster-p.png",
-        L"blaster-l.png", L"blaster-g.png", L"blaster-k.png", L"blaster-h.png"};
+        L"player_00_blue_saber.png", L"player_01_guard_shield.png", L"player_02_spark_staff.png", L"player_03_dash_dagger.png", L"player_04_bell_scepter.png",
+        L"player_05_titan_hammer.png", L"player_06_frost_lance.png", L"player_07_comet_lance.png", L"player_08_orbit_focus.png", L"player_09_solar_blade.png",
+        L"player_10_mint_staff.png", L"player_11_drill_bit.png", L"player_12_prism_focus.png", L"player_13_nebula_cannon.png"};
     for (int i = 0; i < kRosterCount; ++i)
     {
-        LoadBitmapFromFile(AssetPath(L"assets\\weapons\\kenney_blaster\\" + std::wstring(playerWeapons[static_cast<size_t>(i)])),
+        LoadBitmapFromFile(AssetPath(L"assets\\weapons\\jaemit_roles\\" + std::wstring(playerWeapons[static_cast<size_t>(i)])),
                            m_playerWeaponBitmaps[static_cast<size_t>(i)].ReleaseAndGetAddressOf());
     }
 
     const std::array<const wchar_t*, kEnemyCount> enemyWeapons = {
-        L"bullet-foam.png", L"blaster-r.png", L"blaster-b.png", L"blaster-d.png", L"grenade-a.png",
-        L"blaster-e.png", L"target-small.png", L"blaster-i.png", L"blaster-m.png", L"blaster-j.png",
-        L"blaster-q.png", L"blaster-p.png", L"grenade-b.png", L"blaster-g.png", L"blaster-k.png",
-        L"blaster-c.png", L"blaster-o.png"};
+        L"enemy_00_dust_claw.png", L"enemy_01_brute_axe.png", L"enemy_02_skitter_dagger.png", L"enemy_03_sulfur_spitter.png", L"enemy_04_moss_club.png",
+        L"enemy_05_rust_hammer.png", L"enemy_06_storm_shield.png", L"enemy_07_ring_focus.png", L"enemy_08_frost_dagger.png", L"enemy_09_tide_cannon.png",
+        L"enemy_10_void_axe.png", L"enemy_11_flare_lance.png", L"enemy_12_spore_staff.png", L"enemy_13_quake_hammer.png", L"enemy_14_mirror_focus.png",
+        L"enemy_15_comet_lance.png", L"enemy_16_boss_solar_axe.png"};
     for (int i = 0; i < kEnemyCount; ++i)
     {
-        LoadBitmapFromFile(AssetPath(L"assets\\weapons\\kenney_blaster\\" + std::wstring(enemyWeapons[static_cast<size_t>(i)])),
+        LoadBitmapFromFile(AssetPath(L"assets\\weapons\\jaemit_roles\\" + std::wstring(enemyWeapons[static_cast<size_t>(i)])),
                            m_enemyWeaponBitmaps[static_cast<size_t>(i)].ReleaseAndGetAddressOf());
     }
 
