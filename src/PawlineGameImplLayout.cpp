@@ -37,6 +37,16 @@ D2D1_RECT_F PawlineGameImpl::OptionsFlashButtonRect() const
     return D2D1::RectF(490.0f, 338.0f, 790.0f, 388.0f);
 }
 
+D2D1_RECT_F PawlineGameImpl::OptionsSfxDownButtonRect() const
+{
+    return D2D1::RectF(830.0f, 338.0f, 884.0f, 388.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::OptionsSfxUpButtonRect() const
+{
+    return D2D1::RectF(1076.0f, 338.0f, 1130.0f, 388.0f);
+}
+
 D2D1_RECT_F PawlineGameImpl::OptionsSpeedDownButtonRect() const
 {
     return D2D1::RectF(490.0f, 438.0f, 544.0f, 488.0f);

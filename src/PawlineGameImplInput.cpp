@@ -305,6 +305,16 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
         SetMessage(m_reduceFlashes ? L"눈부심 줄이기 켜짐." : L"눈부심 줄이기 꺼짐.");
         return;
     }
+    if (Contains(OptionsSfxDownButtonRect(), pos))
+    {
+        AdjustSfxVolume(-0.10f);
+        return;
+    }
+    if (Contains(OptionsSfxUpButtonRect(), pos))
+    {
+        AdjustSfxVolume(0.10f);
+        return;
+    }
     if (Contains(OptionsSpeedDownButtonRect(), pos))
     {
         m_defaultGameSpeed = std::max(0.5f, m_defaultGameSpeed - 0.5f);
@@ -654,6 +664,14 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         {
             m_reduceFlashes = !m_reduceFlashes;
             SetMessage(m_reduceFlashes ? L"눈부심 줄이기 켜짐." : L"눈부심 줄이기 꺼짐.");
+        }
+        else if (key == 'M')
+        {
+            AdjustSfxVolume(-0.10f);
+        }
+        else if (key == 'N')
+        {
+            AdjustSfxVolume(0.10f);
         }
         else if (key == VK_LEFT || key == VK_OEM_MINUS || key == VK_OEM_4)
         {

@@ -866,6 +866,74 @@ void PawlineGameImpl::DrawOrbitalPlanet(Vec2 center, float radius, int stageInde
     }
 }
 
+void PawlineGameImpl::DrawSpaceDepthGrid(D2D1_RECT_F area, int stageIndex, float time, float cameraX)
+{
+    const StageDefinition stage = GetStageDefinition(std::max(0, std::min(kStageCount - 1, stageIndex)));
+    const float width = area.right - area.left;
+    const float height = area.bottom - area.top;
+    const Vec2 vanishing = {
+        area.left + width * (0.50f + std::sin(time * 0.07f + static_cast<float>(stageIndex)) * 0.06f),
+        area.top + height * 0.34f};
+    const float horizon = area.top + height * 0.62f;
+
+    // 화면 아래쪽으로 갈수록 간격이 넓어지는 원근 격자다.
+    // 실제 3D 투영은 아니지만, 전투 맵이 우주 항로 위에 떠 있다는 느낌을 만든다.
+    for (int i = -8; i <= 8; ++i)
+    {
+        const float edgeX = area.left + width * 0.5f + static_cast<float>(i) * width * 0.125f - std::fmod(cameraX * 0.040f, width * 0.125f);
+        DrawLine(vanishing, {edgeX, area.bottom + 44.0f}, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.060f), 1.1f);
+    }
+
+    for (int i = 0; i < 12; ++i)
+    {
+        const float depth = static_cast<float>(i) / 11.0f;
+        const float curve = depth * depth;
+        const float y = Lerp(horizon, area.bottom + 32.0f, curve);
+        const float alpha = 0.025f + curve * 0.070f;
+        DrawLine({area.left - 20.0f, y}, {area.right + 20.0f, y}, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, alpha), 1.0f + curve * 1.8f);
+    }
+
+    for (int i = 0; i < 5; ++i)
+    {
+        const float orbit = static_cast<float>(i) / 4.0f;
+        const float cx = vanishing.x + std::sin(time * (0.10f + orbit * 0.07f) + static_cast<float>(i)) * width * (0.05f + orbit * 0.10f);
+        const float cy = horizon - 32.0f - orbit * height * 0.12f;
+        StrokeEllipse({cx, cy}, width * (0.11f + orbit * 0.13f), height * (0.028f + orbit * 0.030f),
+                      D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.055f + orbit * 0.045f), 1.1f);
+    }
+}
+
+void PawlineGameImpl::DrawAsteroidField(D2D1_RECT_F area, int stageIndex, float time, float cameraX)
+{
+    const StageDefinition stage = GetStageDefinition(std::max(0, std::min(kStageCount - 1, stageIndex)));
+    const float width = area.right - area.left;
+    const float height = area.bottom - area.top;
+
+    for (int layer = 0; layer < 3; ++layer)
+    {
+        const int count = 9 + layer * 5;
+        const float depth = 0.35f + static_cast<float>(layer) * 0.34f;
+        const float parallax = 0.018f + depth * 0.050f;
+        const float drift = time * (5.0f + depth * 18.0f) - cameraX * parallax;
+        for (int i = 0; i < count; ++i)
+        {
+            const float seed = static_cast<float>(stageIndex * 97 + layer * 31 + i * 53);
+            const float x = area.left - 120.0f + std::fmod(seed * 23.0f + drift, width + 240.0f);
+            const float y = area.top + height * (0.12f + 0.76f * Hash01(seed, 2.0f, 0.0f));
+            const float r = (5.0f + Hash01(seed, 4.0f, 0.0f) * 16.0f) * (0.55f + depth);
+            const float wobble = std::sin(time * (0.9f + depth) + seed) * r * 0.12f;
+            const Vec2 center = {x, y + wobble};
+            const float alpha = 0.050f + depth * 0.075f;
+
+            FillEllipse({center.x + r * 0.18f, center.y + r * 0.22f}, r * 1.18f, r * 0.54f, D2D1::ColorF(0x000000, alpha * 1.8f));
+            FillEllipse(center, r, r * (0.60f + Hash01(seed, 5.0f, 0.0f) * 0.24f), D2D1::ColorF(stage.laneColor.r, stage.laneColor.g, stage.laneColor.b, alpha));
+            FillEllipse({center.x - r * 0.30f, center.y - r * 0.24f}, r * 0.28f, r * 0.13f, D2D1::ColorF(0xFFFFFF, alpha * 1.25f));
+            FillEllipse({center.x + r * 0.28f, center.y + r * 0.18f}, r * 0.46f, r * 0.30f, D2D1::ColorF(0x000000, alpha * 0.80f));
+            StrokeEllipse(center, r, r * 0.72f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, alpha * 1.8f), 1.0f + depth);
+        }
+    }
+}
+
 void PawlineGameImpl::DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, float time, float cameraX, bool showRoute)
 {
     const int safeStage = std::max(0, std::min(kStageCount - 1, stageIndex));
@@ -881,6 +949,7 @@ void PawlineGameImpl::DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, fl
     FillEllipse({area.left + width * 0.22f - cameraX * 0.015f, area.top + height * 0.22f}, width * 0.34f, height * 0.20f, D2D1::ColorF(0x325D86, 0.13f));
     FillEllipse({area.left + width * 0.78f - cameraX * 0.010f, area.top + height * 0.76f}, width * 0.42f, height * 0.24f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.105f));
     FillEllipse({area.left + width * 0.52f + std::sin(time * 0.15f) * width * 0.025f, area.top + height * 0.46f}, width * 0.54f, height * 0.28f, D2D1::ColorF(0x7B63CC, 0.080f));
+    DrawSpaceDepthGrid(area, safeStage, time, cameraX);
 
     for (int layer = 0; layer < 3; ++layer)
     {
@@ -909,6 +978,7 @@ void PawlineGameImpl::DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, fl
     const Vec2 smallPlanet = {area.left + width * (0.18f + std::cos(time * 0.09f) * 0.015f), area.top + height * 0.73f};
     DrawOrbitalPlanet(largePlanet, std::min(width, height) * 0.12f, safeStage, 0.66f, time);
     DrawOrbitalPlanet(smallPlanet, std::min(width, height) * 0.052f, (safeStage + 3) % kStageCount, 0.48f, time * 1.24f);
+    DrawAsteroidField(area, safeStage, time, cameraX);
 
     if (showRoute)
     {
@@ -1017,6 +1087,12 @@ void PawlineGameImpl::DrawOptions()
     DrawString(L"H", D2D1::RectF(OptionsShakeButtonRect().right + 16.0f, OptionsShakeButtonRect().top + 14.0f, OptionsShakeButtonRect().right + 56.0f, OptionsShakeButtonRect().bottom), m_centerFormat, D2D1::ColorF(0x8EA9B8));
     DrawButton(OptionsFlashButtonRect(), m_reduceFlashes ? L"눈부심 줄이기 켜짐" : L"눈부심 줄이기 꺼짐", true, m_reduceFlashes ? D2D1::ColorF(0x283B27) : D2D1::ColorF(0x302735));
     DrawString(L"F", D2D1::RectF(OptionsFlashButtonRect().right + 16.0f, OptionsFlashButtonRect().top + 12.0f, OptionsFlashButtonRect().right + 56.0f, OptionsFlashButtonRect().bottom), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+
+    DrawString(L"효과음 볼륨", D2D1::RectF(830.0f, 306.0f, 1130.0f, 330.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
+    DrawButton(OptionsSfxDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));
+    DrawString(ToWideInt(static_cast<int>(std::round(m_sfxVolume * 100.0f))) + L"%", D2D1::RectF(892.0f, 348.0f, 1068.0f, 378.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
+    DrawButton(OptionsSfxUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
+    DrawString(L"M / N", D2D1::RectF(830.0f, 386.0f, 1130.0f, 410.0f), m_smallFormat, D2D1::ColorF(0x8EA9B8));
 
     DrawString(L"기본 게임 속도", D2D1::RectF(490.0f, 408.0f, 790.0f, 432.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
     DrawButton(OptionsSpeedDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));

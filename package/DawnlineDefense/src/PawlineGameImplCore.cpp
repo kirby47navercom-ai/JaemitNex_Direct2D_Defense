@@ -1,5 +1,7 @@
 #include "PawlineGameImpl.h"
 
+#include <mmsystem.h>
+
 // Lifecycle, persistence, and high-level frame update.
 PawlineGameImpl::~PawlineGameImpl()
 {
@@ -347,18 +349,6 @@ std::wstring PawlineGameImpl::AssetPath(const std::wstring& relativePath) const
 
 void PawlineGameImpl::PlaySfx(SfxKind kind, float minGapSeconds)
 {
-    if (!m_soundEnabled)
-    {
-        return;
-    }
-
-    const int index = std::clamp(static_cast<int>(kind), 0, static_cast<int>(m_sfxLastTimes.size()) - 1);
-    if (m_uiTime - m_sfxLastTimes[static_cast<size_t>(index)] < minGapSeconds)
-    {
-        return;
-    }
-    m_sfxLastTimes[static_cast<size_t>(index)] = m_uiTime;
-
     std::wstring fileName;
     switch (kind)
     {
@@ -377,9 +367,119 @@ void PawlineGameImpl::PlaySfx(SfxKind kind, float minGapSeconds)
     case SfxKind::Clear:
         fileName = L"clear.wav";
         break;
+    case SfxKind::Ui:
+        fileName = L"ui_click.wav";
+        break;
+    case SfxKind::UnitAttack:
+    case SfxKind::Count:
+        return;
     }
 
-    PlaySoundW(AssetPath(L"assets\\sfx\\" + fileName).c_str(), nullptr, SND_FILENAME | SND_ASYNC | SND_NODEFAULT);
+    PlaySfxFile(fileName, kind, minGapSeconds);
+}
+
+void PawlineGameImpl::PlaySfxFile(const std::wstring& relativeFileName, SfxKind throttleKind, float minGapSeconds)
+{
+    if (!m_soundEnabled || m_sfxVolume <= 0.001f)
+    {
+        return;
+    }
+
+    const int index = std::clamp(static_cast<int>(throttleKind), 0, static_cast<int>(m_sfxLastTimes.size()) - 1);
+    if (m_uiTime - m_sfxLastTimes[static_cast<size_t>(index)] < minGapSeconds)
+    {
+        return;
+    }
+    m_sfxLastTimes[static_cast<size_t>(index)] = m_uiTime;
+
+    m_audio.SetVolume(m_sfxVolume);
+    m_audio.PlayEffect(AssetPath(L"assets\\sfx\\" + relativeFileName));
+}
+
+std::wstring PawlineGameImpl::AttackSfxPath(const Unit& attacker) const
+{
+    if (attacker.team == Team::Player)
+    {
+        switch (static_cast<PlayerUnit>(attacker.kind))
+        {
+        case PlayerUnit::Paw:
+            return L"kenney\\player_paw.wav";
+        case PlayerUnit::Box:
+            return L"kenney\\player_box.wav";
+        case PlayerUnit::Spark:
+            return L"kenney\\player_spark.wav";
+        case PlayerUnit::Dash:
+            return L"kenney\\player_dash.wav";
+        case PlayerUnit::Bell:
+            return L"kenney\\player_bell.wav";
+        case PlayerUnit::Titan:
+            return L"kenney\\player_titan.wav";
+        case PlayerUnit::Frost:
+            return L"kenney\\player_frost.wav";
+        case PlayerUnit::Comet:
+            return L"kenney\\player_comet.wav";
+        case PlayerUnit::Orbit:
+            return L"kenney\\player_orbit.wav";
+        case PlayerUnit::Solar:
+            return L"kenney\\player_solar.wav";
+        case PlayerUnit::Mint:
+            return L"kenney\\player_mint.wav";
+        case PlayerUnit::Drill:
+            return L"kenney\\player_drill.wav";
+        case PlayerUnit::Prism:
+            return L"kenney\\player_prism.wav";
+        case PlayerUnit::Nebula:
+            return L"kenney\\player_nebula.wav";
+        }
+    }
+
+    switch (static_cast<EnemyUnit>(attacker.kind))
+    {
+    case EnemyUnit::Dust:
+        return L"kenney\\enemy_dust.wav";
+    case EnemyUnit::Brute:
+        return L"kenney\\enemy_brute.wav";
+    case EnemyUnit::Skitter:
+        return L"kenney\\enemy_skitter.wav";
+    case EnemyUnit::Sulfur:
+        return L"kenney\\enemy_sulfur.wav";
+    case EnemyUnit::Moss:
+        return L"kenney\\enemy_moss.wav";
+    case EnemyUnit::Rust:
+        return L"kenney\\enemy_rust.wav";
+    case EnemyUnit::Storm:
+        return L"kenney\\enemy_storm.wav";
+    case EnemyUnit::Ring:
+        return L"kenney\\enemy_ring.wav";
+    case EnemyUnit::Frost:
+        return L"kenney\\enemy_frost.wav";
+    case EnemyUnit::Tide:
+        return L"kenney\\enemy_tide.wav";
+    case EnemyUnit::Void:
+        return L"kenney\\enemy_void.wav";
+    case EnemyUnit::Flare:
+        return L"kenney\\enemy_flare.wav";
+    case EnemyUnit::Spore:
+        return L"kenney\\enemy_spore.wav";
+    case EnemyUnit::Quake:
+        return L"kenney\\enemy_quake.wav";
+    case EnemyUnit::Mirror:
+        return L"kenney\\enemy_mirror.wav";
+    case EnemyUnit::Comet:
+        return L"kenney\\enemy_comet.wav";
+    case EnemyUnit::Boss:
+        return L"kenney\\enemy_boss.wav";
+    }
+
+    return L"shoot.wav";
+}
+
+void PawlineGameImpl::AdjustSfxVolume(float delta)
+{
+    m_sfxVolume = std::clamp(m_sfxVolume + delta, 0.0f, 1.0f);
+    m_soundEnabled = m_sfxVolume > 0.001f;
+    m_audio.SetVolume(m_sfxVolume);
+    PlaySfx(SfxKind::Ui, 0.02f);
 }
 
 HRESULT PawlineGameImpl::LoadBitmapFromFile(const std::wstring& path, ID2D1Bitmap** bitmap) const
@@ -558,6 +658,7 @@ std::wstring PawlineGameImpl::UnitDisplayName(PlayerUnit unit) const
 UnitStats PawlineGameImpl::PlayerStats(PlayerUnit unit) const
 {
     UnitStats stats = GetPlayerStats(unit);
+    stats.name = UnitDisplayName(unit);
     const int level = UnitLevel(unit);
     const float hpScale = 1.0f + static_cast<float>(level - 1) * 0.22f;
     const float damageScale = 1.0f + static_cast<float>(level - 1) * 0.18f;
@@ -571,7 +672,6 @@ UnitStats PawlineGameImpl::PlayerStats(PlayerUnit unit) const
     if (IsUnitEvolved(unit))
     {
         // 레벨 5 유닛은 이름과 전투 성능이 한 번 더 변해, 성장의 보상이 눈에 보이게 한다.
-        stats.name = UnitDisplayName(unit);
         stats.hp *= 1.10f;
         stats.damage *= 1.12f;
         stats.range *= stats.ranged ? 1.06f : 1.0f;
@@ -827,6 +927,18 @@ void PawlineGameImpl::LoadProgress(int slot)
             m_userViewScale = std::clamp(m_userViewScale, 0.82f, 1.0f);
             m_hitShakeEnabled = shake != 0;
             m_reduceFlashes = reduceFlash != 0;
+
+            float savedSfxVolume = m_sfxVolume;
+            if (file >> savedSfxVolume)
+            {
+                m_sfxVolume = std::clamp(savedSfxVolume, 0.0f, 1.0f);
+                m_soundEnabled = m_sfxVolume > 0.001f;
+                m_audio.SetVolume(m_sfxVolume);
+            }
+            else
+            {
+                file.clear();
+            }
         }
     }
 
@@ -880,7 +992,8 @@ void PawlineGameImpl::SaveProgressToSlot(int slot) const
     file << L"\n";
     file << m_selectedStage << L" " << m_selectedLoadoutSlot << L"\n";
     file << m_defaultGameSpeed << L" " << m_userViewScale << L" "
-         << (m_hitShakeEnabled ? 1 : 0) << L" " << (m_reduceFlashes ? 1 : 0) << L"\n";
+         << (m_hitShakeEnabled ? 1 : 0) << L" " << (m_reduceFlashes ? 1 : 0) << L" "
+         << m_sfxVolume << L"\n";
 }
 
 void PawlineGameImpl::SelectSaveSlot(int slot)

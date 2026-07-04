@@ -34,6 +34,12 @@
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\framework\DeltaTimer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\framework\SceneManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\framework\AudioManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\CMakeLists.txt" />

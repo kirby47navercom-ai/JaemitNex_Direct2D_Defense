@@ -14,6 +14,8 @@ add_executable(DawnlineDefense WIN32
     src/GameData.cpp
     src/framework/GameFramework.cpp
     src/framework/DeltaTimer.cpp
+    src/framework/SceneManager.cpp
+    src/framework/AudioManager.cpp
 )
 
 target_compile_features(DawnlineDefense PRIVATE cxx_std_17)

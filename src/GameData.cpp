@@ -122,20 +122,20 @@ std::array<StageDefinition, kStageCount> MakeDefaultStages()
 std::array<UnitStats, kRosterCount> MakeDefaultPlayers()
 {
     std::array<UnitStats, kRosterCount> table = {};
-    table[static_cast<int>(PlayerUnit::Paw)] = MakePlayer(L"기본냥", 70, 1.18f, 132.0f, 20.0f, 30.0f, 0.68f, 70.0f, 16.0f, false, 0xF4FBFF, 0x65B8FF);
-    table[static_cast<int>(PlayerUnit::Box)] = MakePlayer(L"방패냥", 130, 4.10f, 520.0f, 12.0f, 30.0f, 1.12f, 34.0f, 22.0f, false, 0xF8F0D6, 0xDCA85B);
-    table[static_cast<int>(PlayerUnit::Spark)] = MakePlayer(L"전기냥", 255, 6.10f, 92.0f, 72.0f, 170.0f, 1.62f, 47.0f, 15.0f, true, 0xE8D7FF, 0xBA7BFF);
-    table[static_cast<int>(PlayerUnit::Dash)] = MakePlayer(L"질주냥", 125, 1.88f, 92.0f, 17.0f, 28.0f, 0.34f, 132.0f, 13.0f, false, 0xD9FFE6, 0x62DD88);
-    table[static_cast<int>(PlayerUnit::Bell)] = MakePlayer(L"종냥", 235, 5.35f, 124.0f, 46.0f, 130.0f, 1.12f, 43.0f, 15.0f, true, 0xFFF8C7, 0xF2C94C);
-    table[static_cast<int>(PlayerUnit::Titan)] = MakePlayer(L"거대냥", 430, 9.60f, 860.0f, 96.0f, 42.0f, 1.82f, 22.0f, 28.0f, false, 0xFFE0EF, 0xFF83B7);
-    table[static_cast<int>(PlayerUnit::Frost)] = MakePlayer(L"얼음방패냥", 205, 4.95f, 380.0f, 26.0f, 52.0f, 1.08f, 32.0f, 21.0f, false, 0xDDFBFF, 0x74E8FF);
-    table[static_cast<int>(PlayerUnit::Comet)] = MakePlayer(L"혜성냥", 170, 3.18f, 102.0f, 38.0f, 36.0f, 0.56f, 148.0f, 14.0f, false, 0xFFF0D8, 0xFF9F4A);
-    table[static_cast<int>(PlayerUnit::Orbit)] = MakePlayer(L"궤도냥", 350, 7.40f, 112.0f, 88.0f, 205.0f, 2.10f, 34.0f, 16.0f, true, 0xDBE6FF, 0x88A8FF);
-    table[static_cast<int>(PlayerUnit::Solar)] = MakePlayer(L"태양검냥", 520, 11.20f, 580.0f, 140.0f, 62.0f, 1.62f, 38.0f, 25.0f, false, 0xFFE7B5, 0xFFB347);
-    table[static_cast<int>(PlayerUnit::Mint)] = MakePlayer(L"지원냥", 250, 5.85f, 155.0f, 30.0f, 140.0f, 1.02f, 43.0f, 16.0f, true, 0xD8FFF3, 0x61E6B0);
-    table[static_cast<int>(PlayerUnit::Drill)] = MakePlayer(L"드릴냥", 335, 6.65f, 440.0f, 80.0f, 36.0f, 1.05f, 58.0f, 20.0f, false, 0xE8E0D2, 0xCDAA72);
-    table[static_cast<int>(PlayerUnit::Prism)] = MakePlayer(L"프리즘냥", 450, 9.10f, 88.0f, 126.0f, 245.0f, 2.28f, 31.0f, 15.0f, true, 0xF2E8FF, 0xE19BFF);
-    table[static_cast<int>(PlayerUnit::Nebula)] = MakePlayer(L"성운포냥", 650, 13.80f, 430.0f, 168.0f, 180.0f, 2.05f, 27.0f, 26.0f, true, 0xE5D9FF, 0x9D83FF);
+    table[static_cast<int>(PlayerUnit::Paw)] = MakePlayer(L"푸른검병", 70, 1.18f, 132.0f, 20.0f, 30.0f, 0.68f, 70.0f, 16.0f, false, 0xF4FBFF, 0x65B8FF);
+    table[static_cast<int>(PlayerUnit::Box)] = MakePlayer(L"방패병", 130, 4.10f, 520.0f, 12.0f, 30.0f, 1.12f, 34.0f, 22.0f, false, 0xF8F0D6, 0xDCA85B);
+    table[static_cast<int>(PlayerUnit::Spark)] = MakePlayer(L"전격술사", 255, 6.10f, 92.0f, 72.0f, 170.0f, 1.62f, 47.0f, 15.0f, true, 0xE8D7FF, 0xBA7BFF);
+    table[static_cast<int>(PlayerUnit::Dash)] = MakePlayer(L"질주병", 125, 1.88f, 92.0f, 17.0f, 28.0f, 0.34f, 132.0f, 13.0f, false, 0xD9FFE6, 0x62DD88);
+    table[static_cast<int>(PlayerUnit::Bell)] = MakePlayer(L"종술사", 235, 5.35f, 124.0f, 46.0f, 130.0f, 1.12f, 43.0f, 15.0f, true, 0xFFF8C7, 0xF2C94C);
+    table[static_cast<int>(PlayerUnit::Titan)] = MakePlayer(L"거인병", 430, 9.60f, 860.0f, 96.0f, 42.0f, 1.82f, 22.0f, 28.0f, false, 0xFFE0EF, 0xFF83B7);
+    table[static_cast<int>(PlayerUnit::Frost)] = MakePlayer(L"빙결방패", 205, 4.95f, 380.0f, 26.0f, 52.0f, 1.08f, 32.0f, 21.0f, false, 0xDDFBFF, 0x74E8FF);
+    table[static_cast<int>(PlayerUnit::Comet)] = MakePlayer(L"혜성병", 170, 3.18f, 102.0f, 38.0f, 36.0f, 0.56f, 148.0f, 14.0f, false, 0xFFF0D8, 0xFF9F4A);
+    table[static_cast<int>(PlayerUnit::Orbit)] = MakePlayer(L"궤도드론", 350, 7.40f, 112.0f, 88.0f, 205.0f, 2.10f, 34.0f, 16.0f, true, 0xDBE6FF, 0x88A8FF);
+    table[static_cast<int>(PlayerUnit::Solar)] = MakePlayer(L"태양검", 520, 11.20f, 580.0f, 140.0f, 62.0f, 1.62f, 38.0f, 25.0f, false, 0xFFE7B5, 0xFFB347);
+    table[static_cast<int>(PlayerUnit::Mint)] = MakePlayer(L"지원병", 250, 5.85f, 155.0f, 30.0f, 140.0f, 1.02f, 43.0f, 16.0f, true, 0xD8FFF3, 0x61E6B0);
+    table[static_cast<int>(PlayerUnit::Drill)] = MakePlayer(L"드릴기갑", 335, 6.65f, 440.0f, 80.0f, 36.0f, 1.05f, 58.0f, 20.0f, false, 0xE8E0D2, 0xCDAA72);
+    table[static_cast<int>(PlayerUnit::Prism)] = MakePlayer(L"프리즘술사", 450, 9.10f, 88.0f, 126.0f, 245.0f, 2.28f, 31.0f, 15.0f, true, 0xF2E8FF, 0xE19BFF);
+    table[static_cast<int>(PlayerUnit::Nebula)] = MakePlayer(L"성운포대", 650, 13.80f, 430.0f, 168.0f, 180.0f, 2.05f, 27.0f, 26.0f, true, 0xE5D9FF, 0x9D83FF);
     return table;
 }
 

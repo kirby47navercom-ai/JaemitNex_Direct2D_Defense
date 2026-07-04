@@ -380,6 +380,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\GameData.cpp" />
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\framework\GameFramework.cpp" />
     <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\framework\DeltaTimer.cpp" />
+    <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\framework\SceneManager.cpp" />
+    <ClCompile Include="C:\Users\kirby\OneDrive\바탕 화면\JaemitNex_Direct2D_Defense\src\framework\AudioManager.cpp" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

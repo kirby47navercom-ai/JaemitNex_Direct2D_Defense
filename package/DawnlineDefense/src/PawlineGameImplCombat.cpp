@@ -378,15 +378,15 @@ std::wstring PawlineGameImpl::CounterPlanSummary() const
     switch (m_selectedStage)
     {
     case 0:
-        return L"추천: 기본냥으로 잡병 처리, 방패냥으로 가시러너 차단";
+        return L"추천: 푸른검병으로 잡병 처리, 방패병으로 가시러너 차단";
     case 1:
         return L"추천: 질주/혜성으로 원거리 사수 급습, 민트로 산성 대응";
     case 2:
         return L"추천: 민트와 범위형 딜러로 포자 계열을 빠르게 정리";
     case 3:
-        return L"추천: 드릴/거대냥으로 장갑형을 뚫고 질주냥으로 빈틈 압박";
+        return L"추천: 드릴기갑/거인병으로 장갑형을 뚫고 질주병으로 빈틈 압박";
     case 4:
-        return L"추천: 드릴/태양검냥으로 중장갑 카운터, 방패로 전선 유지";
+        return L"추천: 드릴기갑/태양검으로 중장갑 카운터, 방패병으로 전선 유지";
     case 5:
         return L"추천: 전기/프리즘으로 고리사수 견제, 방패로 돌격 차단";
     case 6:
@@ -394,9 +394,9 @@ std::wstring PawlineGameImpl::CounterPlanSummary() const
     case 7:
         return L"추천: 전기/프리즘으로 원거리 견제, 성운포로 공허 장갑 처리";
     case 8:
-        return L"추천: 드릴/태양검냥으로 중장갑, 종냥/성운포로 공허 대응";
+        return L"추천: 드릴기갑/태양검으로 중장갑, 종술사/성운포대로 공허 대응";
     default:
-        return L"추천: 태양검냥+종냥으로 캐논 시너지, 드릴로 보스 장갑 관통";
+        return L"추천: 태양검+종술사로 캐논 시너지, 드릴기갑으로 보스 장갑 관통";
     }
 }
 
@@ -1130,12 +1130,12 @@ std::wstring PawlineGameImpl::SynergySummary() const
             }
 
             const PlayerUnit missing = hasFirst ? hint.second : hint.first;
-            return L"활성 시너지 없음\n후보: " + GetPlayerStats(hint.first).name + L" + " +
-                   GetPlayerStats(hint.second).name + L" - " + hint.effect +
-                   L"\n필요: " + GetPlayerStats(missing).name;
+            return L"활성 시너지 없음\n후보: " + UnitDisplayName(hint.first) + L" + " +
+                   UnitDisplayName(hint.second) + L" - " + hint.effect +
+                   L"\n필요: " + UnitDisplayName(missing);
         }
 
-        return L"활성 시너지 없음\n추천: 방패냥 + 얼음방패냥 - 전열 HP +10%";
+        return L"활성 시너지 없음\n추천: 방패병 + 빙결방패 - 전열 HP +10%";
     }
 
     std::wstring text;
@@ -1157,7 +1157,7 @@ std::wstring PawlineGameImpl::GrowthRecommendation() const
     {
         if (IsUnitUnlocked(unit) && UnitLevel(unit) < kMaxUnitLevel && m_lumen >= UnitUpgradeCost(unit))
         {
-            return GetPlayerStats(unit).name + L" 강화 가능 - 현재 편성 전력 상승";
+            return UnitDisplayName(unit) + L" 강화 가능 - 현재 편성 전력 상승";
         }
     }
 
@@ -1180,7 +1180,7 @@ std::wstring PawlineGameImpl::GrowthRecommendation() const
         const PlayerUnit missing = hasFirst ? second : first;
         if (!IsUnitUnlocked(missing) && m_lumen >= UnitUnlockCost(missing))
         {
-            return GetPlayerStats(missing).name + L" 구매 가능 - 시너지 완성";
+            return UnitDisplayName(missing) + L" 구매 가능 - 시너지 완성";
         }
     }
 
@@ -1189,7 +1189,7 @@ std::wstring PawlineGameImpl::GrowthRecommendation() const
         const PlayerUnit unit = static_cast<PlayerUnit>(i);
         if (!IsUnitUnlocked(unit) && m_lumen >= UnitUnlockCost(unit))
         {
-            return GetPlayerStats(unit).name + L" 구매 가능 - 캐릭터 풀 확장";
+            return UnitDisplayName(unit) + L" 구매 가능 - 캐릭터 풀 확장";
         }
     }
     for (int i = 0; i < kRosterCount; ++i)
@@ -1197,7 +1197,7 @@ std::wstring PawlineGameImpl::GrowthRecommendation() const
         const PlayerUnit unit = static_cast<PlayerUnit>(i);
         if (IsUnitUnlocked(unit) && UnitLevel(unit) < kMaxUnitLevel && m_lumen >= UnitUpgradeCost(unit))
         {
-            return UnitLevel(unit) == kMaxUnitLevel - 1 ? GetPlayerStats(unit).name + L" 진화 가능" : GetPlayerStats(unit).name + L" 강화 가능";
+            return UnitLevel(unit) == kMaxUnitLevel - 1 ? UnitDisplayName(unit) + L" 진화 가능" : UnitDisplayName(unit) + L" 강화 가능";
         }
     }
 
@@ -1211,7 +1211,7 @@ std::wstring PawlineGameImpl::GrowthRecommendation() const
             if (need < bestNeed)
             {
                 bestNeed = need;
-                target = GetPlayerStats(unit).name + L" 강화";
+                target = UnitDisplayName(unit) + L" 강화";
             }
         }
     }
@@ -1224,7 +1224,7 @@ std::wstring PawlineGameImpl::GrowthRecommendation() const
             if (need < bestNeed)
             {
                 bestNeed = need;
-                target = GetPlayerStats(unit).name + L" 구매";
+                target = UnitDisplayName(unit) + L" 구매";
             }
         }
     }
@@ -1866,6 +1866,7 @@ void PawlineGameImpl::AttackUnit(Unit& attacker, Unit& target)
 {
     const D2D1_COLOR_F hitColor = attacker.team == Team::Player ? D2D1::ColorF(0x65B8FF) : D2D1::ColorF(0xFF9BA8);
     BeginAttack(attacker, target.pos);
+    PlaySfxFile(AttackSfxPath(attacker), SfxKind::UnitAttack, 0.045f);
     AddAttackVfx(attacker, target.pos, hitColor);
     ShakeUnit(attacker, 0.15f);
     if (attacker.ranged)
@@ -1891,6 +1892,7 @@ void PawlineGameImpl::AttackBase(Unit& attacker)
     const Vec2 baseHit = attacker.team == Team::Player ? Vec2{kEnemyBaseX - 44.0f, attacker.pos.y} : Vec2{kPlayerBaseX + 44.0f, attacker.pos.y};
     const D2D1_COLOR_F hitColor = attacker.team == Team::Player ? D2D1::ColorF(0x65B8FF) : D2D1::ColorF(0xFF9BA8);
     BeginAttack(attacker, baseHit);
+    PlaySfxFile(AttackSfxPath(attacker), SfxKind::UnitAttack, 0.045f);
     AddAttackVfx(attacker, baseHit, hitColor);
     ShakeUnit(attacker, 0.15f);
     if (attacker.ranged)
@@ -1919,7 +1921,6 @@ void PawlineGameImpl::FireProjectile(Unit& attacker, const Unit& target)
     projectile.damage = attacker.damage;
     ConfigureProjectileVisual(projectile, attacker);
     m_projectiles.push_back(projectile);
-    PlaySfx(SfxKind::Shoot, 0.06f);
     const Vec2 dir = Normalize(target.pos - muzzle);
     AddBeam(muzzle - dir * 8.0f, muzzle + dir * (58.0f + projectile.radius * 2.0f), 2.4f + projectile.radius * 0.22f, 0.13f, FadeColor(projectile.color, 0.72f));
     AddRing(muzzle, 30.0f + projectile.radius * 2.0f, 0.18f, FadeColor(projectile.color, 0.36f), 1.8f);
@@ -1943,7 +1944,6 @@ void PawlineGameImpl::FireProjectileAtBase(Unit& attacker)
     ConfigureProjectileVisual(projectile, attacker);
     projectile.speed += 18.0f;
     m_projectiles.push_back(projectile);
-    PlaySfx(SfxKind::Shoot, 0.06f);
     const Vec2 dir = Normalize(targetPos - muzzle);
     AddBeam(muzzle - dir * 8.0f, muzzle + dir * (62.0f + projectile.radius * 2.0f), 2.6f + projectile.radius * 0.22f, 0.13f, FadeColor(projectile.color, 0.72f));
     AddRing(muzzle, 32.0f + projectile.radius * 2.0f, 0.18f, FadeColor(projectile.color, 0.36f), 1.8f);

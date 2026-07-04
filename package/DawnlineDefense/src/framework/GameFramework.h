@@ -3,6 +3,9 @@
 #include <memory>
 #include <windows.h>
 
+#include "AudioManager.h"
+#include "SceneManager.h"
+
 namespace framework
 {
 // 게임 실행 객체가 반드시 제공해야 하는 최소 인터페이스다.
@@ -32,8 +35,15 @@ public:
     HRESULT Initialize();
     int Run();
 
+    SceneManager& Scenes();
+    AudioManager& Audio();
+
 private:
     // 프레임워크가 애플리케이션의 생명주기를 단독 소유한다.
     std::unique_ptr<IGameApplication> m_application;
+
+    // 참고 레포의 scene_manager/sound_manager 역할을 Direct2D 프로젝트에 맞게 품는다.
+    SceneManager m_sceneManager;
+    AudioManager m_audioManager;
 };
 }

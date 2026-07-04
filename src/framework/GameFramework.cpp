@@ -26,4 +26,14 @@ int GameFramework::Run()
     }
     return m_application->Run();
 }
+
+SceneManager& GameFramework::Scenes()
+{
+    return m_sceneManager;
+}
+
+AudioManager& GameFramework::Audio()
+{
+    return m_audioManager;
+}
 }

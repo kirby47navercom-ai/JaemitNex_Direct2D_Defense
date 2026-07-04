@@ -1,19 +1,20 @@
 #pragma once
 
 #include <windows.h>
+#include "framework/AudioManager.h"
 #include "framework/DeltaTimer.h"
 #include "GameData.h"
 
 #include <windowsx.h>
 #include <d2d1.h>
 #include <dwrite.h>
-#include <mmsystem.h>
 #include <wincodec.h>
 #include <wrl/client.h>
 
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <functional>
 #include <fstream>
 #include <iomanip>
@@ -182,8 +183,13 @@ enum class SfxKind
     Hit,
     Shoot,
     Upgrade,
-    Clear
+    Clear,
+    UnitAttack,
+    Ui,
+    Count
 };
+
+constexpr size_t kSfxChannelCount = static_cast<size_t>(SfxKind::Count);
 
 enum class ImageVfxKind
 {
@@ -467,6 +473,12 @@ private:
     std::wstring AssetPath(const std::wstring& relativePath) const;
 
     void PlaySfx(SfxKind kind, float minGapSeconds = 0.05f);
+
+    void PlaySfxFile(const std::wstring& relativeFileName, SfxKind throttleKind, float minGapSeconds = 0.05f);
+
+    std::wstring AttackSfxPath(const Unit& attacker) const;
+
+    void AdjustSfxVolume(float delta);
 
     HRESULT LoadBitmapFromFile(const std::wstring& path, ID2D1Bitmap** bitmap) const;
 
@@ -800,6 +812,10 @@ private:
 
     D2D1_RECT_F OptionsFlashButtonRect() const;
 
+    D2D1_RECT_F OptionsSfxDownButtonRect() const;
+
+    D2D1_RECT_F OptionsSfxUpButtonRect() const;
+
     D2D1_RECT_F OptionsSpeedDownButtonRect() const;
 
     D2D1_RECT_F OptionsSpeedUpButtonRect() const;
@@ -935,6 +951,10 @@ private:
     bool IsUnitInLoadout(PlayerUnit unit) const;
 
     void DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, float time, float cameraX, bool showRoute);
+
+    void DrawSpaceDepthGrid(D2D1_RECT_F area, int stageIndex, float time, float cameraX);
+
+    void DrawAsteroidField(D2D1_RECT_F area, int stageIndex, float time, float cameraX);
 
     void DrawOrbitalPlanet(Vec2 center, float radius, int stageIndex, float alpha, float time);
 
@@ -1155,7 +1175,9 @@ private:
     DeltaTimer m_timer;
     std::mt19937 m_rng{std::random_device{}()};
     // 효과음이 한 프레임에 과하게 겹치지 않도록 종류별 마지막 재생 시간을 기록한다.
-    std::array<float, 5> m_sfxLastTimes = {-10.0f, -10.0f, -10.0f, -10.0f, -10.0f};
+    std::array<float, kSfxChannelCount> m_sfxLastTimes = {-10.0f, -10.0f, -10.0f, -10.0f, -10.0f, -10.0f, -10.0f};
+    framework::AudioManager m_audio;
+    float m_sfxVolume = 0.78f;
     bool m_soundEnabled = true;
 
     // 전투 중 살아 움직이는 객체와 짧게 사라지는 VFX 컨테이너.
