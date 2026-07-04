@@ -155,23 +155,32 @@ D2D1_RECT_F PawlineGameImpl::ArchiveTabRect(int index) const
 
 D2D1_RECT_F PawlineGameImpl::BriefingStartButtonRect() const
 {
-    return D2D1::RectF(840.0f, 690.0f, 1196.0f, 754.0f);
+    return D2D1::RectF(786.0f, 724.0f, 1012.0f, 778.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::BriefingBackButtonRect() const
 {
-    return D2D1::RectF(84.0f, 690.0f, 302.0f, 754.0f);
+    return D2D1::RectF(268.0f, 724.0f, 486.0f, 778.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::BriefingShopButtonRect() const
 {
-    return D2D1::RectF(316.0f, 690.0f, 534.0f, 754.0f);
+    return D2D1::RectF(528.0f, 724.0f, 746.0f, 778.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::BriefingDifficultyRect(int index) const
 {
-    const float x = 604.0f + static_cast<float>(index) * 128.0f;
-    return D2D1::RectF(x, 520.0f, x + 112.0f, 568.0f);
+    const float x = 676.0f + static_cast<float>(index) * 124.0f;
+    return D2D1::RectF(x, 646.0f, x + 112.0f, 696.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::BriefingLoadoutSlotRect(int index) const
+{
+    const float cardWidth = 104.0f;
+    const float gap = 24.0f;
+    const float totalWidth = cardWidth * static_cast<float>(kLoadoutSize) + gap * static_cast<float>(kLoadoutSize - 1);
+    const float x = (kWidth - totalWidth) * 0.5f + static_cast<float>(index) * (cardWidth + gap);
+    return D2D1::RectF(x, 402.0f, x + cardWidth, 514.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::ShopBackButtonRect() const

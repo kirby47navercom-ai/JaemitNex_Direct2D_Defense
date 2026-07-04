@@ -467,11 +467,13 @@ void PawlineGameImpl::PlaySfxFile(const std::wstring& relativeFileName, SfxKind 
     }
 
     const int index = std::clamp(static_cast<int>(throttleKind), 0, static_cast<int>(m_sfxLastTimes.size()) - 1);
-    if (m_uiTime - m_sfxLastTimes[static_cast<size_t>(index)] < minGapSeconds)
+    auto& lanes = m_sfxLastTimes[static_cast<size_t>(index)];
+    auto oldestLane = std::min_element(lanes.begin(), lanes.end());
+    if (oldestLane == lanes.end() || m_uiTime - *oldestLane < minGapSeconds)
     {
         return;
     }
-    m_sfxLastTimes[static_cast<size_t>(index)] = m_uiTime;
+    *oldestLane = m_uiTime;
 
     m_audio.SetVolume(m_sfxVolume);
     m_audio.PlayEffect(AssetPath(L"assets\\sfx\\" + relativeFileName));
@@ -485,11 +487,13 @@ void PawlineGameImpl::PlaySfxFileAt(const std::wstring& relativeFileName, SfxKin
     }
 
     const int index = std::clamp(static_cast<int>(throttleKind), 0, static_cast<int>(m_sfxLastTimes.size()) - 1);
-    if (m_uiTime - m_sfxLastTimes[static_cast<size_t>(index)] < minGapSeconds)
+    auto& lanes = m_sfxLastTimes[static_cast<size_t>(index)];
+    auto oldestLane = std::min_element(lanes.begin(), lanes.end());
+    if (oldestLane == lanes.end() || m_uiTime - *oldestLane < minGapSeconds)
     {
         return;
     }
-    m_sfxLastTimes[static_cast<size_t>(index)] = m_uiTime;
+    *oldestLane = m_uiTime;
 
     m_audio.SetVolume(m_sfxVolume);
     m_audio.PlayEffectAt(AssetPath(L"assets\\sfx\\" + relativeFileName), worldX, volumeScale);
@@ -582,23 +586,29 @@ void PawlineGameImpl::PlayAttackSfxAt(const Unit& attacker, float minGapSeconds)
 
     // 공격음은 SfxKind 하나로 묶지 않고 유닛 타입별로 기록한다.
     // 그래야 서로 다른 캐릭터가 동시에 싸워도 각자의 무기 소리가 살아난다.
-    float* lastPlayed = nullptr;
+    std::array<float, kAttackSfxThrottleVoices>* lanes = nullptr;
     if (attacker.team == Team::Player)
     {
         const int index = std::clamp(attacker.kind, 0, static_cast<int>(kRosterCount) - 1);
-        lastPlayed = &m_playerAttackSfxLastTimes[static_cast<size_t>(index)];
+        lanes = &m_playerAttackSfxLastTimes[static_cast<size_t>(index)];
     }
     else
     {
         const int index = std::clamp(attacker.kind, 0, static_cast<int>(kEnemyCount) - 1);
-        lastPlayed = &m_enemyAttackSfxLastTimes[static_cast<size_t>(index)];
+        lanes = &m_enemyAttackSfxLastTimes[static_cast<size_t>(index)];
     }
 
-    if (!lastPlayed || m_uiTime - *lastPlayed < minGapSeconds)
+    if (!lanes)
     {
         return;
     }
-    *lastPlayed = m_uiTime;
+
+    auto oldestLane = std::min_element(lanes->begin(), lanes->end());
+    if (oldestLane == lanes->end() || m_uiTime - *oldestLane < minGapSeconds)
+    {
+        return;
+    }
+    *oldestLane = m_uiTime;
 
     float volumeScale = attacker.ranged ? 1.04f : 0.98f;
     if (attacker.team == Team::Enemy)

@@ -40,6 +40,8 @@ constexpr float kCameraMaxX = kWorldWidth - kWidth;
 constexpr float kPi = 3.14159265358979323846f;
 constexpr int kMaxUnitLevel = 5;
 constexpr int kSaveSlotCount = 3;
+constexpr size_t kSfxThrottleVoices = 6;
+constexpr size_t kAttackSfxThrottleVoices = 4;
 
 struct Vec2
 {
@@ -794,6 +796,8 @@ private:
 
     void OnLeftClick(Vec2 pos);
 
+    bool IsInteractivePoint(Vec2 pos) const;
+
     void OnMenuClick(Vec2 pos);
 
     void OnShopClick(Vec2 pos);
@@ -875,6 +879,8 @@ private:
     D2D1_RECT_F BriefingShopButtonRect() const;
 
     D2D1_RECT_F BriefingDifficultyRect(int index) const;
+
+    D2D1_RECT_F BriefingLoadoutSlotRect(int index) const;
 
     D2D1_RECT_F ShopBackButtonRect() const;
 
@@ -1190,20 +1196,29 @@ private:
     DeltaTimer m_timer;
     std::mt19937 m_rng{std::random_device{}()};
     // 효과음이 한 프레임에 과하게 겹치지 않도록 종류별 마지막 재생 시간을 기록한다.
-    std::array<float, kSfxChannelCount> m_sfxLastTimes = [] {
-        std::array<float, kSfxChannelCount> values = {};
-        values.fill(-10.0f);
+    std::array<std::array<float, kSfxThrottleVoices>, kSfxChannelCount> m_sfxLastTimes = [] {
+        std::array<std::array<float, kSfxThrottleVoices>, kSfxChannelCount> values = {};
+        for (auto& lanes : values)
+        {
+            lanes.fill(-10.0f);
+        }
         return values;
     }();
     // 공격 효과음은 유닛 타입별로 따로 막아야 여러 종류가 동시에 싸울 때 소리가 먹히지 않는다.
-    std::array<float, kRosterCount> m_playerAttackSfxLastTimes = [] {
-        std::array<float, kRosterCount> values = {};
-        values.fill(-10.0f);
+    std::array<std::array<float, kAttackSfxThrottleVoices>, kRosterCount> m_playerAttackSfxLastTimes = [] {
+        std::array<std::array<float, kAttackSfxThrottleVoices>, kRosterCount> values = {};
+        for (auto& lanes : values)
+        {
+            lanes.fill(-10.0f);
+        }
         return values;
     }();
-    std::array<float, kEnemyCount> m_enemyAttackSfxLastTimes = [] {
-        std::array<float, kEnemyCount> values = {};
-        values.fill(-10.0f);
+    std::array<std::array<float, kAttackSfxThrottleVoices>, kEnemyCount> m_enemyAttackSfxLastTimes = [] {
+        std::array<std::array<float, kAttackSfxThrottleVoices>, kEnemyCount> values = {};
+        for (auto& lanes : values)
+        {
+            lanes.fill(-10.0f);
+        }
         return values;
     }();
     framework::AudioManager m_audio;

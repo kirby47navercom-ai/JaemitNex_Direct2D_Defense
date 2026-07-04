@@ -1212,12 +1212,23 @@ void PawlineGameImpl::DrawBriefing()
     const StageDefinition stage = CurrentStage();
     DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), m_selectedStage, m_uiTime, 0.0f, false);
 
-    DrawPixelText(L"MISSION BRIEF", {74.0f, 48.0f}, 5.0f, D2D1::ColorF(0xF3FBFF));
+    DrawPixelTextCentered(L"MISSION BRIEF", D2D1::RectF(240.0f, 42.0f, 1040.0f, 88.0f), 4.7f, D2D1::ColorF(0xF3FBFF));
     DrawPixelText(L"LUMEN " + ToWideInt(m_lumen), {1028.0f, 54.0f}, 2.8f, D2D1::ColorF(0xF6FF83));
 
-    const D2D1_RECT_F terrainPanel = D2D1::RectF(78.0f, 136.0f, 516.0f, 500.0f);
-    DrawCartoonPanel(terrainPanel, D2D1::ColorF(0x0D1821, 0.96f), stage.lineColor);
-    const D2D1_RECT_F terrain = D2D1::RectF(106.0f, 252.0f, 488.0f, 356.0f);
+    const D2D1_RECT_F mainPanel = D2D1::RectF(146.0f, 108.0f, 1134.0f, 558.0f);
+    DrawCartoonPanel(mainPanel, D2D1::ColorF(0x07131C, 0.98f), stage.lineColor);
+    DrawOutlinedString(stage.name,
+                       D2D1::RectF(mainPanel.left + 48.0f, mainPanel.top + 24.0f, mainPanel.right - 48.0f, mainPanel.top + 66.0f),
+                       m_centerFormat,
+                       D2D1::ColorF(0xF3FBFF),
+                       0.72f);
+    DrawOutlinedString(stage.subtitle,
+                       D2D1::RectF(mainPanel.left + 60.0f, mainPanel.top + 66.0f, mainPanel.right - 60.0f, mainPanel.top + 92.0f),
+                       m_centerFormat,
+                       D2D1::ColorF(0xBFD1DB),
+                       0.56f);
+
+    const D2D1_RECT_F terrain = D2D1::RectF(mainPanel.left + 60.0f, mainPanel.top + 110.0f, mainPanel.right - 60.0f, mainPanel.top + 188.0f);
     FillRoundRect(terrain, 20.0f, D2D1::ColorF(stage.laneColor.r, stage.laneColor.g, stage.laneColor.b, 0.88f));
     FillRoundRect(D2D1::RectF(terrain.left + 10.0f, terrain.top + 18.0f, terrain.right - 10.0f, terrain.bottom - 18.0f),
                   16.0f,
@@ -1232,56 +1243,52 @@ void PawlineGameImpl::DrawBriefing()
         const float y = terrain.top + 28.0f + std::sin(m_uiTime * 0.4f + static_cast<float>(i)) * 6.0f;
         DrawCrater({x, y + 34.0f}, 15.0f + static_cast<float>(i % 3) * 5.0f, 5.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.32f), D2D1::ColorF(0x000000, 0.18f));
     }
-    DrawPixelTextCentered(L"SURFACE SAMPLE", D2D1::RectF(terrainPanel.left + 28.0f, terrainPanel.top + 66.0f, terrainPanel.right - 28.0f, terrainPanel.top + 102.0f), 2.0f, D2D1::ColorF(0xCFE8F5), 1.0f);
-    DrawString(stage.name, D2D1::RectF(324.0f, 170.0f, 488.0f, 216.0f), m_titleFormat, D2D1::ColorF(0xF3FBFF));
-    DrawString(stage.subtitle, D2D1::RectF(324.0f, 224.0f, 488.0f, 252.0f), m_bodyFormat, D2D1::ColorF(0xBFD1DB));
-    DrawPixelText(L"EVENT", {324.0f, 278.0f}, 2.5f, D2D1::ColorF(0xF6FF83));
-    DrawString(stage.gimmick, D2D1::RectF(324.0f, 304.0f, 488.0f, 344.0f), m_bodyFormat, D2D1::ColorF(0xF6FF83));
-    DrawPixelText(L"ENEMIES", {324.0f, 372.0f}, 2.5f, D2D1::ColorF(0xFFB6C2));
-    DrawString(StageEnemySummary(), D2D1::RectF(324.0f, 398.0f, 496.0f, 444.0f), m_bodyFormat, D2D1::ColorF(0xFFCAD1));
-    DrawBalancePanel(D2D1::RectF(78.0f, 520.0f, 516.0f, 666.0f));
+    DrawPixelTextCentered(L"SURFACE SAMPLE", D2D1::RectF(terrain.left, terrain.top - 28.0f, terrain.right, terrain.top - 2.0f), 1.9f, D2D1::ColorF(0xCFE8F5), 1.0f);
 
-    const D2D1_RECT_F plan = D2D1::RectF(560.0f, 136.0f, 1202.0f, 474.0f);
-    DrawCartoonPanel(plan, D2D1::ColorF(0x07131C, 0.98f), D2D1::ColorF(0x65B8FF));
-    DrawPixelText(L"LOADOUT CHECK", {598.0f, 160.0f}, 3.15f, D2D1::ColorF(0xEAF7FF));
-    DrawPixelText(L"CLICK SLOT TO EDIT", {600.0f, 198.0f}, 1.9f, D2D1::ColorF(0xC8D8E2));
-    FillRoundRect(D2D1::RectF(plan.left + 34.0f, plan.top + 82.0f, plan.right - 34.0f, plan.top + 94.0f), 6.0f, D2D1::ColorF(0x0E2635, 0.92f));
+    const D2D1_RECT_F infoBand = D2D1::RectF(mainPanel.left + 60.0f, mainPanel.top + 206.0f, mainPanel.right - 60.0f, mainPanel.top + 264.0f);
+    FillRoundRect(infoBand, 7.0f, D2D1::ColorF(0x0B1D28, 0.90f));
+    DrawPixelText(L"EVENT", {infoBand.left + 18.0f, infoBand.top + 9.0f}, 2.05f, D2D1::ColorF(0xF6FF83));
+    DrawString(stage.gimmick, D2D1::RectF(infoBand.left + 154.0f, infoBand.top + 8.0f, infoBand.left + 422.0f, infoBand.top + 32.0f), m_smallFormat, D2D1::ColorF(0xF6FF83));
+    DrawPixelText(L"ENEMIES", {infoBand.left + 448.0f, infoBand.top + 9.0f}, 2.05f, D2D1::ColorF(0xFFB6C2));
+    DrawString(StageEnemySummary(), D2D1::RectF(infoBand.left + 614.0f, infoBand.top + 8.0f, infoBand.right - 18.0f, infoBand.top + 32.0f), m_smallFormat, D2D1::ColorF(0xFFCAD1));
+    DrawString(L"Enemy Base HP  " + ToWideInt(static_cast<int>(stage.enemyHp)), D2D1::RectF(infoBand.left + 18.0f, infoBand.top + 34.0f, infoBand.left + 250.0f, infoBand.bottom - 6.0f), m_smallFormat, D2D1::ColorF(0xFFB6C2));
+    DrawString(L"Start Energy  " + ToWideInt(static_cast<int>(stage.startEnergy)), D2D1::RectF(infoBand.left + 292.0f, infoBand.top + 34.0f, infoBand.left + 520.0f, infoBand.bottom - 6.0f), m_smallFormat, D2D1::ColorF(0xB8FF89));
+    DrawString(L"Boss First  " + ToWideInt(static_cast<int>(stage.bossFirstTime)) + L"s", D2D1::RectF(infoBand.left + 562.0f, infoBand.top + 34.0f, infoBand.left + 744.0f, infoBand.bottom - 6.0f), m_smallFormat, D2D1::ColorF(0xFFB347));
+    DrawString(L"Event Every  " + ToWideInt(static_cast<int>(GimmickInterval())) + L"s", D2D1::RectF(infoBand.left + 778.0f, infoBand.top + 34.0f, infoBand.right - 18.0f, infoBand.bottom - 6.0f), m_smallFormat, D2D1::ColorF(0xF6FF83));
+
+    DrawPixelTextCentered(L"LOADOUT CHECK", D2D1::RectF(mainPanel.left + 120.0f, 374.0f, mainPanel.right - 120.0f, 400.0f), 2.35f, D2D1::ColorF(0xEAF7FF), 1.0f);
     for (int i = 0; i < kLoadoutSize; ++i)
     {
-        const D2D1_RECT_F src = MenuLoadoutSlotRect(i);
-        const D2D1_RECT_F rect = D2D1::RectF(604.0f + static_cast<float>(i) * 112.0f, 236.0f, 700.0f + static_cast<float>(i) * 112.0f, 348.0f);
+        const D2D1_RECT_F rect = BriefingLoadoutSlotRect(i);
         const PlayerUnit unit = m_loadout[i];
         const UnitStats stats = PlayerStats(unit);
-        const bool hover = Contains(src, m_mouse) || Contains(rect, m_mouse);
+        const bool hover = Contains(rect, m_mouse);
         DrawCartoonPanel(rect, hover ? D2D1::ColorF(0x123044, 0.99f) : D2D1::ColorF(0x06131C, 0.99f), stats.accent, hover);
         DrawPlayerIcon(unit, {rect.left + 48.0f, rect.top + 34.0f}, 0.72f, true);
         DrawPixelTextCentered(stats.name, D2D1::RectF(rect.left + 6.0f, rect.top + 68.0f, rect.right - 6.0f, rect.top + 91.0f), 1.45f, D2D1::ColorF(0xFFFFFF), 1.0f);
         DrawPixelTextCentered(L"KEY " + ToWideInt(i + 1), D2D1::RectF(rect.left + 8.0f, rect.bottom - 22.0f, rect.right - 8.0f, rect.bottom - 6.0f), 1.35f, D2D1::ColorF(0xE5F6FF), 1.0f);
     }
-    FillRoundRect(D2D1::RectF(604.0f, 366.0f, 1160.0f, 424.0f), 6.0f, D2D1::ColorF(0x0B1D28, 0.90f));
-    DrawString(L"Enemy Base HP  " + ToWideInt(static_cast<int>(stage.enemyHp)), D2D1::RectF(622.0f, 374.0f, 836.0f, 398.0f), m_smallFormat, D2D1::ColorF(0xFFB6C2));
-    DrawString(L"Start Energy  " + ToWideInt(static_cast<int>(stage.startEnergy)), D2D1::RectF(862.0f, 374.0f, 1088.0f, 398.0f), m_smallFormat, D2D1::ColorF(0xB8FF89));
-    DrawString(L"Boss First  " + ToWideInt(static_cast<int>(stage.bossFirstTime)) + L"s", D2D1::RectF(622.0f, 400.0f, 836.0f, 424.0f), m_smallFormat, D2D1::ColorF(0xFFB347));
-    DrawString(L"Event Every  " + ToWideInt(static_cast<int>(GimmickInterval())) + L"s", D2D1::RectF(862.0f, 400.0f, 1088.0f, 424.0f), m_smallFormat, D2D1::ColorF(0xF6FF83));
     DrawOutlinedString(CounterPlanSummary(),
-                       D2D1::RectF(622.0f, 436.0f, 1156.0f, 464.0f),
+                       D2D1::RectF(mainPanel.left + 80.0f, 522.0f, mainPanel.right - 80.0f, 550.0f),
                        m_smallFormat,
                        D2D1::ColorF(0xEAF7FF),
                        0.76f);
 
-    DrawPixelText(L"DIFFICULTY", {604.0f, 490.0f}, 2.2f, D2D1::ColorF(0xEAF7FF));
+    DrawBalancePanel(D2D1::RectF(152.0f, 572.0f, 556.0f, 694.0f));
+    DrawSynergyPanel(D2D1::RectF(584.0f, 572.0f, 1128.0f, 632.0f));
+
+    DrawPixelTextCentered(L"DIFFICULTY", D2D1::RectF(650.0f, 620.0f, 1062.0f, 644.0f), 1.9f, D2D1::ColorF(0xEAF7FF), 1.0f);
     const std::array<std::wstring, 3> labels = {L"EASY", L"NORMAL", L"HARD"};
     for (int i = 0; i < 3; ++i)
     {
         const bool active = static_cast<int>(m_difficulty) == i;
         DrawButton(BriefingDifficultyRect(i), labels[i], true, active ? D2D1::ColorF(0x283B27) : D2D1::ColorF(0x202833));
     }
-    DrawSynergyPanel(D2D1::RectF(604.0f, 584.0f, 1196.0f, 666.0f));
 
     DrawButton(BriefingBackButtonRect(), L"돌아가기", true, D2D1::ColorF(0x173C4B));
     DrawButton(BriefingShopButtonRect(), L"Shop", true, D2D1::ColorF(0x4B4321));
     DrawButton(BriefingStartButtonRect(), L"Launch", true, D2D1::ColorF(0x283B27));
-    DrawPixelTextCentered(L"ENTER / SPACE", D2D1::RectF(BriefingStartButtonRect().left, BriefingStartButtonRect().bottom + 8.0f, BriefingStartButtonRect().right, BriefingStartButtonRect().bottom + 28.0f), 1.8f, D2D1::ColorF(0x8EA9B8), 1.0f);
+    DrawPixelTextCentered(L"ENTER / SPACE", D2D1::RectF(BriefingStartButtonRect().left, BriefingStartButtonRect().top - 24.0f, BriefingStartButtonRect().right, BriefingStartButtonRect().top - 6.0f), 1.55f, D2D1::ColorF(0x8EA9B8), 1.0f);
 }
 
 void PawlineGameImpl::DrawShop()

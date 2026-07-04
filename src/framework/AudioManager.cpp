@@ -16,6 +16,8 @@ namespace framework
 {
 namespace
 {
+constexpr int kFmodChannelBudget = 256;
+
 std::string ToUtf8(const std::wstring& text)
 {
     if (text.empty())
@@ -49,7 +51,8 @@ bool AudioManager::Initialize()
         return false;
     }
 
-    if (system->init(96, FMOD_INIT_3D_RIGHTHANDED, nullptr) != FMOD_OK)
+    system->setSoftwareChannels(kFmodChannelBudget);
+    if (system->init(kFmodChannelBudget, FMOD_INIT_3D_RIGHTHANDED, nullptr) != FMOD_OK)
     {
         system->release();
         return false;
@@ -242,6 +245,7 @@ bool AudioManager::PlayEffect(const std::wstring& absolutePath) const
         }
         if (channel)
         {
+            channel->setMode(FMOD_2D);
             channel->setVolume(std::clamp(m_volume * EffectGainFor(absolutePath), 0.0f, 1.0f));
         }
         return true;
@@ -283,6 +287,7 @@ bool AudioManager::PlayEffectAt(const std::wstring& absolutePath, float worldX, 
         }
         if (channel)
         {
+            channel->setMode(FMOD_3D);
             FMOD_VECTOR position = {worldX / 96.0f, 0.0f, 0.0f};
             FMOD_VECTOR velocity = {0.0f, 0.0f, 0.0f};
             channel->set3DAttributes(&position, &velocity);
@@ -325,7 +330,7 @@ FMOD::Sound* AudioManager::LoadFmodSound(const std::wstring& absolutePath) const
 
     FMOD::Sound* sound = nullptr;
     const std::string utf8Path = ToUtf8(absolutePath);
-    const FMOD_MODE mode = FMOD_3D | FMOD_CREATECOMPRESSEDSAMPLE;
+    const FMOD_MODE mode = FMOD_3D | FMOD_CREATESAMPLE;
     if (m_fmodSystem->createSound(utf8Path.c_str(), mode, nullptr, &sound) != FMOD_OK)
     {
         return nullptr;

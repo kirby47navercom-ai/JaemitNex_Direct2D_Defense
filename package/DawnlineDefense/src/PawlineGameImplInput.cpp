@@ -48,12 +48,154 @@ void PawlineGameImpl::AdjustEscapeMenuSpeed(float delta)
     }
 }
 
+bool PawlineGameImpl::IsInteractivePoint(Vec2 pos) const
+{
+    if (m_escapeMenuOpen)
+    {
+        return Contains(EscapeResumeButtonRect(), pos) ||
+               Contains(EscapeShakeButtonRect(), pos) ||
+               Contains(EscapeSpeedDownButtonRect(), pos) ||
+               Contains(EscapeSpeedUpButtonRect(), pos) ||
+               Contains(EscapeStageButtonRect(), pos) ||
+               Contains(EscapeQuitButtonRect(), pos);
+    }
+
+    switch (m_screen)
+    {
+    case GameScreen::Title:
+        return Contains(TitleStartButtonRect(), pos) ||
+               Contains(TitleDemoButtonRect(), pos) ||
+               Contains(TitleOptionsButtonRect(), pos) ||
+               Contains(TitleQuitButtonRect(), pos);
+    case GameScreen::Options:
+        for (int i = 0; i < kSaveSlotCount; ++i)
+        {
+            if (Contains(OptionsSaveSlotButtonRect(i), pos))
+            {
+                return true;
+            }
+        }
+        return Contains(OptionsShakeButtonRect(), pos) ||
+               Contains(OptionsFlashButtonRect(), pos) ||
+               Contains(OptionsSfxDownButtonRect(), pos) ||
+               Contains(OptionsSfxUpButtonRect(), pos) ||
+               Contains(OptionsSpeedDownButtonRect(), pos) ||
+               Contains(OptionsSpeedUpButtonRect(), pos) ||
+               Contains(OptionsViewDownButtonRect(), pos) ||
+               Contains(OptionsViewUpButtonRect(), pos) ||
+               Contains(OptionsViewResetButtonRect(), pos) ||
+               Contains(OptionsSaveProgressButtonRect(), pos) ||
+               Contains(OptionsLoadProgressButtonRect(), pos) ||
+               Contains(OptionsDeleteProgressButtonRect(), pos) ||
+               Contains(OptionsResetProgressButtonRect(), pos) ||
+               Contains(OptionsBackButtonRect(), pos);
+    case GameScreen::Menu:
+        for (int i = 0; i < kStageCount; ++i)
+        {
+            if (Contains(MenuStageRect(i), pos))
+            {
+                return true;
+            }
+        }
+        for (int i = 0; i < kLoadoutSize; ++i)
+        {
+            if (Contains(MenuLoadoutSlotRect(i), pos))
+            {
+                return true;
+            }
+        }
+        for (int i = 0; i < kRosterCount; ++i)
+        {
+            if (Contains(RosterCardRect(i), pos))
+            {
+                return true;
+            }
+        }
+        return Contains(StartGameButtonRect(), pos) ||
+               Contains(MenuShopButtonRect(), pos) ||
+               Contains(MenuArchiveButtonRect(), pos);
+    case GameScreen::Archive:
+        if (Contains(ArchiveBackButtonRect(), pos))
+        {
+            return true;
+        }
+        for (int i = 0; i < 3; ++i)
+        {
+            if (Contains(ArchiveTabRect(i), pos))
+            {
+                return true;
+            }
+        }
+        return false;
+    case GameScreen::Briefing:
+        for (int i = 0; i < kLoadoutSize; ++i)
+        {
+            if (Contains(BriefingLoadoutSlotRect(i), pos))
+            {
+                return true;
+            }
+        }
+        for (int i = 0; i < 3; ++i)
+        {
+            if (Contains(BriefingDifficultyRect(i), pos))
+            {
+                return true;
+            }
+        }
+        return Contains(BriefingStartButtonRect(), pos) ||
+               Contains(BriefingBackButtonRect(), pos) ||
+               Contains(BriefingShopButtonRect(), pos);
+    case GameScreen::Shop:
+        if (Contains(ShopBackButtonRect(), pos))
+        {
+            return true;
+        }
+        for (int i = 0; i < kRosterCount; ++i)
+        {
+            if (Contains(ShopUnitRect(i), pos))
+            {
+                return true;
+            }
+        }
+        return false;
+    case GameScreen::Result:
+        return Contains(ResultRetryButtonRect(), pos) ||
+               Contains(ResultNextButtonRect(), pos) ||
+               Contains(ResultMenuButtonRect(), pos);
+    case GameScreen::Playing:
+    {
+        const D2D1_RECT_F cameraRail = D2D1::RectF(40.0f, 94.0f, 1240.0f, 116.0f);
+        if (Contains(cameraRail, pos))
+        {
+            return true;
+        }
+        for (int i = 0; i < kLoadoutSize; ++i)
+        {
+            if (Contains(CardRect(i), pos))
+            {
+                return true;
+            }
+        }
+        return Contains(WalletButtonRect(), pos) ||
+               Contains(CannonButtonRect(), pos) ||
+               Contains(SpeedDownButtonRect(), pos) ||
+               Contains(SpeedUpButtonRect(), pos) ||
+               Contains(PauseButtonRect(), pos) ||
+               Contains(RestartButtonRect(), pos);
+    }
+    }
+    return false;
+}
+
 void PawlineGameImpl::OnLeftClick(Vec2 pos)
 {
     // Every screen owns its click handling. The shared rectangle helpers live in
     // PawlineGameImplLayout.cpp, so render and input stay pixel-aligned.
-    AddUiPulse(pos, D2D1::ColorF(0x65B8FF, 0.72f));
-    PlaySfx(SfxKind::Ui, 0.025f);
+    if (IsInteractivePoint(pos))
+    {
+        AddUiPulse(pos, D2D1::ColorF(0x65B8FF, 0.72f));
+        PlaySfx(SfxKind::Ui, 0.025f);
+    }
     if (m_escapeMenuOpen)
     {
         OnEscapeMenuClick(pos);
@@ -247,8 +389,7 @@ void PawlineGameImpl::OnBriefingClick(Vec2 pos)
 
     for (int i = 0; i < kLoadoutSize; ++i)
     {
-        const D2D1_RECT_F rect = D2D1::RectF(604.0f + static_cast<float>(i) * 112.0f, 236.0f, 700.0f + static_cast<float>(i) * 112.0f, 348.0f);
-        if (Contains(rect, pos))
+        if (Contains(BriefingLoadoutSlotRect(i), pos))
         {
             m_selectedLoadoutSlot = i;
             m_screen = GameScreen::Menu;
