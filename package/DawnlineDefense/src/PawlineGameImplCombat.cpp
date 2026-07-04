@@ -1305,7 +1305,7 @@ void PawlineGameImpl::SpawnPlayer(PlayerUnit type)
     {
         AddRing(unit.pos, 52.0f + static_cast<float>(m_walletLevel) * 5.0f, 0.34f, D2D1::ColorF(0xB8FF89, 0.28f), 2.0f);
         AddImageVfx(ImageVfxKind::HealSoft, unit.pos + Vec2{0.0f, -10.0f}, 72.0f, 0.36f, D2D1::ColorF(0xB8FF89, 0.76f), 1.0f);
-        AddFloatText(unit.pos + Vec2{0.0f, -unit.radius - 34.0f}, L"Wallet +" + ToWideInt(static_cast<int>(std::round((walletBoost - 1.0f) * 100.0f))) + L"%", D2D1::ColorF(0xB8FF89), 0.82f);
+        AddFloatText(unit.pos + Vec2{0.0f, -unit.radius - 34.0f}, L"월렛 +" + ToWideInt(static_cast<int>(std::round((walletBoost - 1.0f) * 100.0f))) + L"%", D2D1::ColorF(0xB8FF89), 0.82f);
     }
     PlaySfxAt(SfxKind::Spawn, unit.pos.x, 0.10f, 0.95f);
 }
@@ -2651,14 +2651,14 @@ void PawlineGameImpl::TryUpgradeWallet()
 {
     if (m_walletLevel >= 5)
     {
-        SetMessage(L"WALLET은 이미 최대 레벨이야.");
+        SetMessage(L"월렛은 이미 최대 레벨이야.");
         return;
     }
 
     const int cost = WalletUpgradeCost();
     if (m_energy < static_cast<float>(cost))
     {
-        SetMessage(L"WALLET 강화 에너지가 부족해.");
+        SetMessage(L"월렛 강화 에너지가 부족해.");
         return;
     }
 
@@ -2667,9 +2667,9 @@ void PawlineGameImpl::TryUpgradeWallet()
     m_walletPulseTimer = std::min(m_walletPulseTimer, 1.0f);
     TriggerWalletPulse(true);
     PlaySfxAt(SfxKind::Wallet, kPlayerBaseX + 58.0f, 0.12f, 1.05f);
-    AddFloatText({640.0f, 570.0f}, L"WALLET Lv." + ToWideInt(m_walletLevel), D2D1::ColorF(0xB8FF89), 1.1f);
+    AddFloatText({640.0f, 570.0f}, L"월렛 Lv." + ToWideInt(m_walletLevel), D2D1::ColorF(0xB8FF89), 1.1f);
     AddRing({kPlayerBaseX + 58.0f, kLaneY}, 152.0f, 0.58f, D2D1::ColorF(0xB8FF89, 0.48f), 4.0f);
-    SetMessage(L"WALLET 강화. 소환 비용 감소, 아군 강화, 보급 펄스 활성.");
+    SetMessage(L"월렛 강화. 소환 비용 감소, 아군 강화, 보급 펄스 활성.");
 }
 
 void PawlineGameImpl::TryFireCannon()

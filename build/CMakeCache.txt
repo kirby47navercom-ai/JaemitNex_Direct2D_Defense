@@ -183,10 +183,10 @@ DawnlineDefense_IS_TOP_LEVEL:STATIC=ON
 DawnlineDefense_SOURCE_DIR:STATIC=C:/Users/kirby/OneDrive/바탕 화면/JaemitNex_Direct2D_Defense
 
 //FMOD Engine SDK root directory
-FMOD_SDK_DIR:PATH=
+FMOD_SDK_DIR:PATH=C:/Program Files (x86)/FMOD SoundSystem/FMOD Studio API Windows
 
 //Build with FMOD Core API when FMOD_SDK_DIR is provided
-USE_FMOD:BOOL=OFF
+USE_FMOD:BOOL=ON
 
 
 ########################

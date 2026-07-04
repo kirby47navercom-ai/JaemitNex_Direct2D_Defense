@@ -52,12 +52,12 @@ During combat, the enemy director watches lane state and base HP.
 
 | Synergy | Required Units | Effect |
 | --- | --- | --- |
-| Guard Wall | 방패냥 + 얼음방패냥 | Front-line HP +10% |
-| Arc Focus | 전기냥 + 프리즘냥 | Ranged damage +8% |
-| Rush Pack | 질주냥 + 혜성냥 | Rush speed/damage +7% |
-| Star Scope | 궤도냥 + 성운포냥 | Ranged range +6% |
-| Mint Supply | 지원냥 | Energy regen +4 and stronger wallet healing |
-| Sun Chime | 태양검냥 + 종냥 | Cannon charge +12% |
+| Guard Wall | 방패병 + 빙결방패 | Front-line HP +10% |
+| Arc Focus | 전격술사 + 프리즘술사 | Ranged damage +8% |
+| Rush Pack | 질주병 + 혜성병 | Rush speed/damage +7% |
+| Star Scope | 궤도드론 + 성운포대 | Ranged range +6% |
+| Mint Supply | 지원병 | Energy regen +4 and stronger wallet healing |
+| Sun Chime | 태양검 + 종술사 | Cannon charge +12% |
 
 ## Evolution
 

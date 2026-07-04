@@ -90,18 +90,18 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
         OnMenuClick(pos);
         return;
     }
-    if (m_screen == GameScreen::Codex)
+    if (m_screen == GameScreen::Archive)
     {
-        if (Contains(CodexBackButtonRect(), pos))
+        if (Contains(ArchiveBackButtonRect(), pos))
         {
             ResetToMenu();
             return;
         }
         for (int i = 0; i < 3; ++i)
         {
-            if (Contains(CodexTabRect(i), pos))
+            if (Contains(ArchiveTabRect(i), pos))
             {
-                m_codexTab = i;
+                m_archiveTab = i;
                 return;
             }
         }
@@ -221,9 +221,9 @@ void PawlineGameImpl::OnMenuClick(Vec2 pos)
         m_screen = GameScreen::Shop;
         return;
     }
-    if (Contains(MenuCodexButtonRect(), pos))
+    if (Contains(MenuArchiveButtonRect(), pos))
     {
-        m_screen = GameScreen::Codex;
+        m_screen = GameScreen::Archive;
     }
 }
 
@@ -564,7 +564,7 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         return;
     }
 
-    if (m_screen == GameScreen::Codex)
+    if (m_screen == GameScreen::Archive)
     {
         if (key == VK_ESCAPE || key == VK_BACK || key == 'M')
         {
@@ -572,15 +572,15 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         }
         else if (key == VK_LEFT)
         {
-            m_codexTab = (m_codexTab + 2) % 3;
+            m_archiveTab = (m_archiveTab + 2) % 3;
         }
         else if (key == VK_RIGHT || key == VK_TAB)
         {
-            m_codexTab = (m_codexTab + 1) % 3;
+            m_archiveTab = (m_archiveTab + 1) % 3;
         }
         else if (key >= '1' && key <= '3')
         {
-            m_codexTab = static_cast<int>(key - '1');
+            m_archiveTab = static_cast<int>(key - '1');
         }
         return;
     }
@@ -775,7 +775,7 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         }
         else if (key == 'D' || key == 'C')
         {
-            m_screen = GameScreen::Codex;
+            m_screen = GameScreen::Archive;
         }
         return;
     }

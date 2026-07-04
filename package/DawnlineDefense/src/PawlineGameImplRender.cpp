@@ -264,9 +264,9 @@ void PawlineGameImpl::Render()
         return;
     }
 
-    if (m_screen == GameScreen::Codex)
+    if (m_screen == GameScreen::Archive)
     {
-        DrawCodex();
+        DrawArchive();
         DrawMessage();
         DrawUiPulses();
         DrawSceneTransition();
@@ -1194,15 +1194,15 @@ void PawlineGameImpl::DrawMenu()
     DrawString(L"Start energy " + ToWideInt(static_cast<int>(menuStage.startEnergy)), D2D1::RectF(82.0f, 676.0f, 540.0f, 700.0f), m_bodyFormat, D2D1::ColorF(0xB8FF89));
 
     const bool selectedUnlocked = IsStageUnlocked(m_selectedStage);
-    DrawButton(MenuCodexButtonRect(), L"Data", true, D2D1::ColorF(0x22323F));
+    DrawButton(MenuArchiveButtonRect(), L"기록", true, D2D1::ColorF(0x22323F));
     DrawButton(MenuShopButtonRect(), L"Shop", true, D2D1::ColorF(0x4B4321));
     DrawButton(StartGameButtonRect(), selectedUnlocked ? L"Start Stage" : L"Locked", selectedUnlocked, D2D1::ColorF(0x173C4B));
-    DrawString(L"D / C", D2D1::RectF(MenuCodexButtonRect().left, MenuCodexButtonRect().bottom + 4.0f, MenuCodexButtonRect().right, MenuCodexButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+    DrawString(L"D / C", D2D1::RectF(MenuArchiveButtonRect().left, MenuArchiveButtonRect().bottom + 4.0f, MenuArchiveButtonRect().right, MenuArchiveButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
     DrawString(L"S / B", D2D1::RectF(MenuShopButtonRect().left, MenuShopButtonRect().bottom + 4.0f, MenuShopButtonRect().right, MenuShopButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
     DrawString(selectedUnlocked ? L"Enter / Space" : L"Clear previous", D2D1::RectF(StartGameButtonRect().left, StartGameButtonRect().bottom + 4.0f, StartGameButtonRect().right, StartGameButtonRect().bottom + 24.0f), m_centerFormat, selectedUnlocked ? D2D1::ColorF(0x8EA9B8) : D2D1::ColorF(0xFFB6C2));
 }
 
-void PawlineGameImpl::DrawCodex()
+void PawlineGameImpl::DrawArchive()
 {
     DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), m_selectedStage, m_uiTime, 0.0f, false);
     for (float y = 28.0f; y < kHeight; y += 42.0f)
@@ -1214,20 +1214,20 @@ void PawlineGameImpl::DrawCodex()
         DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.12f), 1.0f);
     }
 
-    DrawPixelText(L"FIELD DATA", {52.0f, 42.0f}, 4.2f, D2D1::ColorF(0xF3FBFF));
+    DrawString(L"전술 기록", D2D1::RectF(52.0f, 38.0f, 360.0f, 84.0f), m_titleFormat, D2D1::ColorF(0xF3FBFF));
     DrawString(L"유닛, 적, 행성 정보를 한곳에서 확인합니다.", D2D1::RectF(58.0f, 92.0f, 520.0f, 120.0f), m_bodyFormat, D2D1::ColorF(0xBFD1DB));
 
     const std::array<std::wstring, 3> tabs = {L"유닛", L"적", L"스테이지"};
     for (int i = 0; i < 3; ++i)
     {
-        const bool active = m_codexTab == i;
-        DrawButton(CodexTabRect(i), tabs[i], true, active ? D2D1::ColorF(0x173C4B) : D2D1::ColorF(0x202833));
+        const bool active = m_archiveTab == i;
+        DrawButton(ArchiveTabRect(i), tabs[i], true, active ? D2D1::ColorF(0x173C4B) : D2D1::ColorF(0x202833));
     }
 
     const D2D1_RECT_F board = D2D1::RectF(52.0f, 186.0f, 1228.0f, 690.0f);
     DrawCartoonPanel(board, D2D1::ColorF(0x0D1821, 0.96f), D2D1::ColorF(0x65B8FF));
 
-    if (m_codexTab == 0)
+    if (m_archiveTab == 0)
     {
         for (int i = 0; i < kRosterCount; ++i)
         {
@@ -1246,7 +1246,7 @@ void PawlineGameImpl::DrawCodex()
             DrawString(L"HP " + ToWideInt(static_cast<int>(stats.hp)) + L"  DMG " + ToWideInt(static_cast<int>(stats.damage)) + L"  COST " + ToWideInt(UnitEnergyCost(unit)), D2D1::RectF(rect.left + 248.0f, rect.top + 15.0f, rect.right - 12.0f, rect.bottom - 8.0f), m_smallFormat, D2D1::ColorF(0xC7D8FF));
         }
     }
-    else if (m_codexTab == 1)
+    else if (m_archiveTab == 1)
     {
         for (int i = 0; i <= static_cast<int>(EnemyUnit::Boss); ++i)
         {
@@ -1283,8 +1283,8 @@ void PawlineGameImpl::DrawCodex()
         }
     }
 
-    DrawButton(CodexBackButtonRect(), L"Back", true, D2D1::ColorF(0x173C4B));
-    DrawString(L"Esc / M", D2D1::RectF(CodexBackButtonRect().right + 12.0f, CodexBackButtonRect().top + 14.0f, CodexBackButtonRect().right + 120.0f, CodexBackButtonRect().bottom), m_bodyFormat, D2D1::ColorF(0x8EA9B8));
+    DrawButton(ArchiveBackButtonRect(), L"돌아가기", true, D2D1::ColorF(0x173C4B));
+    DrawString(L"Esc / M", D2D1::RectF(ArchiveBackButtonRect().right + 12.0f, ArchiveBackButtonRect().top + 14.0f, ArchiveBackButtonRect().right + 120.0f, ArchiveBackButtonRect().bottom), m_bodyFormat, D2D1::ColorF(0x8EA9B8));
 }
 
 void PawlineGameImpl::DrawBriefing()
@@ -1368,7 +1368,7 @@ void PawlineGameImpl::DrawBriefing()
     }
     DrawSynergyPanel(D2D1::RectF(604.0f, 584.0f, 1196.0f, 666.0f));
 
-    DrawButton(BriefingBackButtonRect(), L"Back", true, D2D1::ColorF(0x173C4B));
+    DrawButton(BriefingBackButtonRect(), L"돌아가기", true, D2D1::ColorF(0x173C4B));
     DrawButton(BriefingShopButtonRect(), L"Shop", true, D2D1::ColorF(0x4B4321));
     DrawButton(BriefingStartButtonRect(), L"Launch", true, D2D1::ColorF(0x283B27));
     DrawPixelTextCentered(L"ENTER / SPACE", D2D1::RectF(BriefingStartButtonRect().left, BriefingStartButtonRect().bottom + 8.0f, BriefingStartButtonRect().right, BriefingStartButtonRect().bottom + 28.0f), 1.8f, D2D1::ColorF(0x8EA9B8), 1.0f);
@@ -1397,7 +1397,7 @@ void PawlineGameImpl::DrawShop()
 
     DrawShopUnitDetail();
 
-    DrawButton(ShopBackButtonRect(), L"Back", true, D2D1::ColorF(0x173C4B));
+    DrawButton(ShopBackButtonRect(), L"돌아가기", true, D2D1::ColorF(0x173C4B));
     DrawString(L"Esc / M", D2D1::RectF(ShopBackButtonRect().right + 12.0f, ShopBackButtonRect().top + 14.0f, ShopBackButtonRect().right + 120.0f, ShopBackButtonRect().bottom), m_bodyFormat, D2D1::ColorF(0x8EA9B8));
 }
 
@@ -1992,9 +1992,10 @@ void PawlineGameImpl::DrawUnitLighting()
             FillEllipse(pos, unit.radius * (2.55f + strike * 1.25f), unit.radius * (1.78f + strike * 0.70f), D2D1::ColorF(accent.r, accent.g, accent.b, 0.052f + strike * 0.092f));
             FillEllipse(front, unit.radius * (1.95f + strike * 1.55f), unit.radius * (1.10f + strike * 0.80f), D2D1::ColorF(accent.r, accent.g, accent.b, 0.066f + strike * 0.130f));
             FillEllipse({pos.x - lightDir.x * unit.radius * 0.38f, pos.y - unit.radius * 0.42f}, unit.radius * 0.72f, unit.radius * 0.34f, D2D1::ColorF(0xFFFFFF, 0.055f + strike * 0.060f));
-            DrawLine({pos.x - unit.attackDir * unit.radius * 0.5f, pos.y - unit.radius * 0.86f},
-                     {pos.x + unit.attackDir * unit.radius * 0.72f, pos.y - unit.radius * 0.58f},
-                     D2D1::ColorF(0xFFFFFF, 0.10f + strike * 0.15f), 2.0f);
+            FillEllipse({pos.x + unit.attackDir * unit.radius * 0.10f, pos.y - unit.radius * 0.70f},
+                        unit.radius * (0.68f + strike * 0.25f),
+                        unit.radius * (0.11f + strike * 0.08f),
+                        D2D1::ColorF(0xFFFFFF, 0.060f + strike * 0.075f));
         }
     }
 }
@@ -2255,157 +2256,96 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
 {
     const PlayerUnit type = static_cast<PlayerUnit>(unit.kind);
     const float dir = unit.attackDir;
-    const D2D1_COLOR_F ink = D2D1::ColorF(0x061019, 0.96f);
-    const D2D1_COLOR_F white = D2D1::ColorF(0xFFF7D6);
     const float reach = strike * 22.0f - windup * 8.0f + recoil * 4.0f;
     const Vec2 hand = {pos.x + dir * (unit.radius * 0.72f), pos.y + 2.0f};
-    const Vec2 front = {pos.x + dir * (unit.radius + 26.0f + reach), pos.y - 4.0f};
+    const Vec2 front = {pos.x + dir * (unit.radius + 40.0f + reach), pos.y - 5.0f};
     const int weaponIndex = std::clamp(static_cast<int>(type), 0, kRosterCount - 1);
-    const Vec2 weaponCenter = {hand.x + dir * (34.0f + reach * 0.56f), hand.y - 12.0f + recoil * 3.0f};
-    const float weaponAngle = (dir >= 0.0f ? -5.0f : 5.0f) + dir * (strike * 15.0f - windup * 10.0f);
-    DrawWeaponBitmap(m_playerWeaponBitmaps[static_cast<size_t>(weaponIndex)].Get(),
-                     weaponCenter,
-                     56.0f + unit.radius * 0.30f + strike * 7.0f,
-                     34.0f + unit.radius * 0.14f,
-                     weaponAngle,
-                     0.74f + strike * 0.18f,
-                     dir < 0.0f);
+    const Vec2 weaponCenter = {hand.x + dir * (38.0f + reach * 0.60f), hand.y - 12.0f + recoil * 3.0f};
+    const float weaponAngle = (dir >= 0.0f ? -5.0f : 5.0f) + dir * (strike * 16.0f - windup * 10.0f);
+    const float action = Clamp01(windup + strike + recoil);
+    const float glowAlpha = 0.10f + action * 0.18f;
+    ImageVfxKind vfx = ImageVfxKind::HitFlash;
+    float vfxSize = 66.0f + strike * 40.0f;
 
-    auto drawStroke = [&](Vec2 a, Vec2 b, D2D1_COLOR_F color, float width) {
-        DrawLine(a, b, ink, width + 3.2f);
-        DrawLine(a, b, color, width);
-    };
-    auto drawOrb = [&](Vec2 center, float r, D2D1_COLOR_F color) {
-        FillEllipse(center, r + 3.0f, r + 3.0f, ink);
-        FillEllipse(center, r * 1.8f, r * 1.8f, D2D1::ColorF(color.r, color.g, color.b, 0.11f + strike * 0.08f));
-        FillEllipse(center, r, r, color);
-        FillEllipse({center.x - r * 0.32f, center.y - r * 0.34f}, r * 0.30f, r * 0.20f, D2D1::ColorF(0xFFFFFF, 0.34f));
-    };
-
+    // 실제 무기는 PNG만 사용하고, 아래 switch는 유닛별 공격 빛과 충격 모양만 고른다.
     switch (type)
     {
     case PlayerUnit::Paw:
-        FillEllipse(front, 13.0f, 10.0f, ink);
-        FillEllipse(front, 9.0f, 7.0f, white);
-        FillEllipse({front.x + dir * (18.0f + strike * 12.0f), front.y}, 22.0f + strike * 18.0f, 12.0f + strike * 7.0f, D2D1::ColorF(0x65B8FF, 0.11f + strike * 0.12f));
-        if (strike > 0.0f)
-        {
-            DrawImageVfxFrame(ImageVfxKind::Slash, std::clamp(static_cast<int>(AttackProgress(unit) * 8.0f), 0, 7),
-                              {front.x + dir * 22.0f, front.y}, 66.0f + strike * 28.0f, 0.46f * strike);
-        }
+        vfx = ImageVfxKind::Slash;
         break;
     case PlayerUnit::Box:
-    {
-        const D2D1_RECT_F shield = D2D1::RectF(front.x - 13.0f, front.y - 24.0f, front.x + 13.0f, front.y + 24.0f);
-        FillRoundRect(shield, 5.0f, ink);
-        FillRoundRect(InsetRectF(shield, 3.0f, 3.0f), 4.0f, D2D1::ColorF(0xDCA85B));
-        StrokeRoundRect(InsetRectF(shield, 5.0f, 5.0f), 3.0f, D2D1::ColorF(0xFFF0B5), 2.0f);
-        if (strike > 0.0f)
-        {
-            StrokeEllipse({front.x + dir * 12.0f, front.y + 16.0f}, 38.0f, 12.0f, D2D1::ColorF(0xFFF0B5, 0.38f * strike), 3.0f);
-        }
+        vfx = ImageVfxKind::Earth;
+        vfxSize += 22.0f;
         break;
-    }
     case PlayerUnit::Spark:
-        drawStroke(hand, {hand.x + dir * 12.0f, hand.y - 42.0f}, stats.accent, 3.0f);
-        drawOrb({hand.x + dir * 15.0f, hand.y - 47.0f}, 7.0f + strike * 3.0f, D2D1::ColorF(0xF6FF83));
-        if (strike > 0.0f)
-        {
-            DrawLine({hand.x + dir * 15.0f, hand.y - 47.0f}, front, D2D1::ColorF(0x061019, 0.80f), 6.0f);
-            DrawLine({hand.x + dir * 15.0f, hand.y - 47.0f}, front, D2D1::ColorF(0xF6FF83, 0.78f * strike), 2.6f);
-            DrawLine({front.x - dir * 10.0f, front.y - 8.0f}, {front.x + dir * 8.0f, front.y + 9.0f}, D2D1::ColorF(0xEAF7FF, 0.50f * strike), 1.8f);
-        }
+        vfx = ImageVfxKind::ThunderSplash;
+        vfxSize += 20.0f;
         break;
     case PlayerUnit::Dash:
-        drawStroke({hand.x - dir * 3.0f, hand.y - 4.0f}, {front.x + dir * 16.0f, front.y - 18.0f}, D2D1::ColorF(0xB8FF89), 2.6f);
-        drawStroke({hand.x - dir * 3.0f, hand.y + 9.0f}, {front.x + dir * 18.0f, front.y + 12.0f}, D2D1::ColorF(0xEAF7FF), 2.2f);
-        if (strike > 0.0f)
-        {
-            FillEllipse({pos.x - dir * 42.0f, pos.y + 10.0f}, 28.0f, 7.0f, D2D1::ColorF(0xB8FF89, 0.18f * strike));
-        }
+        vfx = ImageVfxKind::WindHit;
         break;
     case PlayerUnit::Bell:
-        drawStroke(hand, {hand.x + dir * 18.0f, hand.y - 28.0f}, stats.accent, 2.6f);
-        FillEllipse({hand.x + dir * 22.0f, hand.y - 34.0f}, 12.0f, 9.0f, ink);
-        FillEllipse({hand.x + dir * 22.0f, hand.y - 34.0f}, 8.0f, 6.0f, D2D1::ColorF(0xF2C94C));
-        if (strike > 0.0f)
-        {
-            StrokeEllipse(front, 30.0f + strike * 24.0f, 16.0f + strike * 12.0f, D2D1::ColorF(0xF6FF83, 0.48f * strike), 2.5f);
-            StrokeEllipse(front, 52.0f + strike * 28.0f, 26.0f + strike * 15.0f, D2D1::ColorF(0xF6FF83, 0.26f * strike), 1.8f);
-        }
+        vfx = ImageVfxKind::Holy;
+        vfxSize += 12.0f;
         break;
     case PlayerUnit::Titan:
-    case PlayerUnit::Solar:
-    {
-        const bool solar = type == PlayerUnit::Solar;
-        const D2D1_COLOR_F blade = solar ? D2D1::ColorF(0xFFE66D) : D2D1::ColorF(0xFFF0B5);
-        const Vec2 head = {front.x + dir * 9.0f, front.y + (solar ? -26.0f : 22.0f)};
-        drawStroke(hand, head, blade, solar ? 4.0f : 5.0f);
-        if (solar)
-        {
-            drawStroke(head, {head.x + dir * (30.0f + strike * 20.0f), head.y - 12.0f}, blade, 4.4f);
-            for (int i = -1; i <= 1; ++i)
-            {
-                DrawLine(head, {head.x + dir * 36.0f, head.y + static_cast<float>(i) * 18.0f}, D2D1::ColorF(0xFFB347, 0.34f + strike * 0.20f), 2.2f);
-            }
-        }
-        else
-        {
-            FillRoundRect(D2D1::RectF(head.x - 19.0f, head.y - 12.0f, head.x + 19.0f, head.y + 12.0f), 5.0f, ink);
-            FillRoundRect(D2D1::RectF(head.x - 15.0f, head.y - 8.0f, head.x + 15.0f, head.y + 8.0f), 4.0f, D2D1::ColorF(0xDCA85B));
-            if (strike > 0.0f)
-            {
-                StrokeEllipse({head.x, head.y + 15.0f}, 48.0f, 14.0f, D2D1::ColorF(0xFFF0B5, 0.36f * strike), 3.4f);
-            }
-        }
+        vfx = ImageVfxKind::Explosion;
+        vfxSize += 36.0f;
         break;
-    }
     case PlayerUnit::Frost:
-        drawStroke(hand, {front.x + dir * 20.0f, front.y - 20.0f}, D2D1::ColorF(0xD9FFF8), 3.4f);
-        DrawLine({front.x + dir * 12.0f, front.y - 30.0f}, {front.x + dir * 30.0f, front.y - 12.0f}, D2D1::ColorF(0xB9FFF5, 0.72f), 2.0f);
-        StrokeRoundRect(D2D1::RectF(pos.x - dir * 6.0f - 16.0f, pos.y + 5.0f, pos.x - dir * 6.0f + 16.0f, pos.y + 30.0f), 5.0f, D2D1::ColorF(0xD9FFF8, 0.82f), 2.0f);
+        vfx = ImageVfxKind::Ice;
+        vfxSize += 18.0f;
         break;
     case PlayerUnit::Comet:
-        drawStroke(hand, {front.x + dir * 34.0f, front.y - 2.0f}, D2D1::ColorF(0xFFCA7A), 4.0f);
-        FillEllipse({pos.x - dir * 44.0f, pos.y + 14.0f}, 34.0f, 8.0f, D2D1::ColorF(0xFFB347, 0.16f + strike * 0.12f));
+        vfx = ImageVfxKind::Thrust;
+        vfxSize += 24.0f;
         break;
     case PlayerUnit::Orbit:
-    {
-        drawStroke(hand, {hand.x + dir * 8.0f, hand.y - 36.0f}, stats.accent, 2.6f);
-        StrokeEllipse(pos, unit.radius + 24.0f + strike * 12.0f, unit.radius * 0.70f + strike * 6.0f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.24f + strike * 0.20f), 2.0f);
-        DrawLine({front.x - dir * 26.0f, front.y - 2.0f}, {front.x + dir * (32.0f + strike * 26.0f), front.y - 2.0f}, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.44f + strike * 0.28f), 2.6f);
+        vfx = ImageVfxKind::EnergyImpact;
+        vfxSize += 26.0f;
         break;
-    }
+    case PlayerUnit::Solar:
+        vfx = ImageVfxKind::FireBreath;
+        vfxSize += 34.0f;
+        break;
     case PlayerUnit::Mint:
-        drawStroke(hand, {hand.x + dir * 20.0f, hand.y - 34.0f}, D2D1::ColorF(0xD8FFF3), 2.8f);
-        DrawLine({front.x - 10.0f, front.y}, {front.x + 10.0f, front.y}, D2D1::ColorF(0xD8FFF3), 3.0f);
-        DrawLine({front.x, front.y - 10.0f}, {front.x, front.y + 10.0f}, D2D1::ColorF(0xD8FFF3), 3.0f);
-        if (strike > 0.0f)
-        {
-            FillEllipse(front, 18.0f, 18.0f, D2D1::ColorF(0xD8FFF3, 0.15f * strike));
-        }
+        vfx = ImageVfxKind::HealSoft;
         break;
     case PlayerUnit::Drill:
-        drawStroke(hand, {front.x + dir * 40.0f, front.y}, D2D1::ColorF(0xFFF0C8), 5.0f);
-        StrokeEllipse({front.x + dir * 24.0f, front.y}, 24.0f + strike * 8.0f, 9.0f + strike * 3.0f, stats.accent, 2.4f);
-        DrawLine({front.x + dir * 8.0f, front.y - 8.0f}, {front.x + dir * 38.0f, front.y + 8.0f}, D2D1::ColorF(0xFFF0C8), 1.8f);
-        DrawLine({front.x + dir * 8.0f, front.y + 8.0f}, {front.x + dir * 38.0f, front.y - 8.0f}, D2D1::ColorF(0xFFF0C8), 1.8f);
+        vfx = ImageVfxKind::Smear;
+        vfxSize += 16.0f;
         break;
     case PlayerUnit::Prism:
-        drawStroke(hand, {hand.x + dir * 18.0f, hand.y - 40.0f}, D2D1::ColorF(0xF7D6FF), 3.2f);
-        FillRoundRect(D2D1::RectF(front.x - 8.0f, front.y - 24.0f, front.x + 12.0f, front.y + 4.0f), 3.0f, ink);
-        StrokeRoundRect(D2D1::RectF(front.x - 8.0f, front.y - 24.0f, front.x + 12.0f, front.y + 4.0f), 3.0f, D2D1::ColorF(0xF7D6FF), 2.0f);
-        if (strike > 0.0f)
-        {
-            DrawLine({front.x, front.y - 10.0f}, {front.x + dir * 72.0f, front.y - 6.0f}, D2D1::ColorF(0xF7D6FF, 0.72f * strike), 3.0f);
-            DrawLine({front.x, front.y - 10.0f}, {front.x + dir * 72.0f, front.y + 10.0f}, D2D1::ColorF(0x65D8FF, 0.36f * strike), 2.0f);
-        }
+        vfx = ImageVfxKind::MagicMirror;
+        vfxSize += 18.0f;
         break;
     case PlayerUnit::Nebula:
-        drawStroke(hand, {hand.x + dir * 12.0f, hand.y - 44.0f}, D2D1::ColorF(0xC8B7FF), 3.0f);
-        StrokeEllipse(pos, unit.radius + 22.0f + strike * 14.0f, unit.radius * 0.82f + strike * 8.0f, D2D1::ColorF(0xC8B7FF, 0.38f), 2.0f);
-        DrawLine({front.x - dir * 18.0f, front.y - 20.0f}, {front.x + dir * (34.0f + strike * 34.0f), front.y + 2.0f}, D2D1::ColorF(0xE5D9FF, 0.38f + strike * 0.30f), 3.0f);
+        vfx = ImageVfxKind::Dark;
+        vfxSize += 32.0f;
         break;
+    }
+
+    FillEllipse(weaponCenter, 42.0f + action * 28.0f, 18.0f + action * 10.0f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, glowAlpha));
+    if (strike > 0.0f)
+    {
+        const int frame = std::clamp(static_cast<int>(AttackProgress(unit) * 8.0f), 0, 7);
+        DrawImageVfxFrame(vfx, frame, front, vfxSize, 0.56f * strike);
+        StrokeEllipse(front, 28.0f + strike * 34.0f, 12.0f + strike * 14.0f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.24f + strike * 0.28f), 2.2f + strike * 1.4f);
+    }
+
+    DrawWeaponBitmap(m_playerWeaponBitmaps[static_cast<size_t>(weaponIndex)].Get(),
+                     weaponCenter,
+                     62.0f + unit.radius * 0.34f + strike * 10.0f,
+                     38.0f + unit.radius * 0.16f,
+                     weaponAngle,
+                     0.88f,
+                     dir < 0.0f);
+
+    if (recoil > 0.0f)
+    {
+        FillEllipse({pos.x - dir * (unit.radius + 12.0f), pos.y + unit.radius + 10.0f},
+                    unit.radius * (0.82f + recoil * 0.40f), 5.0f + recoil * 3.0f,
+                    D2D1::ColorF(0xFFFFFF, recoil * 0.055f));
     }
 }
 
@@ -2413,124 +2353,102 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
 {
     const EnemyUnit type = static_cast<EnemyUnit>(unit.kind);
     const float dir = unit.attackDir;
-    const D2D1_COLOR_F ink = D2D1::ColorF(0x08080F, 0.96f);
     const float reach = strike * 22.0f - windup * 7.0f + recoil * 4.0f;
     const Vec2 hand = {pos.x + dir * (unit.radius * 0.68f), pos.y + 4.0f};
-    const Vec2 front = {pos.x + dir * (unit.radius + 24.0f + reach), pos.y - 2.0f};
+    const Vec2 front = {pos.x + dir * (unit.radius + 38.0f + reach), pos.y - 2.0f};
     const int weaponIndex = std::clamp(static_cast<int>(type), 0, kEnemyCount - 1);
-    const Vec2 weaponCenter = {hand.x + dir * (35.0f + reach * 0.58f), hand.y - 10.0f + recoil * 3.0f};
-    const float weaponAngle = (dir >= 0.0f ? -4.0f : 4.0f) + dir * (strike * 14.0f - windup * 8.0f);
-    DrawWeaponBitmap(m_enemyWeaponBitmaps[static_cast<size_t>(weaponIndex)].Get(),
-                     weaponCenter,
-                     58.0f + unit.radius * 0.34f + strike * 8.0f,
-                     36.0f + unit.radius * 0.16f,
-                     weaponAngle,
-                     0.76f + strike * 0.18f,
-                     dir < 0.0f);
+    const Vec2 weaponCenter = {hand.x + dir * (39.0f + reach * 0.58f), hand.y - 10.0f + recoil * 3.0f};
+    const float weaponAngle = (dir >= 0.0f ? -4.0f : 4.0f) + dir * (strike * 15.0f - windup * 9.0f);
+    const float action = Clamp01(windup + strike + recoil);
+    ImageVfxKind vfx = ImageVfxKind::EnemySlash;
+    float vfxSize = 64.0f + strike * 36.0f;
 
-    auto drawStroke = [&](Vec2 a, Vec2 b, D2D1_COLOR_F color, float width) {
-        DrawLine(a, b, ink, width + 3.0f);
-        DrawLine(a, b, color, width);
-    };
-    auto drawBlade = [&](Vec2 a, Vec2 b, D2D1_COLOR_F color) {
-        drawStroke(a, b, color, 3.0f);
-        DrawLine({b.x - dir * 7.0f, b.y - 8.0f}, {b.x + dir * 7.0f, b.y + 8.0f}, ink, 4.2f);
-        DrawLine({b.x - dir * 7.0f, b.y - 8.0f}, {b.x + dir * 7.0f, b.y + 8.0f}, D2D1::ColorF(0xFFE3E8), 2.0f);
-    };
-
+    // 적도 PNG 무기를 주역으로 쓰고, 타입별 차이는 색과 VFX로만 더한다.
     switch (type)
     {
     case EnemyUnit::Dust:
-        for (int i = -1; i <= 1; ++i)
-        {
-            drawStroke({hand.x, hand.y + static_cast<float>(i) * 6.0f}, {front.x + dir * 16.0f, front.y + static_cast<float>(i) * 4.0f}, stats.accent, 1.8f);
-        }
+        vfx = ImageVfxKind::SmokeDust;
         break;
     case EnemyUnit::Brute:
-        drawStroke(hand, {front.x + dir * 4.0f, front.y + 24.0f}, D2D1::ColorF(0xC09A75), 5.0f);
-        FillRoundRect(D2D1::RectF(front.x - 18.0f, front.y + 14.0f, front.x + 18.0f, front.y + 34.0f), 6.0f, ink);
-        FillRoundRect(D2D1::RectF(front.x - 14.0f, front.y + 18.0f, front.x + 14.0f, front.y + 30.0f), 5.0f, D2D1::ColorF(0x8E6B52));
+        vfx = ImageVfxKind::Earth;
+        vfxSize += 18.0f;
         break;
     case EnemyUnit::Skitter:
-        drawBlade(hand, {front.x + dir * 28.0f, front.y - 8.0f}, stats.accent);
-        drawBlade({hand.x, hand.y + 12.0f}, {front.x + dir * 24.0f, front.y + 13.0f}, D2D1::ColorF(0xFFB6C2));
+        vfx = ImageVfxKind::Smear;
         break;
     case EnemyUnit::Sulfur:
-        FillRoundRect(D2D1::RectF(front.x - 18.0f, front.y - 12.0f, front.x + 24.0f, front.y + 12.0f), 8.0f, ink);
-        FillRoundRect(D2D1::RectF(front.x - 13.0f, front.y - 8.0f, front.x + 17.0f, front.y + 8.0f), 6.0f, D2D1::ColorF(0xFFD27A));
-        FillEllipse({front.x + dir * 30.0f, front.y}, 16.0f + strike * 12.0f, 10.0f + strike * 7.0f, D2D1::ColorF(0xFFD27A, 0.18f + strike * 0.12f));
+        vfx = ImageVfxKind::Acid;
         break;
     case EnemyUnit::Moss:
-        drawStroke(hand, {front.x + dir * 18.0f, front.y - 12.0f}, D2D1::ColorF(0xB8FF89), 2.6f);
-        drawStroke({hand.x, hand.y + 10.0f}, {front.x + dir * 20.0f, front.y + 18.0f}, D2D1::ColorF(0x6BAA5C), 2.2f);
-        StrokeEllipse(front, 24.0f + strike * 12.0f, 10.0f + strike * 6.0f, D2D1::ColorF(0xB8FF89, 0.30f * (0.5f + strike)), 2.0f);
+        vfx = ImageVfxKind::Wood;
         break;
     case EnemyUnit::Rust:
-        drawBlade(hand, {front.x + dir * 20.0f, front.y - 18.0f}, D2D1::ColorF(0xD77A5C));
-        FillEllipse({front.x + dir * 13.0f, front.y - 18.0f}, 9.0f, 5.0f, D2D1::ColorF(0xB25E4C));
+        vfx = ImageVfxKind::EnemySlash;
         break;
     case EnemyUnit::Storm:
-        FillRoundRect(D2D1::RectF(front.x - 24.0f, front.y - 20.0f, front.x + 12.0f, front.y + 22.0f), 8.0f, ink);
-        StrokeRoundRect(D2D1::RectF(front.x - 20.0f, front.y - 16.0f, front.x + 8.0f, front.y + 18.0f), 6.0f, stats.accent, 3.0f);
-        StrokeEllipse(front, 44.0f + strike * 22.0f, 18.0f + strike * 7.0f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.24f + strike * 0.20f), 2.2f);
+        vfx = ImageVfxKind::EnergyImpact;
+        vfxSize += 16.0f;
         break;
     case EnemyUnit::Ring:
-        drawStroke(hand, {front.x + dir * 34.0f, front.y - 6.0f}, stats.accent, 3.4f);
-        StrokeEllipse({front.x + dir * 20.0f, front.y - 7.0f}, 15.0f, 9.0f, D2D1::ColorF(0xE6D392), 2.0f);
+        vfx = ImageVfxKind::Crystal;
         break;
     case EnemyUnit::Frost:
-        drawBlade(hand, {front.x + dir * 26.0f, front.y - 22.0f}, D2D1::ColorF(0xD9FFF8));
-        DrawLine({front.x + dir * 8.0f, front.y - 28.0f}, {front.x + dir * 28.0f, front.y - 8.0f}, D2D1::ColorF(0xB9FFF5, 0.62f), 2.0f);
+        vfx = ImageVfxKind::Ice;
+        vfxSize += 12.0f;
         break;
     case EnemyUnit::Tide:
-        drawStroke(hand, {front.x + dir * 26.0f, front.y - 4.0f}, D2D1::ColorF(0xBFD9FF), 3.2f);
-        DrawLine({front.x + dir * 20.0f, front.y - 14.0f}, {front.x + dir * 34.0f, front.y - 4.0f}, D2D1::ColorF(0xBFD9FF), 2.0f);
-        DrawLine({front.x + dir * 20.0f, front.y + 6.0f}, {front.x + dir * 34.0f, front.y - 4.0f}, D2D1::ColorF(0xBFD9FF), 2.0f);
-        StrokeEllipse(front, 30.0f + strike * 18.0f, 12.0f + strike * 8.0f, D2D1::ColorF(0x75A7FF, 0.24f + strike * 0.16f), 2.2f);
+        vfx = ImageVfxKind::WaterBallImpact;
         break;
     case EnemyUnit::Void:
-    case EnemyUnit::Boss:
-        FillEllipse(front, unit.radius * 0.58f + strike * 8.0f, unit.radius * 0.58f + strike * 8.0f, ink);
-        FillEllipse(front, unit.radius * 0.38f + strike * 6.0f, unit.radius * 0.38f + strike * 6.0f, stats.accent);
-        StrokeEllipse(pos, unit.radius + 20.0f + strike * 20.0f, unit.radius + 10.0f + strike * 12.0f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.32f + strike * 0.18f), 2.5f);
-        if (type == EnemyUnit::Boss)
-        {
-            for (int i = -2; i <= 2; ++i)
-            {
-                DrawLine(pos, {front.x + dir * 42.0f, front.y + static_cast<float>(i) * 16.0f}, D2D1::ColorF(0xFFB347, 0.20f + strike * 0.18f), 2.2f);
-            }
-        }
+        vfx = ImageVfxKind::Dark;
+        vfxSize += 22.0f;
         break;
     case EnemyUnit::Flare:
-        drawBlade(hand, {front.x + dir * 28.0f, front.y - 12.0f}, D2D1::ColorF(0xFFDB7A));
-        FillEllipse({front.x - dir * 18.0f, front.y + 8.0f}, 28.0f, 7.0f, D2D1::ColorF(0xFF6A3D, 0.22f + strike * 0.12f));
+        vfx = ImageVfxKind::FireBreath;
+        vfxSize += 18.0f;
         break;
     case EnemyUnit::Spore:
-        FillEllipse(front, 15.0f, 12.0f, ink);
-        FillEllipse(front, 10.0f, 8.0f, D2D1::ColorF(0xFFB6E8));
-        for (int i = -1; i <= 1; ++i)
-        {
-            FillEllipse({front.x + dir * (24.0f + strike * 18.0f), front.y + static_cast<float>(i) * 10.0f}, 5.0f, 5.0f, D2D1::ColorF(0xFFB6E8, 0.30f + strike * 0.25f));
-        }
+        vfx = ImageVfxKind::Acid;
         break;
     case EnemyUnit::Quake:
-        drawStroke(hand, {front.x + dir * 8.0f, front.y + 28.0f}, D2D1::ColorF(0xC09A75), 5.0f);
-        FillRoundRect(D2D1::RectF(front.x - 24.0f, front.y + 18.0f, front.x + 24.0f, front.y + 38.0f), 7.0f, ink);
-        FillRoundRect(D2D1::RectF(front.x - 19.0f, front.y + 22.0f, front.x + 19.0f, front.y + 34.0f), 5.0f, D2D1::ColorF(0x7B5D45));
-        if (strike > 0.0f)
-        {
-            StrokeEllipse({front.x, front.y + 34.0f}, 58.0f, 16.0f, D2D1::ColorF(0xD8A66A, 0.34f * strike), 3.2f);
-        }
+        vfx = ImageVfxKind::Earth;
+        vfxSize += 30.0f;
         break;
     case EnemyUnit::Mirror:
-        FillRoundRect(D2D1::RectF(front.x - 16.0f, front.y - 28.0f, front.x + 16.0f, front.y + 14.0f), 5.0f, ink);
-        FillRoundRect(D2D1::RectF(front.x - 11.0f, front.y - 23.0f, front.x + 11.0f, front.y + 9.0f), 4.0f, D2D1::ColorF(0xEAF7FF, 0.66f));
-        DrawLine({front.x - 7.0f, front.y - 15.0f}, {front.x + 8.0f, front.y - 3.0f}, stats.accent, 1.8f);
+        vfx = ImageVfxKind::MagicMirror;
+        vfxSize += 12.0f;
         break;
     case EnemyUnit::Comet:
-        drawStroke(hand, {front.x + dir * 34.0f, front.y + 2.0f}, D2D1::ColorF(0xFFDB7A), 3.8f);
-        FillEllipse({pos.x - dir * 44.0f, pos.y + 12.0f}, 36.0f, 8.0f, D2D1::ColorF(0xFFDB7A, 0.18f + strike * 0.12f));
+        vfx = ImageVfxKind::Thrust;
+        vfxSize += 20.0f;
         break;
+    case EnemyUnit::Boss:
+        vfx = ImageVfxKind::Explosion;
+        vfxSize += 42.0f;
+        break;
+    }
+
+    FillEllipse(weaponCenter, 42.0f + action * 26.0f, 17.0f + action * 10.0f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.10f + action * 0.18f));
+    if (strike > 0.0f)
+    {
+        const int frame = std::clamp(static_cast<int>(AttackProgress(unit) * 8.0f), 0, 7);
+        DrawImageVfxFrame(vfx, frame, front, vfxSize, 0.52f * strike);
+        StrokeEllipse(front, 26.0f + strike * 32.0f, 12.0f + strike * 13.0f, D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.24f + strike * 0.26f), 2.0f + strike * 1.2f);
+    }
+
+    DrawWeaponBitmap(m_enemyWeaponBitmaps[static_cast<size_t>(weaponIndex)].Get(),
+                     weaponCenter,
+                     64.0f + unit.radius * 0.36f + strike * 10.0f,
+                     39.0f + unit.radius * 0.17f,
+                     weaponAngle,
+                     0.88f,
+                     dir < 0.0f);
+
+    if (recoil > 0.0f)
+    {
+        FillEllipse({pos.x - dir * (unit.radius + 12.0f), pos.y + unit.radius + 10.0f},
+                    unit.radius * (0.80f + recoil * 0.38f), 5.0f + recoil * 3.0f,
+                    D2D1::ColorF(0xFFFFFF, recoil * 0.050f));
     }
 }
 
@@ -2833,7 +2751,7 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
                  D2D1::ColorF(0x071017), 1.8f);
     }
 
-    if (attack > 0.0f)
+    if (!spriteDrawn && attack > 0.0f)
     {
         const Vec2 front = {pos.x + dir * (unit.radius + 22.0f + attack * 14.0f), pos.y};
         switch (playerType)
@@ -3049,7 +2967,7 @@ void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
                  stats.accent, 2.0f);
     }
 
-    if (attack > 0.0f)
+    if (!spriteDrawn && attack > 0.0f)
     {
         const Vec2 front = {pos.x + dir * (unit.radius + 20.0f + attack * 12.0f), pos.y};
         if (type == EnemyUnit::Dust || type == EnemyUnit::Skitter || type == EnemyUnit::Rust)
@@ -3852,7 +3770,7 @@ void PawlineGameImpl::DrawTutorialTips()
     }
     else if (m_stageTime < 6.5f)
     {
-        const float tipAlpha = tip(D2D1::RectF(436.0f, 512.0f, 772.0f, 590.0f), L"GUIDE 2", L"WALLET은 비용 감소, 회복, 보급 펄스를 만든다.", D2D1::ColorF(0xB8FF89, alpha));
+        const float tipAlpha = tip(D2D1::RectF(436.0f, 512.0f, 772.0f, 590.0f), L"GUIDE 2", L"월렛은 비용 감소, 회복, 보급 펄스를 만든다.", D2D1::ColorF(0xB8FF89, alpha));
         DrawLine({650.0f, 590.0f}, {736.0f, 628.0f}, D2D1::ColorF(0xB8FF89, 0.42f * tipAlpha), 2.4f);
     }
     else if (m_stageTime < 9.75f)
@@ -3894,7 +3812,7 @@ std::wstring PawlineGameImpl::DemoStepText() const
     }
     if (m_showcaseTimer < 12.0f)
     {
-        return L"2/5 WALLET 성장";
+        return L"2/5 월렛 성장";
     }
     if (m_showcaseTimer < 22.0f)
     {
@@ -4004,7 +3922,7 @@ void PawlineGameImpl::DrawHeader()
     DrawPixelTextCentered(L"STAGE " + ToWideInt(m_selectedStage + 1), stagePill, 3.0f, D2D1::ColorF(0xDDF7FF), 1.0f);
 
     DrawTopStat(584.0f, L"ENERGY", ToWideInt(static_cast<int>(m_energy)) + L" / " + ToWideInt(static_cast<int>(MaxEnergy())), D2D1::ColorF(0xB8FF89));
-    DrawTopStat(802.0f, L"WALLET", L"Lv." + ToWideInt(m_walletLevel) + L" +" + ToWideInt(static_cast<int>(std::round((WalletUnitBoost() - 1.0f) * 100.0f))) + L"%", D2D1::ColorF(0xF6FF83));
+    DrawTopStat(802.0f, L"월렛", L"Lv." + ToWideInt(m_walletLevel) + L" +" + ToWideInt(static_cast<int>(std::round((WalletUnitBoost() - 1.0f) * 100.0f))) + L"%", D2D1::ColorF(0xF6FF83));
     DrawTopStat(944.0f, L"TIME", ToWideTime(m_stageTime), D2D1::ColorF(0xC7D8FF));
     DrawTopStat(1080.0f, L"SCORE", ToWideInt(m_score), D2D1::ColorF(0xF3FBFF));
 }
@@ -4051,7 +3969,24 @@ void PawlineGameImpl::DrawTopStat(float x, const std::wstring& label, const std:
 {
     D2D1_RECT_F rect = D2D1::RectF(x, 22.0f, x + 126.0f, 72.0f);
     DrawCartoonPanel(rect, D2D1::ColorF(0x06131C, 0.99f), D2D1::ColorF(color.r, color.g, color.b, 0.96f), Contains(rect, m_mouse));
-    DrawPixelText(label, {rect.left + 10.0f, rect.top + 8.0f}, 2.0f, D2D1::ColorF(0xD7EAF4), 1.0f);
+    bool labelPixelReady = true;
+    for (wchar_t c : label)
+    {
+        if (!PixelHasInk(c))
+        {
+            labelPixelReady = false;
+            break;
+        }
+    }
+    if (labelPixelReady)
+    {
+        DrawPixelText(label, {rect.left + 10.0f, rect.top + 8.0f}, 2.0f, D2D1::ColorF(0xD7EAF4), 1.0f);
+    }
+    else
+    {
+        DrawOutlinedString(label, D2D1::RectF(rect.left + 10.0f, rect.top + 4.0f, rect.right - 10.0f, rect.top + 25.0f),
+                           m_smallFormat, D2D1::ColorF(0xD7EAF4), 0.70f);
+    }
 
     // 에너지처럼 숫자가 길어지는 HUD 값은 카드 안쪽 폭에 맞춰 픽셀 폰트 크기를 줄인다.
     const float innerWidth = rect.right - rect.left - 20.0f;
@@ -4149,7 +4084,7 @@ void PawlineGameImpl::DrawCombatHelpPanel()
 
     const std::array<std::wstring, 5> lines = {
         L"1-5  UNIT CARD",
-        L"W    WALLET",
+        L"W    월렛",
         L"SPACE  BEAM",
         L"ESC  MENU",
         L"DRAG / WHEEL"
@@ -4157,9 +4092,25 @@ void PawlineGameImpl::DrawCombatHelpPanel()
     for (int i = 0; i < static_cast<int>(lines.size()); ++i)
     {
         const float y = panel.top + 43.0f + static_cast<float>(i) * 20.0f;
-        DrawPixelText(lines[i], {panel.left + 14.0f, y + 3.0f}, 1.95f,
-                      i == 4 ? D2D1::ColorF(0xD8E8F0) : D2D1::ColorF(0xF6FF83),
-                      0.96f);
+        bool linePixelReady = true;
+        for (wchar_t c : lines[i])
+        {
+            if (!PixelHasInk(c))
+            {
+                linePixelReady = false;
+                break;
+            }
+        }
+        const D2D1_COLOR_F lineColor = i == 4 ? D2D1::ColorF(0xD8E8F0) : D2D1::ColorF(0xF6FF83);
+        if (linePixelReady)
+        {
+            DrawPixelText(lines[i], {panel.left + 14.0f, y + 3.0f}, 1.95f, lineColor, 0.96f);
+        }
+        else
+        {
+            DrawOutlinedString(lines[i], D2D1::RectF(panel.left + 14.0f, y - 1.0f, panel.right - 12.0f, y + 20.0f),
+                               m_smallFormat, lineColor, 0.66f);
+        }
     }
 }
 
@@ -4206,19 +4157,19 @@ void PawlineGameImpl::DrawWalletButton()
     const bool hover = Contains(rect, m_mouse);
     DrawCartoonPanel(rect, hover ? D2D1::ColorF(0x182E28, 0.98f) : D2D1::ColorF(0x10241E, 0.98f),
                      enabled || maxed ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0x4E6253), hover && cost > 0);
-    DrawPixelTextCentered(maxed ? L"WALLET MAX" : L"WALLET +",
+    DrawPixelTextCentered(maxed ? L"월렛 최대" : L"월렛 +",
                           D2D1::RectF(rect.left + 8.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 28.0f),
                           maxed ? 1.72f : 2.0f,
                           maxed ? D2D1::ColorF(0xF6FF83) : D2D1::ColorF(0xEAF7FF),
                           1.0f);
-    DrawPixelTextCentered(maxed ? L"UNIT BOOST +" + ToWideInt(static_cast<int>(std::round((WalletUnitBoost() - 1.0f) * 100.0f))) + L"%"
-                                : L"LV." + ToWideInt(m_walletLevel) + L"  +" + ToWideInt(static_cast<int>(std::round((WalletUnitBoost() - 1.0f) * 100.0f))) + L"%",
+    DrawPixelTextCentered(maxed ? L"유닛 강화 +" + ToWideInt(static_cast<int>(std::round((WalletUnitBoost() - 1.0f) * 100.0f))) + L"%"
+                                : L"Lv." + ToWideInt(m_walletLevel) + L"  +" + ToWideInt(static_cast<int>(std::round((WalletUnitBoost() - 1.0f) * 100.0f))) + L"%",
                           D2D1::RectF(rect.left + 9.0f, rect.top + 29.0f, rect.right - 9.0f, rect.top + 48.0f),
                           maxed ? 1.18f : 1.55f,
                           D2D1::ColorF(0xF6FF83),
                           1.0f);
 
-    const std::wstring supplyText = L"SUPPLY " + ToWideInt(static_cast<int>(std::ceil(std::max(0.0f, m_walletPulseTimer)))) + L"S";
+    const std::wstring supplyText = L"보급 " + ToWideInt(static_cast<int>(std::ceil(std::max(0.0f, m_walletPulseTimer)))) + L"초";
     const D2D1_RECT_F bottom = D2D1::RectF(rect.left + 10.0f, rect.bottom - 24.0f, rect.right - 10.0f, rect.bottom - 6.0f);
     FillRoundRect(bottom, 6.0f, D2D1::ColorF(0x061019, 0.56f));
     if (maxed)
@@ -4231,7 +4182,7 @@ void PawlineGameImpl::DrawWalletButton()
     }
 
     const D2D1_RECT_F costRect = D2D1::RectF(bottom.left + 4.0f, bottom.top + 2.0f, bottom.left + 58.0f, bottom.bottom - 2.0f);
-    DrawPixelTextCentered(L"COST " + ToWideInt(cost), costRect, 1.16f, enabled ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xB5C1C8), 1.0f);
+    DrawPixelTextCentered(L"비용 " + ToWideInt(cost), costRect, 1.16f, enabled ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xB5C1C8), 1.0f);
     const D2D1_RECT_F supplyRect = D2D1::RectF(bottom.left + 62.0f, bottom.top + 3.0f, bottom.right - 4.0f, bottom.bottom - 3.0f);
     FillRoundRect(supplyRect, 4.0f, D2D1::ColorF(0x071017, 0.86f));
     const float pulsePct = 1.0f - Clamp01(m_walletPulseTimer / WalletPulseInterval());
@@ -4383,7 +4334,7 @@ void PawlineGameImpl::DrawResultScreen()
     DrawString(stage.name, D2D1::RectF(panel.left + 64.0f, panel.top + 142.0f, panel.right - 64.0f, panel.top + 170.0f), m_headerFormat, D2D1::ColorF(0xF3FBFF));
     DrawString(L"TIME  " + ToWideTime(m_resultTime), D2D1::RectF(panel.left + 94.0f, panel.top + 190.0f, panel.left + 280.0f, panel.top + 218.0f), m_bodyFormat, D2D1::ColorF(0xC7D8FF));
     DrawString(L"SCORE  " + ToWideInt(m_resultScore), D2D1::RectF(panel.left + 320.0f, panel.top + 190.0f, panel.right - 94.0f, panel.top + 218.0f), m_bodyFormat, D2D1::ColorF(0xF6FF83));
-    DrawString(L"WALLET Lv." + ToWideInt(m_walletLevel), D2D1::RectF(panel.left + 94.0f, panel.top + 224.0f, panel.left + 280.0f, panel.top + 252.0f), m_bodyFormat, D2D1::ColorF(0xB8FF89));
+    DrawString(L"월렛 Lv." + ToWideInt(m_walletLevel), D2D1::RectF(panel.left + 94.0f, panel.top + 224.0f, panel.left + 280.0f, panel.top + 252.0f), m_bodyFormat, D2D1::ColorF(0xB8FF89));
     DrawString(L"DIFFICULTY  " + DifficultyLabel(), D2D1::RectF(panel.left + 320.0f, panel.top + 224.0f, panel.right - 94.0f, panel.top + 252.0f), m_bodyFormat, D2D1::ColorF(0xD9E5F2));
     DrawString(m_victory ? L"LUMEN +" + ToWideInt(m_lastReward) + L"   TOTAL " + ToWideInt(m_lumen) : L"LUMEN +0   TOTAL " + ToWideInt(m_lumen),
                D2D1::RectF(panel.left + 94.0f, panel.top + 268.0f, panel.right - 94.0f, panel.top + 296.0f),

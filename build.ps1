@@ -6,8 +6,26 @@ $packageRoot = Join-Path $root "package"
 $dist = Join-Path $packageRoot "DawnlineDefense"
 $zip = Join-Path $packageRoot "DawnlineDefense.zip"
 
-cmake -S $root -B $build -G "Visual Studio 17 2022" -A x64
+$fmodDefault = Join-Path ${env:ProgramFiles(x86)} "FMOD SoundSystem\FMOD Studio API Windows"
+$fmodHeader = Join-Path $fmodDefault "api\core\inc\fmod.hpp"
+$fmodLib = Join-Path $fmodDefault "api\core\lib\x64\fmod_vc.lib"
+$cmakeArgs = @("-S", $root, "-B", $build, "-G", "Visual Studio 17 2022", "-A", "x64")
+if ((Test-Path $fmodHeader) -and (Test-Path $fmodLib)) {
+    $cmakeArgs += @("-DUSE_FMOD=ON", "-DFMOD_SDK_DIR=$fmodDefault")
+    Write-Host "FMOD SDK detected: $fmodDefault"
+} else {
+    $cmakeArgs += @("-DUSE_FMOD=OFF")
+    Write-Host "FMOD SDK not found. Building with WinMM fallback."
+}
+
+cmake @cmakeArgs
+if ($LASTEXITCODE -ne 0) {
+    throw "CMake configure failed with exit code $LASTEXITCODE"
+}
 cmake --build $build --config Release
+if ($LASTEXITCODE -ne 0) {
+    throw "CMake build failed with exit code $LASTEXITCODE"
+}
 
 if (Test-Path $dist) {
     Remove-Item -LiteralPath $dist -Recurse -Force

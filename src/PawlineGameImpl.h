@@ -147,7 +147,7 @@ enum class GameScreen
     Title,
     Options,
     Menu,
-    Codex,
+    Archive,
     Shop,
     Briefing,
     Playing,
@@ -860,11 +860,11 @@ private:
 
     D2D1_RECT_F MenuShopButtonRect() const;
 
-    D2D1_RECT_F MenuCodexButtonRect() const;
+    D2D1_RECT_F MenuArchiveButtonRect() const;
 
-    D2D1_RECT_F CodexBackButtonRect() const;
+    D2D1_RECT_F ArchiveBackButtonRect() const;
 
-    D2D1_RECT_F CodexTabRect(int index) const;
+    D2D1_RECT_F ArchiveTabRect(int index) const;
 
     D2D1_RECT_F BriefingStartButtonRect() const;
 
@@ -978,7 +978,7 @@ private:
 
     void DrawMenu();
 
-    void DrawCodex();
+    void DrawArchive();
 
     void DrawBriefing();
 
@@ -1234,7 +1234,7 @@ private:
     int m_selectedStage = 0;
     int m_selectedLoadoutSlot = 0;
     int m_shopSelectedUnit = 0;
-    int m_codexTab = 0;
+    int m_archiveTab = 0;
     int m_nextUnitId = 1;
     int m_walletLevel = 1;
     int m_score = 0;

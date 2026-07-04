@@ -137,17 +137,17 @@ D2D1_RECT_F PawlineGameImpl::MenuShopButtonRect() const
     return D2D1::RectF(818.0f, 720.0f, 974.0f, 774.0f);
 }
 
-D2D1_RECT_F PawlineGameImpl::MenuCodexButtonRect() const
+D2D1_RECT_F PawlineGameImpl::MenuArchiveButtonRect() const
 {
     return D2D1::RectF(650.0f, 720.0f, 806.0f, 774.0f);
 }
 
-D2D1_RECT_F PawlineGameImpl::CodexBackButtonRect() const
+D2D1_RECT_F PawlineGameImpl::ArchiveBackButtonRect() const
 {
     return D2D1::RectF(58.0f, 716.0f, 244.0f, 768.0f);
 }
 
-D2D1_RECT_F PawlineGameImpl::CodexTabRect(int index) const
+D2D1_RECT_F PawlineGameImpl::ArchiveTabRect(int index) const
 {
     const float x = 410.0f + static_cast<float>(index) * 160.0f;
     return D2D1::RectF(x, 116.0f, x + 144.0f, 166.0f);
