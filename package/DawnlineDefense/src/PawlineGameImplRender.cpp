@@ -208,24 +208,24 @@ std::wstring UnitRoleLabel(PlayerUnit unit, const UnitStats& stats)
     case PlayerUnit::Box:
     case PlayerUnit::Frost:
     case PlayerUnit::Titan:
-        return L"TANK";
+        return L"방어";
     case PlayerUnit::Dash:
     case PlayerUnit::Comet:
-        return L"RUSH";
+        return L"돌파";
     case PlayerUnit::Bell:
     case PlayerUnit::Mint:
-        return L"AURA";
+        return L"지원";
     case PlayerUnit::Drill:
     case PlayerUnit::Solar:
-        return L"SIEGE";
+        return L"공성";
     case PlayerUnit::Spark:
     case PlayerUnit::Orbit:
     case PlayerUnit::Prism:
     case PlayerUnit::Nebula:
-        return L"RANGE";
+        return L"원격";
     case PlayerUnit::Paw:
     default:
-        return stats.ranged ? L"RANGE" : L"MELEE";
+        return stats.ranged ? L"원격" : L"근접";
     }
 }
 
@@ -988,7 +988,7 @@ void PawlineGameImpl::DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, fl
         DrawBitmapCover(m_deepSpaceBitmap.Get(), area, 0.98f, time, cameraX, gameplayBackdrop ? 3.0f : 0.45f);
     }
     FillRect(area, D2D1::ColorF(0x01050B, 0.18f));
-    DrawSpaceDepthGrid(area, safeStage, time, cameraX);
+    // 고화질 우주 사진 자체가 깊이감을 만들기 때문에, 배경 격자는 전면에서 빼서 선이 튀지 않게 한다.
 
     // 실제 우주 사진 위에는 위치감을 위한 먼지 입자만 얇게 얹는다.
     // 큰 별, 행성, 소행성처럼 보이는 배경 장식은 사용하지 않는다.
@@ -1075,11 +1075,11 @@ void PawlineGameImpl::DrawOptions()
     DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), m_selectedStage, m_uiTime, 0.0f, false);
     for (float y = 38.0f; y < kHeight; y += 46.0f)
     {
-        DrawLine({24.0f, y}, {1256.0f, y}, D2D1::ColorF(0x17303C, 0.24f), 1.0f);
+        DrawLine({24.0f, y}, {1256.0f, y}, D2D1::ColorF(0x17303C, 0.045f), 1.0f);
     }
     for (float x = 36.0f; x < kWidth; x += 54.0f)
     {
-        DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.16f), 1.0f);
+        DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.030f), 1.0f);
     }
 
     DrawString(L"옵션", D2D1::RectF(250.0f, 132.0f, 1030.0f, 188.0f), m_titleFormat, D2D1::ColorF(0xF3FBFF));
@@ -1128,11 +1128,11 @@ void PawlineGameImpl::DrawMenu()
     DrawLine({86.0f, 638.0f}, {1162.0f, 698.0f}, D2D1::ColorF(menuStage.lineColor.r, menuStage.lineColor.g, menuStage.lineColor.b, 0.18f), 1.8f);
     for (float y = 30.0f; y < kHeight; y += 44.0f)
     {
-        DrawLine({24.0f, y}, {1256.0f, y}, D2D1::ColorF(0x17303C, 0.24f), 1.0f);
+        DrawLine({24.0f, y}, {1256.0f, y}, D2D1::ColorF(0x17303C, 0.045f), 1.0f);
     }
     for (float x = 32.0f; x < kWidth; x += 48.0f)
     {
-        DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.18f), 1.0f);
+        DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.032f), 1.0f);
     }
     DrawPixelText(L"PAWLINE DEFENSE", {48.0f, 42.0f}, 4.2f, D2D1::ColorF(0xF3FBFF));
     DrawOutlinedString(L"스테이지와 다섯 유닛을 골라 출격해.", D2D1::RectF(58.0f, 88.0f, 460.0f, 118.0f), m_smallFormat, D2D1::ColorF(0xBFD1DB), 0.58f);
@@ -1142,19 +1142,19 @@ void PawlineGameImpl::DrawMenu()
         DrawPixelText(L"DEBUG ON", {1004.0f, 88.0f}, 2.0f, D2D1::ColorF(0xFFB6C2));
     }
 
-    DrawString(L"Stage", D2D1::RectF(48.0f, 112.0f, 260.0f, 138.0f), m_headerFormat, D2D1::ColorF(0xEAF7FF));
+    DrawString(L"스테이지", D2D1::RectF(48.0f, 112.0f, 260.0f, 140.0f), m_headerFormat, D2D1::ColorF(0xEAF7FF));
     for (int i = 0; i < kStageCount; ++i)
     {
         DrawStageCard(i);
     }
 
-    DrawString(L"Loadout", D2D1::RectF(58.0f, 326.0f, 280.0f, 352.0f), m_headerFormat, D2D1::ColorF(0xEAF7FF));
+    DrawString(L"편성", D2D1::RectF(58.0f, 326.0f, 280.0f, 354.0f), m_headerFormat, D2D1::ColorF(0xEAF7FF));
     for (int i = 0; i < kLoadoutSize; ++i)
     {
         DrawLoadoutSlot(i);
     }
 
-    DrawString(L"Roster", D2D1::RectF(650.0f, 326.0f, 850.0f, 352.0f), m_headerFormat, D2D1::ColorF(0xEAF7FF));
+    DrawString(L"부대 명단", D2D1::RectF(650.0f, 326.0f, 850.0f, 354.0f), m_headerFormat, D2D1::ColorF(0xEAF7FF));
     for (int i = 0; i < kRosterCount; ++i)
     {
         DrawRosterCard(i);
@@ -1167,9 +1167,9 @@ void PawlineGameImpl::DrawMenu()
     DrawString(menuStage.name, D2D1::RectF(82.0f, 532.0f, 500.0f, 562.0f), m_headerFormat, D2D1::ColorF(0xF3FBFF));
     DrawString(menuStage.subtitle, D2D1::RectF(82.0f, 566.0f, 540.0f, 590.0f), m_bodyFormat, D2D1::ColorF(0xBFD1DB));
     DrawString(menuStage.gimmick, D2D1::RectF(82.0f, 594.0f, 540.0f, 618.0f), m_bodyFormat, D2D1::ColorF(0xF6FF83));
-    DrawString(L"Enemies  " + StageEnemySummary(), D2D1::RectF(82.0f, 622.0f, 540.0f, 646.0f), m_bodyFormat, D2D1::ColorF(0xFFB6C2));
-    DrawString(L"Enemy base " + ToWideInt(static_cast<int>(menuStage.enemyHp)) + L" HP", D2D1::RectF(82.0f, 650.0f, 540.0f, 674.0f), m_bodyFormat, D2D1::ColorF(0xFFB6C2));
-    DrawString(L"Start energy " + ToWideInt(static_cast<int>(menuStage.startEnergy)), D2D1::RectF(82.0f, 676.0f, 540.0f, 700.0f), m_bodyFormat, D2D1::ColorF(0xB8FF89));
+    DrawString(L"적 구성  " + StageEnemySummary(), D2D1::RectF(82.0f, 622.0f, 540.0f, 648.0f), m_bodyFormat, D2D1::ColorF(0xFFB6C2));
+    DrawString(L"적 기지 체력  " + ToWideInt(static_cast<int>(menuStage.enemyHp)), D2D1::RectF(82.0f, 650.0f, 540.0f, 676.0f), m_bodyFormat, D2D1::ColorF(0xFFB6C2));
+    DrawString(L"시작 에너지  " + ToWideInt(static_cast<int>(menuStage.startEnergy)), D2D1::RectF(82.0f, 678.0f, 540.0f, 704.0f), m_bodyFormat, D2D1::ColorF(0xB8FF89));
 
     const bool selectedUnlocked = IsStageUnlocked(m_selectedStage);
     DrawButton(MenuArchiveButtonRect(), L"ARCHIVE", true, D2D1::ColorF(0x22323F));
@@ -1177,7 +1177,7 @@ void PawlineGameImpl::DrawMenu()
     DrawButton(StartGameButtonRect(), selectedUnlocked ? L"START STAGE" : L"LOCKED", selectedUnlocked, D2D1::ColorF(0x173C4B));
     DrawString(L"D / C", D2D1::RectF(MenuArchiveButtonRect().left, MenuArchiveButtonRect().bottom + 4.0f, MenuArchiveButtonRect().right, MenuArchiveButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
     DrawString(L"S / B", D2D1::RectF(MenuShopButtonRect().left, MenuShopButtonRect().bottom + 4.0f, MenuShopButtonRect().right, MenuShopButtonRect().bottom + 24.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
-    DrawString(selectedUnlocked ? L"Enter / Space" : L"Clear previous", D2D1::RectF(StartGameButtonRect().left, StartGameButtonRect().bottom + 4.0f, StartGameButtonRect().right, StartGameButtonRect().bottom + 24.0f), m_centerFormat, selectedUnlocked ? D2D1::ColorF(0x8EA9B8) : D2D1::ColorF(0xFFB6C2));
+    DrawString(selectedUnlocked ? L"엔터 / 스페이스" : L"이전 행성 클리어 필요", D2D1::RectF(StartGameButtonRect().left, StartGameButtonRect().bottom + 4.0f, StartGameButtonRect().right, StartGameButtonRect().bottom + 28.0f), m_centerFormat, selectedUnlocked ? D2D1::ColorF(0x8EA9B8) : D2D1::ColorF(0xFFB6C2));
 }
 
 void PawlineGameImpl::DrawArchive()
@@ -1185,11 +1185,11 @@ void PawlineGameImpl::DrawArchive()
     DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), m_selectedStage, m_uiTime, 0.0f, false);
     for (float y = 28.0f; y < kHeight; y += 42.0f)
     {
-        DrawLine({24.0f, y}, {1256.0f, y}, D2D1::ColorF(0x17303C, 0.18f), 1.0f);
+        DrawLine({24.0f, y}, {1256.0f, y}, D2D1::ColorF(0x17303C, 0.038f), 1.0f);
     }
     for (float x = 34.0f; x < kWidth; x += 50.0f)
     {
-        DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.12f), 1.0f);
+        DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.026f), 1.0f);
     }
 
     DrawPixelText(L"TACTICAL ARCHIVE", {52.0f, 40.0f}, 4.25f, D2D1::ColorF(0xF3FBFF));
@@ -1295,16 +1295,24 @@ void PawlineGameImpl::DrawBriefing()
         DrawCrater({x, y + 26.0f}, 13.0f + static_cast<float>(i % 3) * 4.0f, 4.5f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.32f), D2D1::ColorF(0x000000, 0.18f));
     }
     FillRoundRect(D2D1::RectF(106.0f, 346.0f, 488.0f, 390.0f), 12.0f, D2D1::ColorF(0x0B1D28, 0.86f));
-    DrawPixelText(L"EVENT", {122.0f, 360.0f}, 2.15f, D2D1::ColorF(0xF6FF83));
+    DrawOutlinedString(L"이벤트",
+                       D2D1::RectF(122.0f, 354.0f, 206.0f, 384.0f),
+                       m_headerFormat,
+                       D2D1::ColorF(0xF6FF83),
+                       0.70f);
     DrawOutlinedString(stage.gimmick,
-                       D2D1::RectF(228.0f, 354.0f, 476.0f, 382.0f),
+                       D2D1::RectF(224.0f, 354.0f, 476.0f, 384.0f),
                        m_bodyFormat,
                        D2D1::ColorF(0xF6FF83),
                        0.72f);
     FillRoundRect(D2D1::RectF(106.0f, 406.0f, 488.0f, 474.0f), 12.0f, D2D1::ColorF(0x0B1D28, 0.80f));
-    DrawPixelText(L"ENEMIES", {122.0f, 420.0f}, 2.15f, D2D1::ColorF(0xFFB6C2));
+    DrawOutlinedString(L"적 구성",
+                       D2D1::RectF(122.0f, 424.0f, 206.0f, 454.0f),
+                       m_headerFormat,
+                       D2D1::ColorF(0xFFB6C2),
+                       0.70f);
     DrawOutlinedString(StageEnemySummary(),
-                       D2D1::RectF(228.0f, 414.0f, 476.0f, 468.0f),
+                       D2D1::RectF(224.0f, 420.0f, 476.0f, 468.0f),
                        m_bodyFormat,
                        D2D1::ColorF(0xFFCAD1),
                        0.72f);
@@ -1322,23 +1330,23 @@ void PawlineGameImpl::DrawBriefing()
         const UnitStats stats = PlayerStats(unit);
         const bool hover = Contains(rect, m_mouse);
         DrawCartoonPanel(rect, hover ? D2D1::ColorF(0x123044, 0.99f) : D2D1::ColorF(0x06131C, 0.99f), stats.accent, hover);
-        DrawPlayerIcon(unit, {rect.left + 48.0f, rect.top + 34.0f}, 0.72f, true);
-        FillRoundRect(D2D1::RectF(rect.right - 49.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 23.0f),
+        DrawPlayerIcon(unit, {rect.left + 48.0f, rect.top + 38.0f}, 0.72f, true);
+        FillRoundRect(D2D1::RectF(rect.right - 55.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 28.0f),
                       5.0f,
                       D2D1::ColorF(UnitRoleColor(unit, stats).r, UnitRoleColor(unit, stats).g, UnitRoleColor(unit, stats).b, 0.22f));
         DrawPixelTextCentered(UnitRoleLabel(unit, stats),
-                              D2D1::RectF(rect.right - 48.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 23.0f),
-                              0.92f,
+                              D2D1::RectF(rect.right - 54.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 28.0f),
+                              0.78f,
                               UnitRoleColor(unit, stats),
                               0.96f);
-        DrawPixelTextCentered(stats.name, D2D1::RectF(rect.left + 6.0f, rect.top + 68.0f, rect.right - 6.0f, rect.top + 91.0f), 1.45f, D2D1::ColorF(0xFFFFFF), 1.0f);
+        DrawPixelTextCentered(stats.name, D2D1::RectF(rect.left + 6.0f, rect.top + 70.0f, rect.right - 6.0f, rect.top + 94.0f), 1.36f, D2D1::ColorF(0xFFFFFF), 1.0f);
         DrawPixelTextCentered(L"KEY " + ToWideInt(i + 1), D2D1::RectF(rect.left + 8.0f, rect.bottom - 22.0f, rect.right - 8.0f, rect.bottom - 6.0f), 1.35f, D2D1::ColorF(0xE5F6FF), 1.0f);
     }
     FillRoundRect(D2D1::RectF(604.0f, 366.0f, 1160.0f, 424.0f), 6.0f, D2D1::ColorF(0x0B1D28, 0.90f));
-    DrawString(L"Enemy Base HP  " + ToWideInt(static_cast<int>(stage.enemyHp)), D2D1::RectF(622.0f, 374.0f, 836.0f, 398.0f), m_smallFormat, D2D1::ColorF(0xFFB6C2));
-    DrawString(L"Start Energy  " + ToWideInt(static_cast<int>(stage.startEnergy)), D2D1::RectF(862.0f, 374.0f, 1088.0f, 398.0f), m_smallFormat, D2D1::ColorF(0xB8FF89));
-    DrawString(L"Boss First  " + ToWideInt(static_cast<int>(stage.bossFirstTime)) + L"s", D2D1::RectF(622.0f, 400.0f, 836.0f, 424.0f), m_smallFormat, D2D1::ColorF(0xFFB347));
-    DrawString(L"Event  " + ToWideInt(static_cast<int>(GimmickInterval())) + L"s", D2D1::RectF(862.0f, 400.0f, 1088.0f, 424.0f), m_smallFormat, D2D1::ColorF(0xF6FF83));
+    DrawString(L"적 기지 체력  " + ToWideInt(static_cast<int>(stage.enemyHp)), D2D1::RectF(622.0f, 374.0f, 836.0f, 400.0f), m_smallFormat, D2D1::ColorF(0xFFB6C2));
+    DrawString(L"시작 에너지  " + ToWideInt(static_cast<int>(stage.startEnergy)), D2D1::RectF(862.0f, 374.0f, 1088.0f, 400.0f), m_smallFormat, D2D1::ColorF(0xB8FF89));
+    DrawString(L"보스 첫 등장  " + ToWideInt(static_cast<int>(stage.bossFirstTime)) + L"초", D2D1::RectF(622.0f, 400.0f, 836.0f, 426.0f), m_smallFormat, D2D1::ColorF(0xFFB347));
+    DrawString(L"이벤트 주기  " + ToWideInt(static_cast<int>(GimmickInterval())) + L"초", D2D1::RectF(862.0f, 400.0f, 1088.0f, 426.0f), m_smallFormat, D2D1::ColorF(0xF6FF83));
     DrawOutlinedString(CounterPlanSummary(),
                        D2D1::RectF(622.0f, 436.0f, 1156.0f, 464.0f),
                        m_smallFormat,
@@ -1367,11 +1375,11 @@ void PawlineGameImpl::DrawShop()
     DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), m_selectedStage, m_uiTime, 0.0f, false);
     for (float y = 30.0f; y < kHeight; y += 44.0f)
     {
-        DrawLine({24.0f, y}, {1256.0f, y}, D2D1::ColorF(0x17303C, 0.20f), 1.0f);
+        DrawLine({24.0f, y}, {1256.0f, y}, D2D1::ColorF(0x17303C, 0.040f), 1.0f);
     }
     for (float x = 32.0f; x < kWidth; x += 48.0f)
     {
-        DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.13f), 1.0f);
+        DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.026f), 1.0f);
     }
 
     DrawPixelText(L"UNIT SHOP", {48.0f, 42.0f}, 4.4f, D2D1::ColorF(0xF3FBFF));
@@ -1407,10 +1415,10 @@ void PawlineGameImpl::DrawShopUnitCard(int index)
     DrawPlayerIcon(unit, {rect.left + 44.0f, rect.top + 43.0f}, 0.9f, unlocked);
 
     DrawString(base.name, D2D1::RectF(rect.left + 92.0f, rect.top + 14.0f, rect.right - 12.0f, rect.top + 40.0f), m_bodyFormat, unlocked ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x9AA8B0));
-    DrawString(unlocked ? L"Lv." + ToWideInt(level) + L" / " + ToWideInt(kMaxUnitLevel) : L"LOCKED", D2D1::RectF(rect.left + 92.0f, rect.top + 42.0f, rect.right - 12.0f, rect.top + 64.0f), m_smallFormat, unlocked ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xFFB6C2));
-    DrawString(L"Battle cost " + ToWideInt(stats.cost), D2D1::RectF(rect.left + 92.0f, rect.top + 64.0f, rect.right - 12.0f, rect.top + 86.0f), m_smallFormat, D2D1::ColorF(0xC7D8FF));
+    DrawString(unlocked ? L"레벨 " + ToWideInt(level) + L" / " + ToWideInt(kMaxUnitLevel) : L"잠김", D2D1::RectF(rect.left + 92.0f, rect.top + 42.0f, rect.right - 12.0f, rect.top + 66.0f), m_smallFormat, unlocked ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xFFB6C2));
+    DrawString(L"전투 비용 " + ToWideInt(stats.cost), D2D1::RectF(rect.left + 92.0f, rect.top + 66.0f, rect.right - 12.0f, rect.top + 90.0f), m_smallFormat, D2D1::ColorF(0xC7D8FF));
 
-    std::wstring action = maxed ? L"MAX" : (unlocked ? L"Upgrade " : L"Buy ");
+    std::wstring action = maxed ? L"최대" : (unlocked ? L"강화 " : L"구매 ");
     if (!maxed)
     {
         action += ToWideInt(cost);
@@ -1519,7 +1527,7 @@ void PawlineGameImpl::DrawLoadoutSlot(int index)
     StrokeRoundRect(rect, 8.0f, active ? stats.accent : D2D1::ColorF(0x2C4A5B), active ? 2.2f : 1.0f);
     DrawPlayerIcon(m_loadout[index], {rect.left + 51.0f, rect.top + 34.0f}, 0.82f, true);
     DrawString(stats.name, D2D1::RectF(rect.left + 8.0f, rect.top + 66.0f, rect.right - 8.0f, rect.top + 92.0f), m_smallFormat, D2D1::ColorF(0xF3FBFF));
-    DrawString(L"Lv." + ToWideInt(UnitLevel(m_loadout[index])) + L"  Key " + ToWideInt(index + 1), D2D1::RectF(rect.left + 8.0f, rect.bottom - 24.0f, rect.right - 8.0f, rect.bottom - 6.0f), m_smallFormat, D2D1::ColorF(0x9AB2BF));
+    DrawString(L"레벨 " + ToWideInt(UnitLevel(m_loadout[index])) + L"  키 " + ToWideInt(index + 1), D2D1::RectF(rect.left + 8.0f, rect.bottom - 25.0f, rect.right - 8.0f, rect.bottom - 4.0f), m_smallFormat, D2D1::ColorF(0x9AB2BF));
 }
 
 void PawlineGameImpl::DrawRosterCard(int index)
@@ -1536,12 +1544,12 @@ void PawlineGameImpl::DrawRosterCard(int index)
     {
         FillRoundRect(rect, 8.0f, D2D1::ColorF(0x000000, 0.24f));
     }
-    DrawPlayerIcon(unit, {rect.left + 34.0f, rect.top + 31.0f}, 0.62f, unlocked);
-    DrawString(stats.name, D2D1::RectF(rect.left + 62.0f, rect.top + 12.0f, rect.right - 8.0f, rect.top + 36.0f), m_smallFormat, unlocked ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x73818A));
-    DrawString(unlocked ? L"Lv." + ToWideInt(UnitLevel(unit)) : L"LOCKED", D2D1::RectF(rect.left + 62.0f, rect.top + 42.0f, rect.right - 8.0f, rect.top + 62.0f), m_smallFormat, unlocked ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xFFB6C2));
+    DrawPlayerIcon(unit, {rect.left + 34.0f, rect.top + 39.0f}, 0.62f, unlocked);
+    DrawString(stats.name, D2D1::RectF(rect.left + 62.0f, rect.top + 16.0f, rect.right - 8.0f, rect.top + 44.0f), m_smallFormat, unlocked ? D2D1::ColorF(0xF3FBFF) : D2D1::ColorF(0x73818A));
+    DrawString(unlocked ? L"레벨 " + ToWideInt(UnitLevel(unit)) : L"잠김", D2D1::RectF(rect.left + 62.0f, rect.top + 48.0f, rect.right - 8.0f, rect.top + 72.0f), m_smallFormat, unlocked ? D2D1::ColorF(0xB8FF89) : D2D1::ColorF(0xFFB6C2));
     if (picked)
     {
-        DrawString(L"IN", D2D1::RectF(rect.left + 8.0f, rect.bottom - 24.0f, rect.left + 38.0f, rect.bottom - 6.0f), m_smallFormat, stats.accent);
+        DrawString(L"편성", D2D1::RectF(rect.left + 8.0f, rect.bottom - 26.0f, rect.left + 54.0f, rect.bottom - 4.0f), m_smallFormat, stats.accent);
     }
 }
 
@@ -1554,11 +1562,11 @@ void PawlineGameImpl::DrawArena()
 
     for (float y = kBattleTop + 22.0f; y < kBattleBottom; y += 38.0f)
     {
-        DrawLine({34.0f, y}, {kWorldWidth - 34.0f, y}, D2D1::ColorF(0x27475B, 0.22f), 1.0f);
+        DrawLine({34.0f, y}, {kWorldWidth - 34.0f, y}, D2D1::ColorF(0x27475B, 0.055f), 1.0f);
     }
     for (float x = 42.0f; x < kWorldWidth - 30.0f; x += 46.0f)
     {
-        DrawLine({x, kBattleTop + 10.0f}, {x, kBattleBottom - 10.0f}, D2D1::ColorF(0x27475B, 0.13f), 1.0f);
+        DrawLine({x, kBattleTop + 10.0f}, {x, kBattleBottom - 10.0f}, D2D1::ColorF(0x27475B, 0.032f), 1.0f);
     }
 
     FillRoundRect(D2D1::RectF(48.0f, kLaneY - kLaneHalfHeight, kWorldWidth - 48.0f, kLaneY + kLaneHalfHeight), 18.0f, D2D1::ColorF(stage.laneColor.r, stage.laneColor.g, stage.laneColor.b, 0.82f));
@@ -1589,7 +1597,7 @@ void PawlineGameImpl::DrawSpaceBackdrop()
     {
         const float y = kBattleTop + 44.0f + static_cast<float>(i) * 44.0f;
         const float wave = std::sin(m_stageTime * 0.38f + static_cast<float>(i) * 0.77f) * 28.0f;
-        DrawLine({60.0f + wave, y}, {kWorldWidth - 76.0f + wave * 0.35f, y + 26.0f}, D2D1::ColorF(0xCFE8F5, 0.030f), 4.0f);
+        DrawLine({60.0f + wave, y}, {kWorldWidth - 76.0f + wave * 0.35f, y + 26.0f}, D2D1::ColorF(0xCFE8F5, 0.010f), 3.0f);
     }
 
     FillRoundRect(D2D1::RectF(48.0f, kLaneY - kLaneHalfHeight - 20.0f, kWorldWidth - 48.0f, kLaneY + kLaneHalfHeight + 22.0f), 22.0f, D2D1::ColorF(0xFFFFFF, 0.018f));
@@ -2348,14 +2356,14 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
 
     // 스프라이트 팔 위치에 붙이는 수동 무기 포즈.
     // 각 유닛의 무기 길이와 전투 방식이 달라서 손 위치, 크기, 휘두름 각도를 따로 보정한다.
-    float handLift = ranged ? (unit.radius * 0.04f + 2.0f) : (unit.radius * 0.13f + 4.0f);
-    float handForward = unit.radius * (ranged ? 0.46f : 0.58f);
-    float weaponForward = ranged ? 30.0f : 36.0f;
-    float weaponLift = ranged ? 0.0f : 2.0f;
-    float frontForward = ranged ? 48.0f : 44.0f;
+    float handLift = ranged ? (unit.radius * 0.06f + 2.0f) : (unit.radius * 0.15f + 4.0f);
+    float handForward = unit.radius * (ranged ? 0.42f : 0.50f);
+    float weaponForward = ranged ? 28.0f : 32.0f;
+    float weaponLift = ranged ? 0.0f : 3.0f;
+    float frontForward = ranged ? 42.0f : 38.0f;
     float frontLift = ranged ? handLift - 4.0f : 2.0f;
-    float weaponWidth = (ranged ? 82.0f : 92.0f) + unit.radius * (ranged ? 0.28f : 0.36f);
-    float weaponHeight = (ranged ? 54.0f : 58.0f) + unit.radius * (ranged ? 0.10f : 0.14f);
+    float weaponWidth = (ranged ? 68.0f : 78.0f) + unit.radius * (ranged ? 0.20f : 0.26f);
+    float weaponHeight = (ranged ? 46.0f : 50.0f) + unit.radius * (ranged ? 0.08f : 0.10f);
     float angleBase = ranged ? -2.0f : -18.0f;
     float strikeAngle = ranged ? 3.0f : 48.0f;
     float windupAngle = ranged ? 5.0f : 38.0f;
@@ -2365,35 +2373,35 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
     switch (type)
     {
     case PlayerUnit::Box:
-        handLift = unit.radius * 0.20f + 5.0f;
-        handForward = unit.radius * 0.50f;
-        weaponForward = 24.0f;
-        weaponLift = 5.0f;
-        weaponWidth = 74.0f;
-        weaponHeight = 64.0f;
-        angleBase = -6.0f;
+        handLift = unit.radius * 0.30f + 8.0f;
+        handForward = unit.radius * 0.54f;
+        weaponForward = 38.0f;
+        weaponLift = 9.0f;
+        weaponWidth = 64.0f;
+        weaponHeight = 56.0f;
+        angleBase = -14.0f;
         strikeAngle = 16.0f;
         windupAngle = 8.0f;
         break;
     case PlayerUnit::Spark:
     case PlayerUnit::Bell:
     case PlayerUnit::Mint:
-        handLift = unit.radius * 0.02f + 1.0f;
+        handLift = unit.radius * 0.04f + 1.0f;
         handForward = unit.radius * 0.44f;
-        weaponForward = 27.0f;
-        weaponLift = -1.0f;
-        weaponWidth = 78.0f;
-        weaponHeight = 72.0f;
+        weaponForward = 30.0f;
+        weaponLift = 1.0f;
+        weaponWidth = 66.0f;
+        weaponHeight = 58.0f;
         angleBase = -10.0f;
         strikeAngle = 9.0f;
         windupAngle = 10.0f;
         break;
     case PlayerUnit::Titan:
         handLift = unit.radius * 0.16f + 6.0f;
-        handForward = unit.radius * 0.58f;
-        weaponForward = 43.0f;
-        weaponLift = 1.0f;
-        weaponWidth += 18.0f;
+        handForward = unit.radius * 0.52f;
+        weaponForward = 39.0f;
+        weaponLift = 3.0f;
+        weaponWidth += 12.0f;
         weaponHeight += 8.0f;
         strikeAngle = 64.0f;
         windupAngle = 52.0f;
@@ -2402,10 +2410,10 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
     case PlayerUnit::Frost:
     case PlayerUnit::Comet:
         handLift = unit.radius * 0.10f + 4.0f;
-        handForward = unit.radius * 0.56f;
-        weaponForward = 47.0f;
-        weaponLift = 2.0f;
-        weaponWidth += 20.0f;
+        handForward = unit.radius * 0.50f;
+        weaponForward = 42.0f;
+        weaponLift = 3.0f;
+        weaponWidth += 14.0f;
         weaponHeight -= 4.0f;
         angleBase = -8.0f;
         strikeAngle = 28.0f;
@@ -2415,22 +2423,22 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
     case PlayerUnit::Orbit:
     case PlayerUnit::Prism:
     case PlayerUnit::Nebula:
-        handLift = unit.radius * 0.02f + 1.0f;
+        handLift = unit.radius * 0.04f + 1.0f;
         handForward = unit.radius * 0.46f;
-        weaponForward = 34.0f;
+        weaponForward = 32.0f;
         weaponLift = 2.0f;
-        weaponWidth += type == PlayerUnit::Nebula ? 20.0f : 10.0f;
-        weaponHeight += type == PlayerUnit::Nebula ? 10.0f : 4.0f;
+        weaponWidth += type == PlayerUnit::Nebula ? 14.0f : 6.0f;
+        weaponHeight += type == PlayerUnit::Nebula ? 8.0f : 2.0f;
         angleBase = -1.0f;
         strikeAngle = 5.0f;
         recoilAngle = 9.0f;
         break;
     case PlayerUnit::Solar:
         handLift = unit.radius * 0.12f + 5.0f;
-        handForward = unit.radius * 0.58f;
-        weaponForward = 44.0f;
-        weaponLift = 1.0f;
-        weaponWidth += 22.0f;
+        handForward = unit.radius * 0.52f;
+        weaponForward = 40.0f;
+        weaponLift = 3.0f;
+        weaponWidth += 15.0f;
         weaponHeight += 8.0f;
         strikeAngle = 58.0f;
         windupAngle = 46.0f;
@@ -2438,10 +2446,10 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
         break;
     case PlayerUnit::Drill:
         handLift = unit.radius * 0.10f + 4.0f;
-        handForward = unit.radius * 0.56f;
-        weaponForward = 39.0f;
-        weaponLift = 3.0f;
-        weaponWidth += 16.0f;
+        handForward = unit.radius * 0.50f;
+        weaponForward = 37.0f;
+        weaponLift = 4.0f;
+        weaponWidth += 10.0f;
         weaponHeight += 5.0f;
         angleBase = -6.0f;
         strikeAngle = 22.0f;
@@ -2461,7 +2469,7 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
     const float action = Clamp01(windup + strike + recoil);
     const float glowAlpha = 0.10f + action * 0.18f;
     ImageVfxKind vfx = ImageVfxKind::HitFlash;
-    float vfxSize = (ranged ? 58.0f : 76.0f) + strike * (ranged ? 24.0f : 48.0f);
+    float vfxSize = (ranged ? 42.0f : 52.0f) + strike * (ranged ? 14.0f : 24.0f);
 
     // 실제 무기는 PNG만 사용하고, 아래 switch는 유닛별 공격 빛과 충격 모양만 고른다.
     switch (type)
@@ -2471,53 +2479,53 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
         break;
     case PlayerUnit::Box:
         vfx = ImageVfxKind::Earth;
-        vfxSize += 22.0f;
+        vfxSize += 10.0f;
         break;
     case PlayerUnit::Spark:
         vfx = ImageVfxKind::ThunderSplash;
-        vfxSize += 20.0f;
+        vfxSize += 12.0f;
         break;
     case PlayerUnit::Dash:
         vfx = ImageVfxKind::WindHit;
         break;
     case PlayerUnit::Bell:
         vfx = ImageVfxKind::Holy;
-        vfxSize += 12.0f;
+        vfxSize += 8.0f;
         break;
     case PlayerUnit::Titan:
         vfx = ImageVfxKind::Explosion;
-        vfxSize += 36.0f;
+        vfxSize += 20.0f;
         break;
     case PlayerUnit::Frost:
         vfx = ImageVfxKind::Ice;
-        vfxSize += 18.0f;
+        vfxSize += 10.0f;
         break;
     case PlayerUnit::Comet:
         vfx = ImageVfxKind::Thrust;
-        vfxSize += 24.0f;
+        vfxSize += 14.0f;
         break;
     case PlayerUnit::Orbit:
         vfx = ImageVfxKind::EnergyImpact;
-        vfxSize += 26.0f;
+        vfxSize += 14.0f;
         break;
     case PlayerUnit::Solar:
         vfx = ImageVfxKind::FireBreath;
-        vfxSize += 34.0f;
+        vfxSize += 18.0f;
         break;
     case PlayerUnit::Mint:
         vfx = ImageVfxKind::HealSoft;
         break;
     case PlayerUnit::Drill:
         vfx = ImageVfxKind::Smear;
-        vfxSize += 16.0f;
+        vfxSize += 8.0f;
         break;
     case PlayerUnit::Prism:
         vfx = ImageVfxKind::MagicMirror;
-        vfxSize += 18.0f;
+        vfxSize += 10.0f;
         break;
     case PlayerUnit::Nebula:
         vfx = ImageVfxKind::Dark;
-        vfxSize += 32.0f;
+        vfxSize += 16.0f;
         break;
     }
 
@@ -2544,24 +2552,6 @@ void PawlineGameImpl::DrawPlayerWeapon(const Unit& unit, Vec2 pos, const UnitSta
                      0.88f,
                      dir < 0.0f);
 
-    const Vec2 shoulder = {pos.x + dir * (unit.radius * 0.16f - windup * 2.0f),
-                           pos.y - unit.radius * (ranged ? 0.28f : 0.02f)};
-    const Vec2 grip = {hand.x + dir * (strike * 4.0f - recoil * 2.0f), hand.y + recoil * 1.2f};
-    DrawLine(shoulder, grip, D2D1::ColorF(0x071017, 0.86f), 6.2f);
-    DrawLine(shoulder, grip, D2D1::ColorF(stats.color.r, stats.color.g, stats.color.b, 0.82f), 3.8f);
-    FillEllipse(grip, 8.0f + action * 2.2f, 5.4f + action * 1.2f, D2D1::ColorF(0x071017, 0.92f));
-    FillEllipse({grip.x + dir * 1.4f, grip.y - 0.8f},
-                5.5f + action * 1.5f,
-                3.9f + action * 0.9f,
-                D2D1::ColorF(stats.color.r, stats.color.g, stats.color.b, 0.96f));
-    if (strike > 0.0f)
-    {
-        FillEllipse({grip.x + dir * 10.0f, grip.y - 2.0f},
-                    14.0f + strike * 10.0f,
-                    5.5f + strike * 4.0f,
-                    D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.16f + strike * 0.24f));
-    }
-
     if (recoil > 0.0f)
     {
         FillEllipse({pos.x - dir * (unit.radius + 12.0f), pos.y + unit.radius + 10.0f},
@@ -2579,14 +2569,14 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
     const int weaponIndex = std::clamp(static_cast<int>(type), 0, kEnemyCount - 1);
 
     // 적도 타워 쪽이 아니라 플레이어 쪽으로 무기가 향하도록 attackDir(-1)을 기준으로 좌우 반전한다.
-    float handLift = ranged ? (unit.radius * 0.04f + 2.0f) : (unit.radius * 0.12f + 4.0f);
-    float handForward = unit.radius * (ranged ? 0.46f : 0.58f);
-    float weaponForward = ranged ? 30.0f : 36.0f;
-    float weaponLift = ranged ? 0.0f : 2.0f;
-    float frontForward = ranged ? 48.0f : 44.0f;
+    float handLift = ranged ? (unit.radius * 0.06f + 2.0f) : (unit.radius * 0.15f + 4.0f);
+    float handForward = unit.radius * (ranged ? 0.42f : 0.50f);
+    float weaponForward = ranged ? 28.0f : 32.0f;
+    float weaponLift = ranged ? 0.0f : 3.0f;
+    float frontForward = ranged ? 42.0f : 38.0f;
     float frontLift = ranged ? handLift - 4.0f : 2.0f;
-    float weaponWidth = (ranged ? 82.0f : 92.0f) + unit.radius * (ranged ? 0.28f : 0.36f);
-    float weaponHeight = (ranged ? 54.0f : 58.0f) + unit.radius * (ranged ? 0.10f : 0.14f);
+    float weaponWidth = (ranged ? 68.0f : 78.0f) + unit.radius * (ranged ? 0.20f : 0.26f);
+    float weaponHeight = (ranged ? 46.0f : 50.0f) + unit.radius * (ranged ? 0.08f : 0.10f);
     float angleBase = ranged ? -2.0f : -16.0f;
     float strikeAngle = ranged ? 3.0f : 46.0f;
     float windupAngle = ranged ? 4.0f : 36.0f;
@@ -2600,10 +2590,10 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
     case EnemyUnit::Quake:
     case EnemyUnit::Boss:
         handLift = unit.radius * 0.16f + 6.0f;
-        handForward = unit.radius * 0.58f;
-        weaponForward = type == EnemyUnit::Boss ? 47.0f : 42.0f;
-        weaponLift = 1.0f;
-        weaponWidth += type == EnemyUnit::Boss ? 28.0f : 16.0f;
+        handForward = unit.radius * 0.52f;
+        weaponForward = type == EnemyUnit::Boss ? 43.0f : 38.0f;
+        weaponLift = 3.0f;
+        weaponWidth += type == EnemyUnit::Boss ? 20.0f : 10.0f;
         weaponHeight += type == EnemyUnit::Boss ? 12.0f : 7.0f;
         strikeAngle = type == EnemyUnit::Boss ? 66.0f : 58.0f;
         windupAngle = type == EnemyUnit::Boss ? 54.0f : 46.0f;
@@ -2612,10 +2602,10 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
     case EnemyUnit::Skitter:
     case EnemyUnit::Frost:
         handLift = unit.radius * 0.10f + 4.0f;
-        handForward = unit.radius * 0.56f;
-        weaponForward = 40.0f;
-        weaponLift = 2.0f;
-        weaponWidth += 8.0f;
+        handForward = unit.radius * 0.50f;
+        weaponForward = 37.0f;
+        weaponLift = 3.0f;
+        weaponWidth += 4.0f;
         weaponHeight -= 2.0f;
         strikeAngle = 34.0f;
         windupAngle = 20.0f;
@@ -2625,12 +2615,12 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
     case EnemyUnit::Ring:
     case EnemyUnit::Tide:
     case EnemyUnit::Mirror:
-        handLift = unit.radius * 0.02f + 1.0f;
+        handLift = unit.radius * 0.04f + 1.0f;
         handForward = unit.radius * 0.46f;
-        weaponForward = 34.0f;
+        weaponForward = 32.0f;
         weaponLift = 2.0f;
-        weaponWidth += 10.0f;
-        weaponHeight += 4.0f;
+        weaponWidth += 6.0f;
+        weaponHeight += 2.0f;
         angleBase = -1.0f;
         strikeAngle = 5.0f;
         recoilAngle = 9.0f;
@@ -2638,10 +2628,10 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
     case EnemyUnit::Flare:
     case EnemyUnit::Comet:
         handLift = unit.radius * 0.10f + 4.0f;
-        handForward = unit.radius * 0.56f;
-        weaponForward = 47.0f;
-        weaponLift = 2.0f;
-        weaponWidth += 20.0f;
+        handForward = unit.radius * 0.50f;
+        weaponForward = 42.0f;
+        weaponLift = 3.0f;
+        weaponWidth += 14.0f;
         weaponHeight -= 4.0f;
         angleBase = -8.0f;
         strikeAngle = 28.0f;
@@ -2649,12 +2639,12 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
         reachWeight = 0.86f;
         break;
     case EnemyUnit::Spore:
-        handLift = unit.radius * 0.02f + 1.0f;
+        handLift = unit.radius * 0.04f + 1.0f;
         handForward = unit.radius * 0.44f;
-        weaponForward = 27.0f;
-        weaponLift = -1.0f;
-        weaponWidth = 78.0f;
-        weaponHeight = 72.0f;
+        weaponForward = 30.0f;
+        weaponLift = 1.0f;
+        weaponWidth = 66.0f;
+        weaponHeight = 58.0f;
         angleBase = -10.0f;
         strikeAngle = 9.0f;
         windupAngle = 10.0f;
@@ -2672,7 +2662,7 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
     const float weaponAngle = (dir >= 0.0f ? angleBase : -angleBase) + dir * (strike * strikeAngle - windup * windupAngle + recoil * recoilAngle);
     const float action = Clamp01(windup + strike + recoil);
     ImageVfxKind vfx = ImageVfxKind::EnemySlash;
-    float vfxSize = (ranged ? 58.0f : 72.0f) + strike * (ranged ? 22.0f : 44.0f);
+    float vfxSize = (ranged ? 42.0f : 50.0f) + strike * (ranged ? 14.0f : 24.0f);
 
     // 적도 PNG 무기를 주역으로 쓰고, 타입별 차이는 색과 VFX로만 더한다.
     switch (type)
@@ -2682,7 +2672,7 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
         break;
     case EnemyUnit::Brute:
         vfx = ImageVfxKind::Earth;
-        vfxSize += 18.0f;
+        vfxSize += 10.0f;
         break;
     case EnemyUnit::Skitter:
         vfx = ImageVfxKind::Smear;
@@ -2698,44 +2688,44 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
         break;
     case EnemyUnit::Storm:
         vfx = ImageVfxKind::EnergyImpact;
-        vfxSize += 16.0f;
+        vfxSize += 10.0f;
         break;
     case EnemyUnit::Ring:
         vfx = ImageVfxKind::Crystal;
         break;
     case EnemyUnit::Frost:
         vfx = ImageVfxKind::Ice;
-        vfxSize += 12.0f;
+        vfxSize += 8.0f;
         break;
     case EnemyUnit::Tide:
         vfx = ImageVfxKind::WaterBallImpact;
         break;
     case EnemyUnit::Void:
         vfx = ImageVfxKind::Dark;
-        vfxSize += 22.0f;
+        vfxSize += 12.0f;
         break;
     case EnemyUnit::Flare:
         vfx = ImageVfxKind::FireBreath;
-        vfxSize += 18.0f;
+        vfxSize += 10.0f;
         break;
     case EnemyUnit::Spore:
         vfx = ImageVfxKind::Acid;
         break;
     case EnemyUnit::Quake:
         vfx = ImageVfxKind::Earth;
-        vfxSize += 30.0f;
+        vfxSize += 16.0f;
         break;
     case EnemyUnit::Mirror:
         vfx = ImageVfxKind::MagicMirror;
-        vfxSize += 12.0f;
+        vfxSize += 8.0f;
         break;
     case EnemyUnit::Comet:
         vfx = ImageVfxKind::Thrust;
-        vfxSize += 20.0f;
+        vfxSize += 12.0f;
         break;
     case EnemyUnit::Boss:
         vfx = ImageVfxKind::Explosion;
-        vfxSize += 42.0f;
+        vfxSize += 24.0f;
         break;
     }
 
@@ -2761,24 +2751,6 @@ void PawlineGameImpl::DrawEnemyWeapon(const Unit& unit, Vec2 pos, const UnitStat
                      weaponAngle,
                      0.88f,
                      dir < 0.0f);
-
-    const Vec2 shoulder = {pos.x + dir * (unit.radius * 0.16f - windup * 2.0f),
-                           pos.y - unit.radius * (ranged ? 0.24f : 0.00f)};
-    const Vec2 grip = {hand.x + dir * (strike * 4.0f - recoil * 2.0f), hand.y + recoil * 1.2f};
-    DrawLine(shoulder, grip, D2D1::ColorF(0x05070B, 0.88f), 6.2f);
-    DrawLine(shoulder, grip, D2D1::ColorF(stats.color.r, stats.color.g, stats.color.b, 0.80f), 3.8f);
-    FillEllipse(grip, 8.0f + action * 2.2f, 5.4f + action * 1.2f, D2D1::ColorF(0x05070B, 0.94f));
-    FillEllipse({grip.x + dir * 1.4f, grip.y - 0.8f},
-                5.6f + action * 1.4f,
-                3.9f + action * 0.9f,
-                D2D1::ColorF(stats.color.r, stats.color.g, stats.color.b, 0.94f));
-    if (strike > 0.0f)
-    {
-        FillEllipse({grip.x + dir * 10.0f, grip.y - 2.0f},
-                    14.0f + strike * 10.0f,
-                    5.5f + strike * 4.0f,
-                    D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.15f + strike * 0.22f));
-    }
 
     if (recoil > 0.0f)
     {
@@ -3728,7 +3700,7 @@ void PawlineGameImpl::DrawShaderPostProcess()
 
     for (float y = kBattleTop + 4.0f + scanOffset; y < kBattleBottom; y += 14.0f)
     {
-        DrawLine({arena.left + 6.0f, y}, {arena.right - 6.0f, y}, FadeColor(stage.lineColor, 0.026f + action * 0.030f + feedback * 0.012f), 1.0f);
+        DrawLine({arena.left + 6.0f, y}, {arena.right - 6.0f, y}, FadeColor(stage.lineColor, 0.010f + action * 0.016f + feedback * 0.006f), 1.0f);
     }
 
     for (int i = 0; i < 26; ++i)
@@ -4517,12 +4489,12 @@ void PawlineGameImpl::DrawUnitCard(int index)
 
     DrawPlayerIcon(type, {rect.left + 59.0f, rect.top + 37.0f}, 0.82f, affordable);
     const D2D1_COLOR_F roleColor = UnitRoleColor(type, stats);
-    FillRoundRect(D2D1::RectF(rect.right - 58.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 24.0f),
+    FillRoundRect(D2D1::RectF(rect.right - 61.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 29.0f),
                   5.0f,
                   D2D1::ColorF(roleColor.r, roleColor.g, roleColor.b, affordable ? 0.24f : 0.12f));
     DrawPixelTextCentered(UnitRoleLabel(type, stats),
-                          D2D1::RectF(rect.right - 57.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 24.0f),
-                          0.88f,
+                          D2D1::RectF(rect.right - 60.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 29.0f),
+                          0.76f,
                           affordable ? roleColor : D2D1::ColorF(0x7E919C),
                           1.0f);
 

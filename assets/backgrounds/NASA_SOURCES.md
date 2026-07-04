@@ -1,7 +1,6 @@
 # NASA Background Sources
 
-스테이지 배경은 NASA Image and Video Library에서 받은 이미지를 `1600x900` 게임 배경으로 크롭, 대비 보정, 별 입자 보강한 결과물입니다.
-NASA 로고나 휘장은 사용하지 않았고, NASA가 안내하는 이미지/미디어 사용 가이드에 맞춰 출처를 문서화했습니다.
+스테이지 배경은 NASA Image and Video Library 이미지를 게임 해상도에 맞게 크롭하고 대비를 보정해 사용했습니다. NASA 로고나 휘장은 사용하지 않았고, NASA가 안내하는 이미지/미디어 사용 가이드에 맞춰 출처를 문서화했습니다.
 
 - 수성: `GSFC_20171208_Archive_e001918`, From Orbit, Looking toward Mercury's Horizon
 - 금성: `PIA00270`, Venus - Computer Simulated Global View Centered at 90 Degrees East Longitude
@@ -14,13 +13,13 @@ NASA 로고나 휘장은 사용하지 않았고, NASA가 안내하는 이미지/
 - 명왕성: `PIA11707`, Pluto Color Map
 - 태양: `PIA26681`, Image of Sun From NASA's Solar Dynamics Observatory
 
+공용 딥스페이스 배경:
+
+- Webb's First Deep Field, NIRCam image, `STScI-01G8H1K2BCNATEZSKVRN9Z69SR.png` source, cropped to `deep_space_hudf.jpg` at 2560x1600 for runtime use
+- Source: https://science.nasa.gov/asset/webb/webbs-first-deep-field-nircam-image/
+- Credit: NASA, ESA, CSA, and STScI
+
 관련 링크:
 
 - NASA Image and Video Library: https://images.nasa.gov/
 - NASA Image and Media Usage Guidelines: https://www.nasa.gov/nasa-brand-center/images-and-media/
-
-Additional deep-space backdrop:
-
-- Hubble Ultra Deep Field, NASA SVS ID 30946, `hudf-hst-6200x6200.png` source, resized to `deep_space_hudf.jpg` at 4096x4096 for runtime use
-- Source: https://svs.gsfc.nasa.gov/30946
-- Credit: NASA, ESA, S. Beckwith (STScI) and the HUDF Team

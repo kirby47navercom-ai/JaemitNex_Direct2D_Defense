@@ -220,7 +220,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
     const wchar_t* bodyFont = hasGyeonggiFont ? L"GyeonggiBatangOTF" : L"Segoe UI";
     HRESULT hr = m_writeFactory->CreateTextFormat(
         titleFont, nullptr, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 32.0f, L"ko-kr", m_titleFormat.GetAddressOf());
+        DWRITE_FONT_STRETCH_NORMAL, 34.0f, L"ko-kr", m_titleFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -228,7 +228,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
 
     hr = m_writeFactory->CreateTextFormat(
         titleFont, nullptr, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 18.0f, L"ko-kr", m_headerFormat.GetAddressOf());
+        DWRITE_FONT_STRETCH_NORMAL, 20.0f, L"ko-kr", m_headerFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -236,7 +236,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
 
     hr = m_writeFactory->CreateTextFormat(
         bodyFont, nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 15.0f, L"ko-kr", m_bodyFormat.GetAddressOf());
+        DWRITE_FONT_STRETCH_NORMAL, 16.5f, L"ko-kr", m_bodyFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -244,7 +244,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
 
     hr = m_writeFactory->CreateTextFormat(
         bodyFont, nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 12.5f, L"ko-kr", m_smallFormat.GetAddressOf());
+        DWRITE_FONT_STRETCH_NORMAL, 13.7f, L"ko-kr", m_smallFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -252,7 +252,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
 
     hr = m_writeFactory->CreateTextFormat(
         titleFont, nullptr, DWRITE_FONT_WEIGHT_SEMI_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 15.0f, L"ko-kr", m_buttonFormat.GetAddressOf());
+        DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"ko-kr", m_buttonFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;
@@ -260,7 +260,7 @@ HRESULT PawlineGameImpl::CreateTextFormats()
 
     hr = m_writeFactory->CreateTextFormat(
         titleFont, nullptr, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, 18.0f, L"ko-kr", m_centerFormat.GetAddressOf());
+        DWRITE_FONT_STRETCH_NORMAL, 19.5f, L"ko-kr", m_centerFormat.GetAddressOf());
     if (FAILED(hr))
     {
         return hr;

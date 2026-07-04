@@ -367,25 +367,25 @@ std::wstring PawlineGameImpl::StageEnemySummary() const
     switch (m_selectedStage)
     {
     case 0:
-        return L"먼지졸병 / 가시러너 / 철갑병";
+        return L"더스트 / 스키터 / 브루트";
     case 1:
-        return L"산성사수 / 거울사수 / 가시러너";
+        return L"설퍼 / 미러 / 스키터";
     case 2:
-        return L"포자병 / 포자포병 / 철갑병";
+        return L"모스 / 스포어 / 브루트";
     case 3:
-        return L"녹슨망치 / 먼지졸병 / 철갑병";
+        return L"러스트 / 더스트 / 브루트";
     case 4:
-        return L"중력방패 / 지진돌격 / 산성사수";
+        return L"스톰 / 퀘이크 / 설퍼";
     case 5:
-        return L"고리사수 / 가시러너 / 중력방패";
+        return L"링 / 스키터 / 스톰";
     case 6:
-        return L"얼음러너 / 고리사수 / 해류사수";
+        return L"프로스트 / 링 / 타이드";
     case 7:
-        return L"해류사수 / 얼음러너 / 공허장갑";
+        return L"타이드 / 프로스트 / 보이드";
     case 8:
-        return L"공허 / 지진 / 녹슨";
+        return L"보이드 / 퀘이크 / 러스트";
     default:
-        return L"플레어 / 혜성 / 태양";
+        return L"플레어 / 코멧 / 솔라";
     }
 }
 
@@ -395,25 +395,25 @@ std::wstring PawlineGameImpl::CounterPlanSummary() const
     switch (m_selectedStage)
     {
     case 0:
-        return L"추천: 푸른검병으로 잡병 처리, 방패병으로 가시러너 차단";
+        return L"추천: 클로로 더스트 처리, 가드로 스키터 차단";
     case 1:
-        return L"추천: 질주/혜성으로 원거리 사수 급습, 민트로 산성 대응";
+        return L"추천: 대시/코멧으로 원거리 적 급습, 민트로 설퍼 대응";
     case 2:
-        return L"추천: 민트와 범위형 딜러로 포자 계열을 빠르게 정리";
+        return L"추천: 민트와 범위형 딜러로 스포어 계열을 빠르게 정리";
     case 3:
-        return L"추천: 드릴기갑/거인병으로 장갑형을 뚫고 질주병으로 빈틈 압박";
+        return L"추천: 드릴/타이탄으로 장갑형 돌파, 대시로 빈틈 압박";
     case 4:
-        return L"추천: 드릴기갑/태양검으로 중장갑 카운터, 방패병으로 전선 유지";
+        return L"추천: 드릴/솔라로 중장갑 카운터, 가드로 전선 유지";
     case 5:
-        return L"추천: 전기/프리즘으로 고리사수 견제, 방패로 돌격 차단";
+        return L"추천: 썬더/프리즘으로 링 견제, 가드로 돌격 차단";
     case 6:
-        return L"추천: 얼음방패로 빠른 적을 묶고 궤도/프리즘으로 후방 처리";
+        return L"추천: 프로스트로 빠른 적을 묶고 오빗/프리즘으로 후방 처리";
     case 7:
-        return L"추천: 전기/프리즘으로 원거리 견제, 성운포로 공허 장갑 처리";
+        return L"추천: 썬더/프리즘으로 원거리 견제, 네뷸라로 보이드 장갑 처리";
     case 8:
-        return L"추천: 드릴기갑/태양검으로 중장갑, 종술사/성운포대로 공허 대응";
+        return L"추천: 드릴/솔라로 중장갑, 벨/네뷸라로 보이드 대응";
     default:
-        return L"추천: 태양검+종술사로 캐논 시너지, 드릴기갑으로 보스 장갑 관통";
+        return L"추천: 솔라+벨로 캐논 시너지, 드릴로 보스 장갑 관통";
     }
 }
 
@@ -585,7 +585,7 @@ void PawlineGameImpl::TriggerBossPattern(Unit& boss)
     switch (bossType)
     {
     case EnemyUnit::Brute:
-        SetMessage(L"철갑 보스: 압축 파동.");
+        SetMessage(L"브루트 보스: 압축 파동.");
         AddTelegraph(TelegraphKind::BossPulseCircle, TelegraphShape::Circle, bossCenter, bossCenter, 190.0f, 0.0f, 1.08f, 58.0f + threat * 3.6f, D2D1::ColorF(0xCFA27B));
         return;
     case EnemyUnit::Sulfur:
@@ -593,11 +593,11 @@ void PawlineGameImpl::TriggerBossPattern(Unit& boss)
         AddTelegraph(TelegraphKind::VenusFog, TelegraphShape::FullLane, {std::max(kPlayerBaseX + 90.0f, bossCenter.x - 620.0f), kLaneY}, {bossCenter.x + 120.0f, kLaneY}, 360.0f, 0.0f, 0.95f, 16.0f + threat * 1.3f, D2D1::ColorF(0xE0B16D));
         return;
     case EnemyUnit::Moss:
-        SetMessage(L"포자 보스: 포자 증식.");
+        SetMessage(L"스포어 보스: 스포어 증식.");
         AddTelegraph(TelegraphKind::BossReinforce, TelegraphShape::Circle, {std::max(kPlayerBaseX + 360.0f, bossCenter.x - 260.0f), RandomLaneY()}, bossCenter, 112.0f, 0.0f, 0.90f, 0.0f, D2D1::ColorF(0xB8FF89));
         return;
     case EnemyUnit::Rust:
-        SetMessage(L"녹슨 보스: 붉은 낙하.");
+        SetMessage(L"러스트 보스: 붉은 낙하.");
         AddTelegraph(TelegraphKind::MarsMeteor, TelegraphShape::Circle, {std::max(kPlayerBaseX + 240.0f, bossCenter.x - 360.0f), RandomLaneY()}, bossCenter, 138.0f, 0.0f, 0.86f, 62.0f + threat * 3.8f, D2D1::ColorF(0xFF8B60));
         AddTelegraph(TelegraphKind::MarsMeteor, TelegraphShape::Circle, {std::max(kPlayerBaseX + 380.0f, bossCenter.x - 180.0f), RandomLaneY()}, bossCenter, 112.0f, 0.0f, 1.06f, 48.0f + threat * 3.0f, D2D1::ColorF(0xFFB08B));
         return;
@@ -606,7 +606,7 @@ void PawlineGameImpl::TriggerBossPattern(Unit& boss)
         AddTelegraph(TelegraphKind::JupiterGravity, TelegraphShape::Circle, {std::max(kPlayerBaseX + 430.0f, bossCenter.x - 260.0f), kLaneY}, bossCenter, 330.0f, 0.0f, 1.12f, 18.0f + threat * 1.8f, D2D1::ColorF(0xD8A66A));
         return;
     case EnemyUnit::Ring:
-        SetMessage(L"고리 보스: 고리탄 소환.");
+        SetMessage(L"링 보스: 링 샷 소환.");
         AddTelegraph(TelegraphKind::SaturnReinforce, TelegraphShape::Circle, {std::max(kPlayerBaseX + 390.0f, bossCenter.x - 300.0f), RandomLaneY()}, bossCenter, 120.0f, 0.0f, 0.88f, 0.0f, D2D1::ColorF(0xE6D392));
         AddTelegraph(TelegraphKind::BossFlareLine, TelegraphShape::Line, bossCenter, {std::max(kPlayerBaseX + 80.0f, bossCenter.x - 560.0f), bossCenter.y - 54.0f}, 0.0f, 62.0f, 1.05f, 46.0f + threat * 2.5f, D2D1::ColorF(0xE6D392));
         return;
@@ -615,15 +615,15 @@ void PawlineGameImpl::TriggerBossPattern(Unit& boss)
         AddTelegraph(TelegraphKind::UranusIce, TelegraphShape::Line, {bossCenter.x, bossCenter.y - 96.0f}, {std::max(kPlayerBaseX + 70.0f, bossCenter.x - 680.0f), bossCenter.y + 86.0f}, 0.0f, 104.0f, 0.88f, 34.0f + threat * 2.5f, D2D1::ColorF(0xD9FFF8));
         return;
     case EnemyUnit::Tide:
-        SetMessage(L"해류 보스: 심해 밀물.");
+        SetMessage(L"타이드 보스: 딥 타이드.");
         AddTelegraph(TelegraphKind::NeptuneTide, TelegraphShape::FullLane, {std::max(kPlayerBaseX + 90.0f, bossCenter.x - 620.0f), kLaneY + 28.0f}, {bossCenter.x + 120.0f, kLaneY + 28.0f}, 380.0f, 0.0f, 0.90f, 34.0f + threat * 2.4f, D2D1::ColorF(0x75A7FF));
         return;
     case EnemyUnit::Quake:
-        SetMessage(L"지진 보스: 공허 균열.");
+        SetMessage(L"퀘이크 보스: 보이드 균열.");
         AddTelegraph(TelegraphKind::PlutoVoid, TelegraphShape::Circle, {std::max(kPlayerBaseX + 420.0f, bossCenter.x - 260.0f), kLaneY}, bossCenter, 250.0f, 0.0f, 1.02f, 54.0f + threat * 3.2f, D2D1::ColorF(0xC8B7FF));
         return;
     case EnemyUnit::Boss:
-        SetMessage(L"태양문지기: 삼중 플레어.");
+        SetMessage(L"솔라 보스: 트리플 플레어.");
         AddTelegraph(TelegraphKind::SolarFlare, TelegraphShape::Line, bossCenter, {std::max(kPlayerBaseX + 80.0f, bossCenter.x - 760.0f), bossCenter.y - 92.0f}, 0.0f, 94.0f, 0.88f, 72.0f + threat * 4.0f, D2D1::ColorF(0xFFB347));
         AddTelegraph(TelegraphKind::SolarFlare, TelegraphShape::Line, {bossCenter.x, bossCenter.y + 50.0f}, {std::max(kPlayerBaseX + 80.0f, bossCenter.x - 720.0f), bossCenter.y + 96.0f}, 0.0f, 84.0f, 1.06f, 58.0f + threat * 3.3f, D2D1::ColorF(0xFFF4B8));
         return;
@@ -767,7 +767,7 @@ void PawlineGameImpl::TriggerStageGimmick()
         AddTelegraph(TelegraphKind::JupiterGravity, TelegraphShape::Circle, {m_cameraX + 640.0f, kLaneY}, {m_cameraX + 640.0f, kLaneY}, 340.0f, 0.0f, 0.95f, 0.0f, D2D1::ColorF(0xD8A66A));
         break;
     case 5:
-        SetMessage(L"토성 고리 증원.");
+        SetMessage(L"토성 링 증원.");
         AddTelegraph(TelegraphKind::SaturnReinforce, TelegraphShape::Circle, {kEnemyBaseX - 330.0f, kLaneY}, {kEnemyBaseX - 330.0f, kLaneY}, 124.0f, 0.0f, 0.95f, 0.0f, D2D1::ColorF(0xE6D392));
         break;
     case 6:
@@ -779,11 +779,11 @@ void PawlineGameImpl::TriggerStageGimmick()
         AddTelegraph(TelegraphKind::NeptuneTide, TelegraphShape::FullLane, {m_cameraX + 64.0f, kLaneY + 32.0f}, {m_cameraX + kWidth - 64.0f, kLaneY + 32.0f}, 320.0f, 0.0f, 0.80f, 0.0f, D2D1::ColorF(0x75A7FF));
         break;
     case 8:
-        SetMessage(L"명왕성 공허 일식.");
+        SetMessage(L"명왕성 보이드 이클립스.");
         AddTelegraph(TelegraphKind::PlutoVoid, TelegraphShape::Circle, {m_cameraX + 640.0f, kLaneY}, {m_cameraX + 640.0f, kLaneY}, 230.0f, 0.0f, 0.95f, 34.0f + ThreatLevel() * 2.2f, D2D1::ColorF(0xC8B7FF));
         break;
     default:
-        SetMessage(L"태양 플레어.");
+        SetMessage(L"솔라 플레어.");
         AddTelegraph(TelegraphKind::SolarFlare, TelegraphShape::Line, {m_cameraX + 20.0f, kBattleTop + 44.0f}, {m_cameraX + kWidth - 20.0f, kBattleBottom - 58.0f}, 330.0f, 128.0f, 1.05f, 52.0f + ThreatLevel() * 3.0f, D2D1::ColorF(0xFFB347));
         break;
     }
@@ -1119,7 +1119,7 @@ std::wstring PawlineGameImpl::SynergySummary() const
     }
     if (HasLoadoutUnit(PlayerUnit::Solar) && HasLoadoutUnit(PlayerUnit::Bell))
     {
-        lines.push_back(L"태양 종소리: 캐논 충전 +12%");
+        lines.push_back(L"솔라 벨: 캐논 충전 +12%");
     }
     if (lines.empty())
     {
@@ -1152,7 +1152,7 @@ std::wstring PawlineGameImpl::SynergySummary() const
                    L"\n필요: " + UnitDisplayName(missing);
         }
 
-        return L"활성 시너지 없음\n추천: 방패병 + 빙결방패 - 전열 HP +10%";
+        return L"활성 시너지 없음\n추천: 가드 + 프로스트 - 전열 HP +10%";
     }
 
     std::wstring text;
@@ -1642,22 +1642,22 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
     const ImageVfxKind imageKind = combo.primary;
     const Vec2 imagePos = attacker.ranged ? muzzle : targetPos;
     const float punchScale = attacker.boss ? 1.34f : (attacker.elite ? 1.16f : 1.0f);
-    const float imageSize = (attacker.ranged ? 146.0f : 164.0f + attacker.radius * 0.96f) * punchScale;
+    const float imageSize = (attacker.ranged ? 88.0f : 96.0f + attacker.radius * 0.62f) * punchScale;
     const float imageLife = attacker.ranged ? 0.52f : 0.46f;
     AddImageVfx(imageKind, imagePos, imageSize, imageLife, FadeColor(color, 1.0f), attacker.attackDir);
     const Vec2 impactPos = targetPos + Vec2{0.0f, attacker.ranged ? -2.0f : -5.0f};
-    AddImageVfx(combo.secondary, impactPos, (attacker.ranged ? 124.0f : 138.0f + attacker.radius * 0.62f) * punchScale,
+    AddImageVfx(combo.secondary, impactPos, (attacker.ranged ? 74.0f : 84.0f + attacker.radius * 0.40f) * punchScale,
                 attacker.ranged ? 0.40f : 0.36f, FadeColor(color, 0.80f), attacker.attackDir);
     AddImageVfx(combo.accent, attacker.ranged ? muzzle : impactPos + dir * 8.0f,
-                (attacker.ranged ? 102.0f : 112.0f + attacker.radius * 0.38f) * punchScale,
+                (attacker.ranged ? 60.0f : 68.0f + attacker.radius * 0.26f) * punchScale,
                 attacker.ranged ? 0.32f : 0.28f, FadeColor(color, 0.64f), attacker.attackDir);
     if (!attacker.ranged)
     {
-        AddImageVfx(ImageVfxKind::HitFlash, targetPos + Vec2{0.0f, -4.0f}, 124.0f * punchScale, 0.32f, FadeColor(color, 0.92f), attacker.attackDir);
+        AddImageVfx(ImageVfxKind::HitFlash, targetPos + Vec2{0.0f, -4.0f}, 72.0f * punchScale, 0.30f, FadeColor(color, 0.88f), attacker.attackDir);
     }
-    AddRing(muzzle, attacker.ranged ? 30.0f * punchScale : 24.0f * punchScale, 0.16f, FadeColor(color, 0.24f), 1.6f);
-    AddRing(impactPos, (attacker.ranged ? 48.0f : 58.0f + attacker.radius * 0.46f) * punchScale, 0.24f, FadeColor(color, 0.34f), attacker.ranged ? 2.2f : 2.8f);
-    AddSparkLines(impactPos, FadeColor(color, 0.92f), attacker.ranged ? 7 : 10);
+    AddRing(muzzle, attacker.ranged ? 22.0f * punchScale : 18.0f * punchScale, 0.16f, FadeColor(color, 0.22f), 1.4f);
+    AddRing(impactPos, (attacker.ranged ? 34.0f : 38.0f + attacker.radius * 0.30f) * punchScale, 0.22f, FadeColor(color, 0.30f), attacker.ranged ? 1.8f : 2.2f);
+    AddSparkLines(impactPos, FadeColor(color, 0.90f), attacker.ranged ? 5 : 7);
     if (attacker.boss || attacker.elite)
     {
         AddBurst(impactPos, FadeColor(color, 0.82f), attacker.boss ? 18 : 12);
@@ -1676,7 +1676,7 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
         case PlayerUnit::Spark:
             if (attacker.ranged) { AddBeam(muzzle + Vec2{0.0f, -26.0f}, targetPos, 4.8f, 0.18f, D2D1::ColorF(0xF6FF83, 0.76f)); }
             AddSparkLines(targetPos, D2D1::ColorF(0xF6FF83), 16);
-            AddRing(attacker.pos + Vec2{0.0f, -34.0f}, 42.0f, 0.22f, D2D1::ColorF(0xF6FF83, 0.34f), 2.0f);
+            AddRing(attacker.pos + Vec2{0.0f, -30.0f}, 32.0f, 0.22f, D2D1::ColorF(0xF6FF83, 0.34f), 1.8f);
             break;
         case PlayerUnit::Dash:
             if (attacker.ranged) { AddBeam(attacker.pos - dir * 34.0f, targetPos, 4.8f, 0.13f, D2D1::ColorF(0xB8FF89, 0.66f)); }
@@ -1684,36 +1684,36 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
             break;
         case PlayerUnit::Comet:
             if (attacker.ranged) { AddBeam(attacker.pos - dir * 58.0f, targetPos + dir * 16.0f, 6.2f, 0.18f, D2D1::ColorF(0xFFCA7A, 0.72f)); }
-            AddRing(targetPos, 48.0f, 0.22f, D2D1::ColorF(0xFFB347, 0.34f), 2.4f);
+            AddRing(targetPos, 38.0f, 0.22f, D2D1::ColorF(0xFFB347, 0.34f), 2.1f);
             AddSparkLines(targetPos, D2D1::ColorF(0xFFCA7A), 12);
             break;
         case PlayerUnit::Box:
-            AddRing(targetPos, 62.0f, 0.30f, D2D1::ColorF(0xFFF0B5, 0.38f), 3.6f);
+            AddRing(targetPos, 44.0f, 0.28f, D2D1::ColorF(0xFFF0B5, 0.38f), 3.0f);
             AddBurst(targetPos, D2D1::ColorF(0xDCA85B), 8);
             break;
         case PlayerUnit::Titan:
-            AddRing(targetPos, 92.0f, 0.36f, D2D1::ColorF(0xFFF0B5, 0.48f), 5.0f);
+            AddRing(targetPos, 66.0f, 0.34f, D2D1::ColorF(0xFFF0B5, 0.46f), 4.0f);
             AddSparkLines(targetPos, D2D1::ColorF(0xFFF0B5), 14);
             AddBurst(targetPos, D2D1::ColorF(0xDCA85B), 14);
             break;
         case PlayerUnit::Bell:
-            AddRing(attacker.pos, 62.0f, 0.30f, D2D1::ColorF(0xF6FF83, 0.30f), 2.2f);
-            AddRing(targetPos, 74.0f, 0.32f, D2D1::ColorF(0xF6FF83, 0.34f), 2.4f);
+            AddRing(attacker.pos, 48.0f, 0.28f, D2D1::ColorF(0xF6FF83, 0.30f), 2.0f);
+            AddRing(targetPos, 54.0f, 0.30f, D2D1::ColorF(0xF6FF83, 0.34f), 2.2f);
             if (attacker.ranged) { AddBeam(muzzle, targetPos, 2.8f, 0.14f, D2D1::ColorF(0xF6FF83, 0.42f)); }
             break;
         case PlayerUnit::Orbit:
-            AddRing(attacker.pos, 86.0f, 0.34f, D2D1::ColorF(0xC7D8FF, 0.36f), 2.2f);
+            AddRing(attacker.pos, 62.0f, 0.32f, D2D1::ColorF(0xC7D8FF, 0.34f), 2.0f);
             if (attacker.ranged) { AddBeam(muzzle, targetPos, 4.2f, 0.18f, D2D1::ColorF(0xC7D8FF, 0.70f)); }
             AddSparkLines(targetPos, D2D1::ColorF(0xC7D8FF), 8);
             break;
         case PlayerUnit::Nebula:
-            AddRing(attacker.pos, 104.0f, 0.40f, D2D1::ColorF(0xC8B7FF, 0.38f), 2.8f);
+            AddRing(attacker.pos, 76.0f, 0.36f, D2D1::ColorF(0xC8B7FF, 0.36f), 2.4f);
             if (attacker.ranged) { AddBeam(muzzle, targetPos, 5.8f, 0.22f, D2D1::ColorF(0xC8B7FF, 0.76f)); }
-            AddRing(targetPos, 78.0f, 0.34f, D2D1::ColorF(0xF7D6FF, 0.34f), 2.8f);
+            AddRing(targetPos, 58.0f, 0.32f, D2D1::ColorF(0xF7D6FF, 0.34f), 2.4f);
             break;
         case PlayerUnit::Frost:
             if (attacker.ranged) { AddBeam(muzzle, targetPos, 4.8f, 0.18f, D2D1::ColorF(0xD9FFF8, 0.72f)); }
-            AddRing(targetPos, 62.0f, 0.32f, D2D1::ColorF(0xB9FFF5, 0.40f), 2.7f);
+            AddRing(targetPos, 46.0f, 0.30f, D2D1::ColorF(0xB9FFF5, 0.38f), 2.3f);
             break;
         case PlayerUnit::Drill:
             if (attacker.ranged) { AddBeam(attacker.pos, targetPos + dir * 18.0f, 7.0f, 0.15f, D2D1::ColorF(0xFFF0C8, 0.76f)); }
@@ -1721,16 +1721,16 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
             break;
         case PlayerUnit::Prism:
             if (attacker.ranged) { AddBeam(muzzle, targetPos, 7.5f, 0.22f, D2D1::ColorF(0xF7D6FF, 0.80f)); }
-            AddRing(targetPos, 66.0f, 0.30f, D2D1::ColorF(0xF7D6FF, 0.42f), 2.5f);
+            AddRing(targetPos, 48.0f, 0.28f, D2D1::ColorF(0xF7D6FF, 0.40f), 2.2f);
             break;
         case PlayerUnit::Solar:
             if (attacker.ranged) { AddBeam(attacker.pos, targetPos, 8.0f, 0.20f, D2D1::ColorF(0xFFB347, 0.82f)); }
-            AddRing(targetPos, 92.0f, 0.38f, D2D1::ColorF(0xFFE66D, 0.46f), 4.5f);
-            AddRing(attacker.pos, 74.0f, 0.28f, D2D1::ColorF(0xFFE66D, 0.34f), 3.4f);
+            AddRing(targetPos, 68.0f, 0.34f, D2D1::ColorF(0xFFE66D, 0.44f), 3.8f);
+            AddRing(attacker.pos, 54.0f, 0.26f, D2D1::ColorF(0xFFE66D, 0.32f), 2.8f);
             break;
         case PlayerUnit::Mint:
             if (attacker.ranged) { AddBeam(muzzle, targetPos, 3.2f, 0.16f, D2D1::ColorF(0xD8FFF3, 0.58f)); }
-            AddRing(targetPos, 48.0f, 0.25f, D2D1::ColorF(0xD8FFF3, 0.35f), 2.0f);
+            AddRing(targetPos, 36.0f, 0.24f, D2D1::ColorF(0xD8FFF3, 0.35f), 1.8f);
             AddSparkLines(targetPos, D2D1::ColorF(0xD8FFF3), 7);
             break;
         default:
@@ -1749,7 +1749,7 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
         if (attacker.ranged) { AddBeam(muzzle, targetPos, 2.4f, 0.10f, D2D1::ColorF(0xFF9BA8, 0.42f)); }
         break;
     case EnemyUnit::Brute:
-        AddRing(targetPos, 70.0f, 0.32f, D2D1::ColorF(0xD8A66A, 0.38f), 4.0f);
+        AddRing(targetPos, 50.0f, 0.30f, D2D1::ColorF(0xD8A66A, 0.36f), 3.2f);
         AddBurst(targetPos, D2D1::ColorF(0xD8A66A), 9);
         break;
     case EnemyUnit::Skitter:
@@ -1757,11 +1757,11 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
         AddSparkLines(targetPos, D2D1::ColorF(0xFFB6C2), 8);
         break;
     case EnemyUnit::Sulfur:
-        AddRing(targetPos, 58.0f, 0.35f, D2D1::ColorF(0xFFD27A, 0.34f), 2.8f);
+        AddRing(targetPos, 42.0f, 0.32f, D2D1::ColorF(0xFFD27A, 0.34f), 2.3f);
         AddBurst(targetPos, D2D1::ColorF(0xFFD27A), 12);
         break;
     case EnemyUnit::Moss:
-        AddRing(targetPos, 54.0f, 0.30f, D2D1::ColorF(0xB8FF89, 0.30f), 2.4f);
+        AddRing(targetPos, 40.0f, 0.28f, D2D1::ColorF(0xB8FF89, 0.30f), 2.1f);
         AddSparkLines(targetPos, D2D1::ColorF(0x6BAA5C), 8);
         break;
     case EnemyUnit::Rust:
@@ -1769,23 +1769,23 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
         AddSparkLines(targetPos, D2D1::ColorF(0xD77A5C), 9);
         break;
     case EnemyUnit::Storm:
-        AddRing(attacker.pos, 76.0f, 0.34f, D2D1::ColorF(0xF1D09A, 0.32f), 2.8f);
-        AddRing(targetPos, 68.0f, 0.34f, D2D1::ColorF(0xF1D09A, 0.32f), 3.0f);
+        AddRing(attacker.pos, 54.0f, 0.31f, D2D1::ColorF(0xF1D09A, 0.30f), 2.3f);
+        AddRing(targetPos, 50.0f, 0.31f, D2D1::ColorF(0xF1D09A, 0.32f), 2.5f);
         break;
     case EnemyUnit::Ring:
         if (attacker.ranged) { AddBeam(muzzle, targetPos, 4.6f, 0.18f, D2D1::ColorF(0xE6D392, 0.72f)); }
-        AddRing(targetPos, 58.0f, 0.26f, D2D1::ColorF(0xE6D392, 0.30f), 2.4f);
+        AddRing(targetPos, 42.0f, 0.25f, D2D1::ColorF(0xE6D392, 0.30f), 2.1f);
         break;
     case EnemyUnit::Frost:
         if (attacker.ranged) { AddBeam(muzzle, targetPos, 4.2f, 0.16f, D2D1::ColorF(0xD9FFF8, 0.68f)); }
-        AddRing(targetPos, 56.0f, 0.30f, D2D1::ColorF(0xB9FFF5, 0.34f), 2.4f);
+        AddRing(targetPos, 42.0f, 0.28f, D2D1::ColorF(0xB9FFF5, 0.34f), 2.1f);
         break;
     case EnemyUnit::Tide:
-        AddRing(targetPos, 70.0f, 0.34f, D2D1::ColorF(0x75A7FF, 0.30f), 3.0f);
+        AddRing(targetPos, 50.0f, 0.31f, D2D1::ColorF(0x75A7FF, 0.30f), 2.5f);
         if (attacker.ranged) { AddBeam(muzzle, targetPos, 4.0f, 0.18f, D2D1::ColorF(0xBFD9FF, 0.58f)); }
         break;
     case EnemyUnit::Void:
-        AddRing(attacker.pos, 92.0f, 0.38f, D2D1::ColorF(0xC8B7FF, 0.32f), 2.8f);
+        AddRing(attacker.pos, 68.0f, 0.34f, D2D1::ColorF(0xC8B7FF, 0.30f), 2.4f);
         if (attacker.ranged) { AddBeam(muzzle, targetPos, 5.2f, 0.22f, D2D1::ColorF(0xC8B7FF, 0.70f)); }
         break;
     case EnemyUnit::Flare:
@@ -1793,24 +1793,24 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
         AddSparkLines(targetPos, D2D1::ColorF(0xFFDB7A), 10);
         break;
     case EnemyUnit::Spore:
-        AddRing(targetPos, 62.0f, 0.34f, D2D1::ColorF(0xFFB6E8, 0.30f), 2.6f);
+        AddRing(targetPos, 44.0f, 0.30f, D2D1::ColorF(0xFFB6E8, 0.30f), 2.2f);
         AddBurst(targetPos, D2D1::ColorF(0xFFB6E8), 10);
         break;
     case EnemyUnit::Quake:
-        AddRing(targetPos, type == EnemyUnit::Boss ? 118.0f : 82.0f, 0.38f, D2D1::ColorF(color.r, color.g, color.b, 0.46f), 4.0f);
+        AddRing(targetPos, 58.0f, 0.34f, D2D1::ColorF(color.r, color.g, color.b, 0.42f), 3.2f);
         AddBurst(targetPos, color, 9);
         break;
     case EnemyUnit::Mirror:
         if (attacker.ranged) { AddBeam(muzzle, targetPos, 3.6f, 0.16f, D2D1::ColorF(0xEAF7FF, 0.52f)); }
-        AddRing(attacker.pos, 58.0f, 0.28f, D2D1::ColorF(0xEAF7FF, 0.28f), 2.2f);
+        AddRing(attacker.pos, 42.0f, 0.26f, D2D1::ColorF(0xEAF7FF, 0.28f), 2.0f);
         break;
     case EnemyUnit::Comet:
         if (attacker.ranged) { AddBeam(attacker.pos - dir * 56.0f, targetPos + dir * 18.0f, 5.8f, 0.17f, D2D1::ColorF(0xFFDB7A, 0.72f)); }
         AddSparkLines(targetPos, D2D1::ColorF(0xFFDB7A), 11);
         break;
     case EnemyUnit::Boss:
-        AddRing(targetPos, 122.0f, 0.42f, D2D1::ColorF(0xFFB347, 0.44f), 5.0f);
-        AddRing(attacker.pos, 128.0f, 0.44f, D2D1::ColorF(0xFF9BA8, 0.34f), 3.4f);
+        AddRing(targetPos, 86.0f, 0.38f, D2D1::ColorF(0xFFB347, 0.42f), 4.2f);
+        AddRing(attacker.pos, 92.0f, 0.40f, D2D1::ColorF(0xFF9BA8, 0.32f), 3.0f);
         if (attacker.ranged) { AddBeam(muzzle, targetPos, 8.0f, 0.24f, D2D1::ColorF(0xFFB347, 0.78f)); }
         AddBurst(targetPos, D2D1::ColorF(0xFFB347), 18);
         break;
@@ -1918,7 +1918,7 @@ void PawlineGameImpl::AttackUnit(Unit& attacker, Unit& target)
         target.stunTimer = std::max(target.stunTimer, 0.18f);
     }
     AddMeleeClashVfx(attacker, target.pos, hitColor);
-    AddImageVfx(UnitImageVfxKind(attacker), target.pos + Vec2{0.0f, -4.0f}, 96.0f + attacker.radius * 1.1f, 0.24f, FadeColor(hitColor, 0.88f), attacker.attackDir);
+    AddImageVfx(UnitImageVfxKind(attacker), target.pos + Vec2{0.0f, -4.0f}, 58.0f + attacker.radius * 0.68f, 0.22f, FadeColor(hitColor, 0.82f), attacker.attackDir);
     AddHitEffects(target.pos, hitColor);
 }
 
@@ -1937,7 +1937,7 @@ void PawlineGameImpl::AttackBase(Unit& attacker)
     }
 
     AddMeleeClashVfx(attacker, baseHit, hitColor);
-    AddImageVfx(UnitImageVfxKind(attacker), baseHit + Vec2{0.0f, -8.0f}, 108.0f + attacker.radius * 1.2f, 0.28f, FadeColor(hitColor, 0.90f), attacker.attackDir);
+    AddImageVfx(UnitImageVfxKind(attacker), baseHit + Vec2{0.0f, -8.0f}, 66.0f + attacker.radius * 0.72f, 0.26f, FadeColor(hitColor, 0.84f), attacker.attackDir);
     DamageBase(attacker.team == Team::Player ? Team::Enemy : Team::Player, attacker.damage, attacker.pos);
 }
 
@@ -2207,53 +2207,53 @@ void PawlineGameImpl::AddProjectileImpact(const Projectile& projectile)
                              imageKind == ImageVfxKind::Thrust || imageKind == ImageVfxKind::Explosion ||
                              imageKind == ImageVfxKind::EnergyImpact || imageKind == ImageVfxKind::MagicMirror ||
                              imageKind == ImageVfxKind::WaterBallImpact || imageKind == ImageVfxKind::ThunderSplash;
-    AddImageVfx(imageKind, pos, healingVisual ? 132.0f : (largeVisual ? 164.0f : 112.0f + projectile.radius * 4.8f),
+    AddImageVfx(imageKind, pos, healingVisual ? 86.0f : (largeVisual ? 96.0f : 72.0f + projectile.radius * 3.0f),
                 healingVisual ? 0.52f : 0.44f, FadeColor(projectile.color, 1.0f), projectile.team == Team::Player ? 1.0f : -1.0f);
-    AddImageVfx(ImageVfxKind::HitFlash, pos, 96.0f + projectile.radius * 2.8f, 0.24f, FadeColor(projectile.color, 0.84f),
+    AddImageVfx(ImageVfxKind::HitFlash, pos, 58.0f + projectile.radius * 1.9f, 0.22f, FadeColor(projectile.color, 0.78f),
                 projectile.team == Team::Player ? 1.0f : -1.0f);
 
     switch (projectile.visual)
     {
     case ProjectileVisual::Bolt:
         AddSparkLines(pos, D2D1::ColorF(0xF6FF83), 16);
-        AddRing(pos, 58.0f, 0.22f, FadeColor(projectile.color, 0.42f), 2.4f);
+        AddRing(pos, 42.0f, 0.21f, FadeColor(projectile.color, 0.40f), 2.0f);
         break;
     case ProjectileVisual::BellWave:
-        AddRing(pos, 104.0f, 0.42f, FadeColor(projectile.color, 0.46f), 3.2f);
-        AddRing(pos, 66.0f, 0.32f, D2D1::ColorF(0xFFF4B8, 0.32f), 2.2f);
+        AddRing(pos, 74.0f, 0.38f, FadeColor(projectile.color, 0.42f), 2.6f);
+        AddRing(pos, 48.0f, 0.30f, D2D1::ColorF(0xFFF4B8, 0.30f), 2.0f);
         AddSparkLines(pos, D2D1::ColorF(0xFFF4B8), 8);
         break;
     case ProjectileVisual::OrbitStar:
-        AddRing(pos, 82.0f, 0.32f, FadeColor(projectile.color, 0.42f), 2.8f);
+        AddRing(pos, 58.0f, 0.30f, FadeColor(projectile.color, 0.40f), 2.3f);
         AddBurst(pos, projectile.color, 12);
         break;
     case ProjectileVisual::PrismShard:
     case ProjectileVisual::MirrorShard:
         AddSparkLines(pos, projectile.visual == ProjectileVisual::MirrorShard ? D2D1::ColorF(0xEAF7FF) : D2D1::ColorF(0xF7D6FF), 18);
         AddBurst(pos, projectile.color, 12);
-        AddRing(pos, 62.0f, 0.26f, FadeColor(projectile.color, 0.44f), 2.6f);
+        AddRing(pos, 44.0f, 0.25f, FadeColor(projectile.color, 0.40f), 2.2f);
         break;
     case ProjectileVisual::NebulaOrb:
     case ProjectileVisual::VoidOrb:
-        AddRing(pos, 96.0f, 0.38f, FadeColor(projectile.color, 0.46f), 3.3f);
-        AddRing(pos, 46.0f, 0.25f, D2D1::ColorF(0x061019, 0.48f), 4.0f);
+        AddRing(pos, 68.0f, 0.34f, FadeColor(projectile.color, 0.42f), 2.8f);
+        AddRing(pos, 36.0f, 0.24f, D2D1::ColorF(0x061019, 0.46f), 3.2f);
         AddBurst(pos, projectile.color, 16);
         break;
     case ProjectileVisual::MintPulse:
-        AddRing(pos, 72.0f, 0.30f, FadeColor(projectile.color, 0.44f), 2.4f);
+        AddRing(pos, 52.0f, 0.28f, FadeColor(projectile.color, 0.40f), 2.1f);
         AddParticleEx(pos, {0.0f, -32.0f}, 10.0f, 0.42f, D2D1::ColorF(0xD8FFF3, 0.66f), ParticleKind::Glow, 0.0f, 0.90f, 22.0f);
         break;
     case ProjectileVisual::FrostShard:
         AddSparkLines(pos, D2D1::ColorF(0xD9FFF8), 14);
-        AddRing(pos, 64.0f, 0.34f, D2D1::ColorF(0xB9FFF5, 0.42f), 2.4f);
+        AddRing(pos, 46.0f, 0.31f, D2D1::ColorF(0xB9FFF5, 0.40f), 2.1f);
         AddDustPuff({pos.x, pos.y + 12.0f}, D2D1::ColorF(0xD9FFF8, 0.22f), 7);
         break;
     case ProjectileVisual::AcidGlob:
         AddBurst(pos, D2D1::ColorF(0xFFD27A), 18);
-        AddRing(pos, 58.0f, 0.33f, D2D1::ColorF(0xB8FF89, 0.36f), 2.6f);
+        AddRing(pos, 42.0f, 0.30f, D2D1::ColorF(0xB8FF89, 0.34f), 2.2f);
         break;
     case ProjectileVisual::TideWave:
-        AddRing(pos, 88.0f, 0.36f, D2D1::ColorF(0x75A7FF, 0.40f), 3.0f);
+        AddRing(pos, 62.0f, 0.32f, D2D1::ColorF(0x75A7FF, 0.38f), 2.5f);
         for (int i = -2; i <= 2; ++i)
         {
             AddParticleEx({pos.x + static_cast<float>(i) * 10.0f, pos.y + 8.0f}, {static_cast<float>(i) * 12.0f, -34.0f}, 5.2f, 0.46f, D2D1::ColorF(0xBFD9FF, 0.70f), ParticleKind::Bubble, -18.0f, 0.90f, 4.0f);
@@ -2261,11 +2261,11 @@ void PawlineGameImpl::AddProjectileImpact(const Projectile& projectile)
         break;
     case ProjectileVisual::SolarSpark:
         AddSparkLines(pos, D2D1::ColorF(0xFFDB7A), 20);
-        AddRing(pos, 76.0f, 0.30f, D2D1::ColorF(0xFFB347, 0.46f), 3.0f);
+        AddRing(pos, 54.0f, 0.28f, D2D1::ColorF(0xFFB347, 0.42f), 2.5f);
         AddBurst(pos, D2D1::ColorF(0xFF6A3D), 12);
         break;
     case ProjectileVisual::SporeSeed:
-        AddRing(pos, 66.0f, 0.36f, D2D1::ColorF(0xFFB6E8, 0.38f), 2.8f);
+        AddRing(pos, 48.0f, 0.32f, D2D1::ColorF(0xFFB6E8, 0.36f), 2.3f);
         AddBurst(pos, D2D1::ColorF(0xFFB6E8), 14);
         break;
     }
@@ -2278,9 +2278,9 @@ void PawlineGameImpl::AddMeleeClashVfx(const Unit& attacker, Vec2 targetPos, D2D
     const Vec2 clash = attacker.pos + dir * (attacker.radius + std::min(28.0f, Distance(attacker.pos, targetPos) * 0.45f));
     const float heavy = attacker.radius >= 23.0f ? 1.0f : 0.0f;
 
-    AddRing(clash, 42.0f + attacker.radius * 1.2f + heavy * 22.0f, 0.24f + heavy * 0.08f, FadeColor(color, 0.46f), 2.4f + heavy * 1.4f);
+    AddRing(clash, 30.0f + attacker.radius * 0.82f + heavy * 14.0f, 0.22f + heavy * 0.06f, FadeColor(color, 0.42f), 2.0f + heavy * 1.0f);
     AddImageVfx(UnitImageVfxKind(attacker),
-                clash, 112.0f + attacker.radius * 1.15f + heavy * 30.0f, 0.34f + heavy * 0.07f, FadeColor(color, 1.0f), attacker.attackDir);
+                clash, 70.0f + attacker.radius * 0.72f + heavy * 18.0f, 0.30f + heavy * 0.05f, FadeColor(color, 0.92f), attacker.attackDir);
     AddParticleEx(clash, normal * 22.0f + Vec2{0.0f, -18.0f}, 6.0f + heavy * 2.0f, 0.26f, FadeColor(color, 0.70f), ParticleKind::Glow, -2.0f, 0.90f, 18.0f + heavy * 8.0f);
     AddDustPuff({clash.x, clash.y + 18.0f}, D2D1::ColorF(color.r, color.g, color.b, 0.24f), attacker.radius >= 23.0f ? 8 : 4);
     AddParticleEx(clash, dir * 28.0f + Vec2{0.0f, -22.0f}, 5.0f + heavy * 2.0f, 0.24f, FadeColor(color, 0.82f), ParticleKind::Glow, 0.0f, 0.88f, 16.0f + heavy * 8.0f);
@@ -2291,7 +2291,7 @@ void PawlineGameImpl::AddMeleeClashVfx(const Unit& attacker, Vec2 targetPos, D2D
         {
         case PlayerUnit::Box:
         case PlayerUnit::Titan:
-            AddRing({clash.x, clash.y + 20.0f}, 82.0f + attacker.radius, 0.32f, D2D1::ColorF(0xFFF0B5, 0.34f), 4.2f);
+            AddRing({clash.x, clash.y + 20.0f}, 58.0f + attacker.radius * 0.62f, 0.30f, D2D1::ColorF(0xFFF0B5, 0.32f), 3.4f);
             break;
         case PlayerUnit::Dash:
         case PlayerUnit::Comet:
@@ -2304,10 +2304,10 @@ void PawlineGameImpl::AddMeleeClashVfx(const Unit& attacker, Vec2 targetPos, D2D
             }
             break;
         case PlayerUnit::Frost:
-            AddRing(clash, 64.0f, 0.30f, D2D1::ColorF(0xB9FFF5, 0.38f), 2.6f);
+            AddRing(clash, 46.0f, 0.28f, D2D1::ColorF(0xB9FFF5, 0.36f), 2.2f);
             break;
         case PlayerUnit::Solar:
-            AddRing(clash, 92.0f, 0.34f, D2D1::ColorF(0xFFE66D, 0.42f), 4.0f);
+            AddRing(clash, 66.0f, 0.32f, D2D1::ColorF(0xFFE66D, 0.40f), 3.3f);
             AddBurst(clash, D2D1::ColorF(0xFFB347), 14);
             break;
         default:
@@ -2320,13 +2320,13 @@ void PawlineGameImpl::AddMeleeClashVfx(const Unit& attacker, Vec2 targetPos, D2D
     {
     case EnemyUnit::Brute:
     case EnemyUnit::Quake:
-        AddRing({clash.x, clash.y + 24.0f}, 88.0f + attacker.radius, 0.34f, D2D1::ColorF(0xD8A66A, 0.34f), 4.0f);
+        AddRing({clash.x, clash.y + 24.0f}, 62.0f + attacker.radius * 0.62f, 0.31f, D2D1::ColorF(0xD8A66A, 0.32f), 3.3f);
         break;
     case EnemyUnit::Skitter:
         AddBeam(attacker.pos - dir * 34.0f, clash + dir * 18.0f, 3.6f, 0.12f, D2D1::ColorF(0xFFB6C2, 0.62f));
         break;
     case EnemyUnit::Moss:
-        AddRing(clash, 58.0f, 0.30f, D2D1::ColorF(0xB8FF89, 0.32f), 2.4f);
+        AddRing(clash, 42.0f, 0.28f, D2D1::ColorF(0xB8FF89, 0.30f), 2.1f);
         break;
     case EnemyUnit::Rust:
         AddBurst(clash, D2D1::ColorF(0xD77A5C), 10);

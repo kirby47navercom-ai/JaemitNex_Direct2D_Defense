@@ -86,34 +86,34 @@ EnemyBalance MakeEnemy(std::wstring name, int reward, float rewardThreat, float 
 std::array<StageDefinition, kStageCount> MakeDefaultStages()
 {
     return {{
-        {L"수성", L"가까운 첫 궤도", L"먼지형과 침형 적",
+        {L"수성", L"가까운 첫 궤도", L"더스트와 스키터 적",
          2200.0f, 2500.0f, 190.0f, 2.36f, 0.96f, 42.0f,
          ColorFromHex(0x101B22), ColorFromHex(0x1C3037), ColorFromHex(0x13262D), ColorFromHex(0x8A9EA8)},
-        {L"금성", L"짙은 대기권", L"산성사수 원거리 적",
+        {L"금성", L"짙은 대기권", L"설퍼 원거리 적",
          2250.0f, 2850.0f, 205.0f, 2.18f, 1.05f, 39.0f,
          ColorFromHex(0x191722), ColorFromHex(0x332936), ColorFromHex(0x241E2B), ColorFromHex(0xE0B16D)},
-        {L"지구", L"푸른 방어선", L"포자병 균형 웨이브",
+        {L"지구", L"푸른 방어선", L"모스 균형 웨이브",
          2350.0f, 3200.0f, 220.0f, 2.05f, 1.14f, 36.0f,
          ColorFromHex(0x0E1D29), ColorFromHex(0x14303A), ColorFromHex(0x102731), ColorFromHex(0x56A7B7)},
-        {L"화성", L"붉은 모래 전선", L"녹슨 장갑형 압박",
+        {L"화성", L"붉은 모래 전선", L"러스트 장갑 압박",
          2400.0f, 3550.0f, 230.0f, 1.98f, 1.24f, 33.0f,
          ColorFromHex(0x1D1718), ColorFromHex(0x3A2528), ColorFromHex(0x291D20), ColorFromHex(0xDD7666)},
-        {L"목성", L"거대한 폭풍권", L"중력방패 중심",
+        {L"목성", L"자이언트 스톰 벨트", L"스톰 중심",
          2600.0f, 4200.0f, 250.0f, 1.90f, 1.36f, 30.0f,
          ColorFromHex(0x1E1B16), ColorFromHex(0x3A3127), ColorFromHex(0x2B261F), ColorFromHex(0xD8A66A)},
-        {L"토성", L"고리 위 방어전", L"고리사수 원거리전",
+        {L"토성", L"링 오비트 방어전", L"링 원거리전",
          2650.0f, 4650.0f, 260.0f, 1.78f, 1.48f, 28.0f,
          ColorFromHex(0x171B20), ColorFromHex(0x2D3037), ColorFromHex(0x222731), ColorFromHex(0xCDBB83)},
-        {L"천왕성", L"기울어진 얼음 궤도", L"얼음러너 압박",
+        {L"천왕성", L"기울어진 얼음 궤도", L"프로스트 압박",
          2750.0f, 5200.0f, 275.0f, 1.68f, 1.62f, 25.0f,
          ColorFromHex(0x101D22), ColorFromHex(0x19353A), ColorFromHex(0x122B31), ColorFromHex(0x80E5D4)},
-        {L"해왕성", L"먼 푸른 심해", L"해류사수 원거리 러시",
+        {L"해왕성", L"먼 푸른 심해", L"타이드 원거리 러시",
          2850.0f, 5850.0f, 290.0f, 1.56f, 1.78f, 23.0f,
          ColorFromHex(0x101928), ColorFromHex(0x182C48), ColorFromHex(0x13243C), ColorFromHex(0x75A7FF)},
-        {L"명왕성", L"가장 먼 어둠", L"공허 중장갑과 빠른 보스",
+        {L"명왕성", L"가장 먼 어둠", L"보이드 중장갑과 빠른 보스",
          3000.0f, 6600.0f, 310.0f, 1.50f, 1.96f, 18.0f,
          ColorFromHex(0x15171F), ColorFromHex(0x292637), ColorFromHex(0x211F2E), ColorFromHex(0xC8B7FF)},
-        {L"태양", L"마지막 항성 전선", L"플레어 돌격과 최종 보스",
+        {L"태양", L"마지막 항성 전선", L"플레어 돌격과 솔라 보스",
          3300.0f, 7600.0f, 350.0f, 1.38f, 2.22f, 15.0f,
          ColorFromHex(0x241613), ColorFromHex(0x4A2A1F), ColorFromHex(0x351F18), ColorFromHex(0xFFB347)}
     }};
@@ -122,43 +122,43 @@ std::array<StageDefinition, kStageCount> MakeDefaultStages()
 std::array<UnitStats, kRosterCount> MakeDefaultPlayers()
 {
     std::array<UnitStats, kRosterCount> table = {};
-    table[static_cast<int>(PlayerUnit::Paw)] = MakePlayer(L"푸른검병", 70, 1.18f, 132.0f, 20.0f, 30.0f, 0.68f, 70.0f, 16.0f, false, 0xF4FBFF, 0x65B8FF);
-    table[static_cast<int>(PlayerUnit::Box)] = MakePlayer(L"방패병", 130, 4.10f, 520.0f, 12.0f, 30.0f, 1.12f, 34.0f, 22.0f, false, 0xF8F0D6, 0xDCA85B);
-    table[static_cast<int>(PlayerUnit::Spark)] = MakePlayer(L"전격술사", 255, 6.10f, 92.0f, 72.0f, 170.0f, 1.62f, 47.0f, 15.0f, true, 0xE8D7FF, 0xBA7BFF);
-    table[static_cast<int>(PlayerUnit::Dash)] = MakePlayer(L"질주병", 125, 1.88f, 92.0f, 17.0f, 28.0f, 0.34f, 132.0f, 13.0f, false, 0xD9FFE6, 0x62DD88);
-    table[static_cast<int>(PlayerUnit::Bell)] = MakePlayer(L"종술사", 235, 5.35f, 124.0f, 46.0f, 130.0f, 1.12f, 43.0f, 15.0f, true, 0xFFF8C7, 0xF2C94C);
-    table[static_cast<int>(PlayerUnit::Titan)] = MakePlayer(L"거인병", 430, 9.60f, 860.0f, 96.0f, 42.0f, 1.82f, 22.0f, 28.0f, false, 0xFFE0EF, 0xFF83B7);
-    table[static_cast<int>(PlayerUnit::Frost)] = MakePlayer(L"빙결방패", 205, 4.95f, 380.0f, 26.0f, 52.0f, 1.08f, 32.0f, 21.0f, false, 0xDDFBFF, 0x74E8FF);
-    table[static_cast<int>(PlayerUnit::Comet)] = MakePlayer(L"혜성병", 170, 3.18f, 102.0f, 38.0f, 36.0f, 0.56f, 148.0f, 14.0f, false, 0xFFF0D8, 0xFF9F4A);
-    table[static_cast<int>(PlayerUnit::Orbit)] = MakePlayer(L"궤도드론", 350, 7.40f, 112.0f, 88.0f, 205.0f, 2.10f, 34.0f, 16.0f, true, 0xDBE6FF, 0x88A8FF);
-    table[static_cast<int>(PlayerUnit::Solar)] = MakePlayer(L"태양검", 520, 11.20f, 580.0f, 140.0f, 62.0f, 1.62f, 38.0f, 25.0f, false, 0xFFE7B5, 0xFFB347);
-    table[static_cast<int>(PlayerUnit::Mint)] = MakePlayer(L"지원병", 250, 5.85f, 155.0f, 30.0f, 140.0f, 1.02f, 43.0f, 16.0f, true, 0xD8FFF3, 0x61E6B0);
-    table[static_cast<int>(PlayerUnit::Drill)] = MakePlayer(L"드릴기갑", 335, 6.65f, 440.0f, 80.0f, 36.0f, 1.05f, 58.0f, 20.0f, false, 0xE8E0D2, 0xCDAA72);
-    table[static_cast<int>(PlayerUnit::Prism)] = MakePlayer(L"프리즘술사", 450, 9.10f, 88.0f, 126.0f, 245.0f, 2.28f, 31.0f, 15.0f, true, 0xF2E8FF, 0xE19BFF);
-    table[static_cast<int>(PlayerUnit::Nebula)] = MakePlayer(L"성운포대", 650, 13.80f, 430.0f, 168.0f, 180.0f, 2.05f, 27.0f, 26.0f, true, 0xE5D9FF, 0x9D83FF);
+    table[static_cast<int>(PlayerUnit::Paw)] = MakePlayer(L"클로", 70, 1.18f, 132.0f, 20.0f, 30.0f, 0.68f, 70.0f, 16.0f, false, 0xF4FBFF, 0x65B8FF);
+    table[static_cast<int>(PlayerUnit::Box)] = MakePlayer(L"가드", 130, 4.10f, 520.0f, 12.0f, 30.0f, 1.12f, 34.0f, 22.0f, false, 0xF8F0D6, 0xDCA85B);
+    table[static_cast<int>(PlayerUnit::Spark)] = MakePlayer(L"썬더", 255, 6.10f, 92.0f, 72.0f, 170.0f, 1.62f, 47.0f, 15.0f, true, 0xE8D7FF, 0xBA7BFF);
+    table[static_cast<int>(PlayerUnit::Dash)] = MakePlayer(L"대시", 125, 1.88f, 92.0f, 17.0f, 28.0f, 0.34f, 132.0f, 13.0f, false, 0xD9FFE6, 0x62DD88);
+    table[static_cast<int>(PlayerUnit::Bell)] = MakePlayer(L"벨", 235, 5.35f, 124.0f, 46.0f, 130.0f, 1.12f, 43.0f, 15.0f, true, 0xFFF8C7, 0xF2C94C);
+    table[static_cast<int>(PlayerUnit::Titan)] = MakePlayer(L"타이탄", 430, 9.60f, 860.0f, 96.0f, 42.0f, 1.82f, 22.0f, 28.0f, false, 0xFFE0EF, 0xFF83B7);
+    table[static_cast<int>(PlayerUnit::Frost)] = MakePlayer(L"프로스트", 205, 4.95f, 380.0f, 26.0f, 52.0f, 1.08f, 32.0f, 21.0f, false, 0xDDFBFF, 0x74E8FF);
+    table[static_cast<int>(PlayerUnit::Comet)] = MakePlayer(L"코멧", 170, 3.18f, 102.0f, 38.0f, 36.0f, 0.56f, 148.0f, 14.0f, false, 0xFFF0D8, 0xFF9F4A);
+    table[static_cast<int>(PlayerUnit::Orbit)] = MakePlayer(L"오빗", 350, 7.40f, 112.0f, 88.0f, 205.0f, 2.10f, 34.0f, 16.0f, true, 0xDBE6FF, 0x88A8FF);
+    table[static_cast<int>(PlayerUnit::Solar)] = MakePlayer(L"솔라", 520, 11.20f, 580.0f, 140.0f, 62.0f, 1.62f, 38.0f, 25.0f, false, 0xFFE7B5, 0xFFB347);
+    table[static_cast<int>(PlayerUnit::Mint)] = MakePlayer(L"민트", 250, 5.85f, 155.0f, 30.0f, 140.0f, 1.02f, 43.0f, 16.0f, true, 0xD8FFF3, 0x61E6B0);
+    table[static_cast<int>(PlayerUnit::Drill)] = MakePlayer(L"드릴", 335, 6.65f, 440.0f, 80.0f, 36.0f, 1.05f, 58.0f, 20.0f, false, 0xE8E0D2, 0xCDAA72);
+    table[static_cast<int>(PlayerUnit::Prism)] = MakePlayer(L"프리즘", 450, 9.10f, 88.0f, 126.0f, 245.0f, 2.28f, 31.0f, 15.0f, true, 0xF2E8FF, 0xE19BFF);
+    table[static_cast<int>(PlayerUnit::Nebula)] = MakePlayer(L"네뷸라", 650, 13.80f, 430.0f, 168.0f, 180.0f, 2.05f, 27.0f, 26.0f, true, 0xE5D9FF, 0x9D83FF);
     return table;
 }
 
 std::array<EnemyBalance, kEnemyCount> MakeDefaultEnemies()
 {
     std::array<EnemyBalance, kEnemyCount> table = {};
-    table[static_cast<int>(EnemyUnit::Dust)] = MakeEnemy(L"먼지졸병", 34, 3.0f, 88.0f, 24.0f, 18.0f, 2.5f, 29.0f, 0.95f, 46.0f, 1.7f, 15.0f, false, 0x3A5163, 0x8FA8B8);
-    table[static_cast<int>(EnemyUnit::Brute)] = MakeEnemy(L"철갑병", 78, 5.0f, 310.0f, 78.0f, 31.0f, 4.0f, 34.0f, 1.32f, 31.0f, 0.0f, 22.0f, false, 0x684C75, 0xD5A8EA);
-    table[static_cast<int>(EnemyUnit::Skitter)] = MakeEnemy(L"가시러너", 45, 4.0f, 66.0f, 20.0f, 16.0f, 2.0f, 27.0f, 0.62f, 82.0f, 2.0f, 12.0f, false, 0x756D3B, 0xFFE76A);
-    table[static_cast<int>(EnemyUnit::Sulfur)] = MakeEnemy(L"산성사수", 50, 4.0f, 94.0f, 25.0f, 19.0f, 2.4f, 88.0f, 1.14f, 42.0f, 1.2f, 15.0f, true, 0xB8794F, 0xFFD27A);
-    table[static_cast<int>(EnemyUnit::Moss)] = MakeEnemy(L"포자병", 58, 4.0f, 145.0f, 36.0f, 22.0f, 2.8f, 31.0f, 0.92f, 43.0f, 1.0f, 17.0f, false, 0x385C42, 0x7BDB88);
-    table[static_cast<int>(EnemyUnit::Rust)] = MakeEnemy(L"녹슨망치", 86, 6.0f, 390.0f, 88.0f, 36.0f, 4.5f, 36.0f, 1.36f, 28.0f, 0.7f, 24.0f, false, 0x7D3A2D, 0xFF8B60);
-    table[static_cast<int>(EnemyUnit::Storm)] = MakeEnemy(L"중력방패", 106, 7.0f, 520.0f, 108.0f, 32.0f, 4.0f, 42.0f, 1.18f, 25.0f, 0.6f, 27.0f, false, 0x8A6846, 0xF1D09A);
-    table[static_cast<int>(EnemyUnit::Ring)] = MakeEnemy(L"고리사수", 72, 5.0f, 160.0f, 42.0f, 34.0f, 3.8f, 118.0f, 1.38f, 47.0f, 1.2f, 16.0f, true, 0x736C55, 0xE6D392);
-    table[static_cast<int>(EnemyUnit::Frost)] = MakeEnemy(L"얼음러너", 62, 5.0f, 118.0f, 30.0f, 21.0f, 2.7f, 33.0f, 0.74f, 96.0f, 2.4f, 14.0f, false, 0x4E8F95, 0xB9FFF5);
-    table[static_cast<int>(EnemyUnit::Tide)] = MakeEnemy(L"해류사수", 76, 6.0f, 132.0f, 35.0f, 28.0f, 3.5f, 132.0f, 1.08f, 70.0f, 1.8f, 17.0f, true, 0x2F5C97, 0x75A7FF);
-    table[static_cast<int>(EnemyUnit::Void)] = MakeEnemy(L"공허장갑", 122, 8.0f, 650.0f, 128.0f, 48.0f, 5.4f, 46.0f, 1.28f, 24.0f, 0.5f, 28.0f, false, 0x332B4A, 0xC8B7FF);
-    table[static_cast<int>(EnemyUnit::Flare)] = MakeEnemy(L"화염러너", 92, 7.0f, 190.0f, 48.0f, 38.0f, 4.6f, 38.0f, 0.68f, 112.0f, 2.6f, 16.0f, false, 0x9E3F2D, 0xFFB347);
-    table[static_cast<int>(EnemyUnit::Spore)] = MakeEnemy(L"포자포병", 82, 6.0f, 210.0f, 54.0f, 31.0f, 3.6f, 112.0f, 1.24f, 36.0f, 1.0f, 18.0f, true, 0x625083, 0xF0A8FF);
-    table[static_cast<int>(EnemyUnit::Quake)] = MakeEnemy(L"지진돌격", 145, 9.0f, 820.0f, 150.0f, 58.0f, 6.2f, 48.0f, 1.62f, 19.0f, 0.4f, 32.0f, false, 0x57463D, 0xD6B08C);
-    table[static_cast<int>(EnemyUnit::Mirror)] = MakeEnemy(L"거울사수", 88, 7.0f, 165.0f, 44.0f, 35.0f, 4.1f, 152.0f, 1.02f, 62.0f, 1.7f, 15.0f, true, 0xDDEAFF, 0x9CEBFF);
-    table[static_cast<int>(EnemyUnit::Comet)] = MakeEnemy(L"혜성추격", 96, 7.0f, 150.0f, 40.0f, 42.0f, 4.8f, 32.0f, 0.54f, 132.0f, 3.0f, 15.0f, false, 0xB7543B, 0xFFDB7A);
-    table[static_cast<int>(EnemyUnit::Boss)] = MakeEnemy(L"태양문지기", 240, 12.0f, 1180.0f, 180.0f, 74.0f, 7.0f, 42.0f, 1.45f, 25.0f, 0.0f, 31.0f, false, 0x71323A, 0xFF9BA8);
+    table[static_cast<int>(EnemyUnit::Dust)] = MakeEnemy(L"더스트", 34, 3.0f, 88.0f, 24.0f, 18.0f, 2.5f, 29.0f, 0.95f, 46.0f, 1.7f, 15.0f, false, 0x3A5163, 0x8FA8B8);
+    table[static_cast<int>(EnemyUnit::Brute)] = MakeEnemy(L"브루트", 78, 5.0f, 310.0f, 78.0f, 31.0f, 4.0f, 34.0f, 1.32f, 31.0f, 0.0f, 22.0f, false, 0x684C75, 0xD5A8EA);
+    table[static_cast<int>(EnemyUnit::Skitter)] = MakeEnemy(L"스키터", 45, 4.0f, 66.0f, 20.0f, 16.0f, 2.0f, 27.0f, 0.62f, 82.0f, 2.0f, 12.0f, false, 0x756D3B, 0xFFE76A);
+    table[static_cast<int>(EnemyUnit::Sulfur)] = MakeEnemy(L"설퍼", 50, 4.0f, 94.0f, 25.0f, 19.0f, 2.4f, 88.0f, 1.14f, 42.0f, 1.2f, 15.0f, true, 0xB8794F, 0xFFD27A);
+    table[static_cast<int>(EnemyUnit::Moss)] = MakeEnemy(L"모스", 58, 4.0f, 145.0f, 36.0f, 22.0f, 2.8f, 31.0f, 0.92f, 43.0f, 1.0f, 17.0f, false, 0x385C42, 0x7BDB88);
+    table[static_cast<int>(EnemyUnit::Rust)] = MakeEnemy(L"러스트", 86, 6.0f, 390.0f, 88.0f, 36.0f, 4.5f, 36.0f, 1.36f, 28.0f, 0.7f, 24.0f, false, 0x7D3A2D, 0xFF8B60);
+    table[static_cast<int>(EnemyUnit::Storm)] = MakeEnemy(L"스톰", 106, 7.0f, 520.0f, 108.0f, 32.0f, 4.0f, 42.0f, 1.18f, 25.0f, 0.6f, 27.0f, false, 0x8A6846, 0xF1D09A);
+    table[static_cast<int>(EnemyUnit::Ring)] = MakeEnemy(L"링", 72, 5.0f, 160.0f, 42.0f, 34.0f, 3.8f, 118.0f, 1.38f, 47.0f, 1.2f, 16.0f, true, 0x736C55, 0xE6D392);
+    table[static_cast<int>(EnemyUnit::Frost)] = MakeEnemy(L"프로스트", 62, 5.0f, 118.0f, 30.0f, 21.0f, 2.7f, 33.0f, 0.74f, 96.0f, 2.4f, 14.0f, false, 0x4E8F95, 0xB9FFF5);
+    table[static_cast<int>(EnemyUnit::Tide)] = MakeEnemy(L"타이드", 76, 6.0f, 132.0f, 35.0f, 28.0f, 3.5f, 132.0f, 1.08f, 70.0f, 1.8f, 17.0f, true, 0x2F5C97, 0x75A7FF);
+    table[static_cast<int>(EnemyUnit::Void)] = MakeEnemy(L"보이드", 122, 8.0f, 650.0f, 128.0f, 48.0f, 5.4f, 46.0f, 1.28f, 24.0f, 0.5f, 28.0f, false, 0x332B4A, 0xC8B7FF);
+    table[static_cast<int>(EnemyUnit::Flare)] = MakeEnemy(L"플레어", 92, 7.0f, 190.0f, 48.0f, 38.0f, 4.6f, 38.0f, 0.68f, 112.0f, 2.6f, 16.0f, false, 0x9E3F2D, 0xFFB347);
+    table[static_cast<int>(EnemyUnit::Spore)] = MakeEnemy(L"스포어", 82, 6.0f, 210.0f, 54.0f, 31.0f, 3.6f, 112.0f, 1.24f, 36.0f, 1.0f, 18.0f, true, 0x625083, 0xF0A8FF);
+    table[static_cast<int>(EnemyUnit::Quake)] = MakeEnemy(L"퀘이크", 145, 9.0f, 820.0f, 150.0f, 58.0f, 6.2f, 48.0f, 1.62f, 19.0f, 0.4f, 32.0f, false, 0x57463D, 0xD6B08C);
+    table[static_cast<int>(EnemyUnit::Mirror)] = MakeEnemy(L"미러", 88, 7.0f, 165.0f, 44.0f, 35.0f, 4.1f, 152.0f, 1.02f, 62.0f, 1.7f, 15.0f, true, 0xDDEAFF, 0x9CEBFF);
+    table[static_cast<int>(EnemyUnit::Comet)] = MakeEnemy(L"코멧", 96, 7.0f, 150.0f, 40.0f, 42.0f, 4.8f, 32.0f, 0.54f, 132.0f, 3.0f, 15.0f, false, 0xB7543B, 0xFFDB7A);
+    table[static_cast<int>(EnemyUnit::Boss)] = MakeEnemy(L"솔라 보스", 240, 12.0f, 1180.0f, 180.0f, 74.0f, 7.0f, 42.0f, 1.45f, 25.0f, 0.0f, 31.0f, false, 0x71323A, 0xFF9BA8);
     return table;
 }
 
