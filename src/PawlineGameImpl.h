@@ -176,6 +176,15 @@ enum class ParticleKind
     Bubble
 };
 
+enum class SfxKind
+{
+    Spawn,
+    Hit,
+    Shoot,
+    Upgrade,
+    Clear
+};
+
 enum class ImageVfxKind
 {
     Slash,
@@ -456,6 +465,8 @@ private:
     std::wstring ExecutableDir() const;
 
     std::wstring AssetPath(const std::wstring& relativePath) const;
+
+    void PlaySfx(SfxKind kind, float minGapSeconds = 0.05f);
 
     HRESULT LoadBitmapFromFile(const std::wstring& path, ID2D1Bitmap** bitmap) const;
 
@@ -1129,8 +1140,10 @@ private:
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_thunderSplashEffectSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_waterBallImpactEffectSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_smokeDustEffectSheet;
-    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_playerMotionSheet;
-    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_enemyMotionSheet;
+    // 아군/적 유닛을 종류별로 다르게 보여주는 통합 스프라이트 아틀라스다.
+    // 10열 프레임, 유닛별 7행 모션(idle/walk/run/hurt/death/windup/attack) 구조를 사용한다.
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_playerUnitAtlas;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_enemyUnitAtlas;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_uiAtlas;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_bossCutin;
     bool m_comInitialized = false;
@@ -1141,6 +1154,9 @@ private:
     // 프레임 시간과 랜덤 연출 생성기.
     DeltaTimer m_timer;
     std::mt19937 m_rng{std::random_device{}()};
+    // 효과음이 한 프레임에 과하게 겹치지 않도록 종류별 마지막 재생 시간을 기록한다.
+    std::array<float, 5> m_sfxLastTimes = {-10.0f, -10.0f, -10.0f, -10.0f, -10.0f};
+    bool m_soundEnabled = true;
 
     // 전투 중 살아 움직이는 객체와 짧게 사라지는 VFX 컨테이너.
     std::vector<Unit> m_units;

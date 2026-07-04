@@ -690,7 +690,7 @@ void PawlineGameImpl::DrawImageVfxFrame(ImageVfxKind kind, int frame, Vec2 cente
     const float aspect = spec.frameWidth / spec.frameHeight;
     const D2D1_RECT_F destination = D2D1::RectF(center.x - size * aspect * 0.5f, center.y - size * 0.5f,
                                                 center.x + size * aspect * 0.5f, center.y + size * 0.5f);
-    DrawBitmap(sheet, destination, std::min(1.0f, opacity * 1.35f), &source);
+    DrawBitmap(sheet, destination, std::min(1.0f, opacity * 1.58f), &source);
 }
 
 void PawlineGameImpl::DrawImageVfxSprites()
@@ -2558,9 +2558,9 @@ void PawlineGameImpl::DrawUnitIdentityMark(const Unit& unit, Vec2 pos, D2D1_COLO
 
 bool PawlineGameImpl::DrawUnitCharacterSprite(const Unit& unit, Vec2 pos, D2D1_COLOR_F accent)
 {
-    // GameArt2D Cat/Dog 무료 CC0 프레임을 10열 x 7행 시트로 묶어 사용한다.
-    // 행 순서: idle, walk, run, hurt, dead, jump, slide.
-    ID2D1Bitmap* sheet = unit.team == Team::Player ? m_playerMotionSheet.Get() : m_enemyMotionSheet.Get();
+    // Kenney Toon Characters CC0 포즈를 유닛별 아틀라스로 묶어 사용한다.
+    // 구조: 유닛 종류마다 7행 모션을 가지고, 각 모션은 10열 프레임으로 재생된다.
+    ID2D1Bitmap* sheet = unit.team == Team::Player ? m_playerUnitAtlas.Get() : m_enemyUnitAtlas.Get();
     if (!sheet)
     {
         return false;
@@ -2601,14 +2601,15 @@ bool PawlineGameImpl::DrawUnitCharacterSprite(const Unit& unit, Vec2 pos, D2D1_C
         frame = static_cast<int>(std::floor((unit.stateTime + unit.shakePhase * 0.01f) * frameRate)) % frameCount;
     }
 
-    constexpr float kCellW = 192.0f;
-    constexpr float kCellH = 168.0f;
+    constexpr float kCellW = 128.0f;
+    constexpr float kCellH = 128.0f;
+    const int unitRow = std::max(0, unit.kind) * 7 + row;
     const D2D1_RECT_F source = D2D1::RectF(static_cast<float>(frame) * kCellW,
-                                           static_cast<float>(row) * kCellH,
+                                           static_cast<float>(unitRow) * kCellH,
                                            static_cast<float>(frame + 1) * kCellW,
-                                           static_cast<float>(row + 1) * kCellH);
+                                           static_cast<float>(unitRow + 1) * kCellH);
 
-    const float roleScale = unit.team == Team::Player ? 4.95f : 4.70f;
+    const float roleScale = unit.team == Team::Player ? 5.10f : 5.00f;
     const float eliteScale = unit.boss ? 1.28f : (unit.elite ? 1.14f : 1.0f);
     const float height = std::clamp(unit.radius * roleScale * eliteScale, 62.0f, unit.boss ? 190.0f : 148.0f);
     const float width = height * (kCellW / kCellH);
@@ -2622,7 +2623,7 @@ bool PawlineGameImpl::DrawUnitCharacterSprite(const Unit& unit, Vec2 pos, D2D1_C
                 D2D1::ColorF(0x000000, unit.team == Team::Player ? 0.26f : 0.32f));
     FillEllipse({pos.x, pos.y - unit.radius * 0.18f}, width * 0.32f, height * 0.33f,
                 D2D1::ColorF(accent.r, accent.g, accent.b, 0.055f + AttackIntensity(unit) * 0.045f));
-    DrawBitmap(sheet, destination, unit.team == Team::Player ? 0.94f : 0.90f, &source);
+    DrawBitmap(sheet, destination, unit.team == Team::Player ? 0.98f : 0.96f, &source);
 
     if (unit.hitFlash > 0.0f)
     {
@@ -2666,6 +2667,9 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
     const float bodyRy = unit.radius * (1.0f - strike * 0.18f + windup * 0.10f + recoil * 0.04f - step * 0.04f - deathPose * 0.42f);
     const float trailAlpha = Clamp01(strike * 0.55f + windup * 0.18f + step * 0.12f + hitPose * 0.24f);
 
+    const bool spriteDrawn = DrawUnitCharacterSprite(unit, pos, stats.accent);
+    if (!spriteDrawn)
+    {
     if (trailAlpha > 0.02f)
     {
         // 시트 프레임 대신 잔상으로 걷기/공격 방향을 직접 보여준다.
@@ -2711,7 +2715,7 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
         }
     }
 
-    const bool spriteDrawn = DrawUnitCharacterSprite(unit, pos, stats.accent);
+    }
     DrawPlayerWeapon(unit, pos, stats, windup, strike, recoil);
     DrawUnitActionLines(unit, pos, stats.accent);
 
@@ -2791,6 +2795,8 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
         }
     }
 
+    if (!spriteDrawn)
+    {
     if (playerType == PlayerUnit::Box)
     {
         FillRoundRect(D2D1::RectF(pos.x - 15.0f, pos.y - 4.0f, pos.x + 17.0f, pos.y + 21.0f), 5.0f, D2D1::ColorF(0xDCA85B, 0.72f));
@@ -2864,6 +2870,7 @@ void PawlineGameImpl::DrawPlayerUnit(const Unit& unit)
         StrokeEllipse(pos, unit.radius * 0.78f, unit.radius + 11.0f, D2D1::ColorF(0xC8B7FF, 0.55f), 1.9f);
         FillEllipse({pos.x + 30.0f, pos.y - 8.0f}, 5.0f, 5.0f, D2D1::ColorF(0xE5D9FF));
     }
+    }
 }
 
 void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
@@ -2896,6 +2903,9 @@ void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
     const float bodyRy = unit.radius * (1.0f - strike * 0.17f + windup * 0.09f - step * 0.03f - deathPose * 0.40f);
     const float trailAlpha = Clamp01(strike * 0.52f + windup * 0.16f + step * 0.10f + hitPose * 0.24f);
 
+    const bool spriteDrawn = DrawUnitCharacterSprite(unit, pos, stats.accent);
+    if (!spriteDrawn)
+    {
     if (trailAlpha > 0.02f)
     {
         // 적도 같은 수동 포즈 규칙을 쓰지만, 더 거칠고 어두운 잔상으로 위협감을 준다.
@@ -2922,7 +2932,7 @@ void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
         FillEllipse(clawGlow, unit.radius * (0.66f + strike * 0.32f), unit.radius * (0.22f + strike * 0.16f),
                     D2D1::ColorF(stats.accent.r, stats.accent.g, stats.accent.b, 0.06f + strike * 0.12f + windup * 0.03f));
     }
-    const bool spriteDrawn = DrawUnitCharacterSprite(unit, pos, stats.accent);
+    }
     DrawEnemyWeapon(unit, pos, stats, windup, strike, recoil);
     DrawUnitActionLines(unit, pos, stats.accent);
     if (!spriteDrawn)
@@ -2969,6 +2979,8 @@ void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
         }
     }
 
+    if (!spriteDrawn)
+    {
     if (type == EnemyUnit::Sulfur)
     {
         FillEllipse({pos.x - 18.0f, pos.y - 22.0f}, 12.0f, 7.0f, D2D1::ColorF(0xFFD27A, 0.38f));
@@ -3040,6 +3052,7 @@ void PawlineGameImpl::DrawEnemyUnit(const Unit& unit)
         DrawLine({pos.x + 19.0f, pos.y + 12.0f}, {pos.x + 38.0f, pos.y + 16.0f}, stats.accent, 3.4f);
         DrawLine({pos.x + 17.0f, pos.y - 2.0f}, {pos.x + 38.0f, pos.y - 5.0f}, D2D1::ColorF(0xFFDB7A, 0.82f), 2.8f);
         FillEllipse({pos.x - 18.0f, pos.y - 20.0f}, 5.0f, 5.0f, D2D1::ColorF(0xFFDB7A));
+    }
     }
 
     if (unit.boss || unit.elite || type == EnemyUnit::Boss)

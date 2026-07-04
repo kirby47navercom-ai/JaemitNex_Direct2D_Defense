@@ -1270,6 +1270,10 @@ void PawlineGameImpl::TriggerWalletPulse(bool upgradeBurst)
     AddImageVfx(upgradeBurst ? ImageVfxKind::Heal : ImageVfxKind::HealSoft, {kPlayerBaseX + 58.0f, kLaneY - 18.0f},
                 upgradeBurst ? 128.0f : 104.0f, 0.48f, D2D1::ColorF(0xB8FF89, 0.90f), 1.0f);
     AddBurst({kPlayerBaseX + 58.0f, kLaneY - 18.0f}, D2D1::ColorF(0xB8FF89), upgradeBurst ? 24 : 12);
+    if (upgradeBurst)
+    {
+        PlaySfx(SfxKind::Upgrade, 0.18f);
+    }
 }
 
 void PawlineGameImpl::SpawnPlayer(PlayerUnit type)
@@ -1303,6 +1307,7 @@ void PawlineGameImpl::SpawnPlayer(PlayerUnit type)
         AddImageVfx(ImageVfxKind::HealSoft, unit.pos + Vec2{0.0f, -10.0f}, 72.0f, 0.36f, D2D1::ColorF(0xB8FF89, 0.76f), 1.0f);
         AddFloatText(unit.pos + Vec2{0.0f, -unit.radius - 34.0f}, L"Wallet +" + ToWideInt(static_cast<int>(std::round((walletBoost - 1.0f) * 100.0f))) + L"%", D2D1::ColorF(0xB8FF89), 0.82f);
     }
+    PlaySfx(SfxKind::Spawn, 0.10f);
 }
 
 void PawlineGameImpl::SpawnEnemy(EnemyUnit type, bool elite)
@@ -1615,12 +1620,12 @@ void PawlineGameImpl::AddAttackVfx(const Unit& attacker, Vec2 targetPos, D2D1_CO
     const Vec2 muzzle = attacker.pos + dir * (attacker.radius + 10.0f);
     const ImageVfxKind imageKind = UnitImageVfxKind(attacker);
     const Vec2 imagePos = attacker.ranged ? muzzle : targetPos;
-    const float imageSize = attacker.ranged ? 104.0f : 118.0f + attacker.radius * 0.72f;
-    const float imageLife = attacker.ranged ? 0.34f : 0.30f;
-    AddImageVfx(imageKind, imagePos, imageSize, imageLife, FadeColor(color, 0.96f), attacker.attackDir);
+    const float imageSize = attacker.ranged ? 132.0f : 148.0f + attacker.radius * 0.86f;
+    const float imageLife = attacker.ranged ? 0.46f : 0.40f;
+    AddImageVfx(imageKind, imagePos, imageSize, imageLife, FadeColor(color, 1.0f), attacker.attackDir);
     if (!attacker.ranged)
     {
-        AddImageVfx(ImageVfxKind::HitFlash, targetPos + Vec2{0.0f, -4.0f}, 84.0f, 0.20f, FadeColor(color, 0.76f), attacker.attackDir);
+        AddImageVfx(ImageVfxKind::HitFlash, targetPos + Vec2{0.0f, -4.0f}, 108.0f, 0.28f, FadeColor(color, 0.88f), attacker.attackDir);
     }
 
     if (attacker.team == Team::Player)
@@ -1788,32 +1793,32 @@ float PawlineGameImpl::AttackMatchupMultiplier(Team attackerTeam, int attackerKi
 
         if ((player == PlayerUnit::Drill || player == PlayerUnit::Titan || player == PlayerUnit::Solar) && IsArmoredEnemy(enemy))
         {
-            multiplier = std::max(multiplier, 1.22f);
+            multiplier = std::max(multiplier, 1.32f);
         }
         if ((player == PlayerUnit::Spark || player == PlayerUnit::Prism || player == PlayerUnit::Orbit) && IsRangedEnemy(enemy))
         {
-            multiplier = std::max(multiplier, 1.18f);
+            multiplier = std::max(multiplier, 1.28f);
         }
         if ((player == PlayerUnit::Dash || player == PlayerUnit::Comet) && IsRangedEnemy(enemy))
         {
-            multiplier = std::max(multiplier, 1.14f);
+            multiplier = std::max(multiplier, 1.21f);
         }
         if ((player == PlayerUnit::Frost || player == PlayerUnit::Box) && IsRushEnemy(enemy))
         {
-            multiplier = std::max(multiplier, 1.16f);
+            multiplier = std::max(multiplier, 1.26f);
         }
         if (player == PlayerUnit::Mint && (enemy == EnemyUnit::Moss || enemy == EnemyUnit::Spore || enemy == EnemyUnit::Sulfur))
         {
-            multiplier = std::max(multiplier, 1.12f);
+            multiplier = std::max(multiplier, 1.20f);
         }
         if ((player == PlayerUnit::Bell || player == PlayerUnit::Nebula) &&
             (enemy == EnemyUnit::Ring || enemy == EnemyUnit::Mirror || enemy == EnemyUnit::Void || enemy == EnemyUnit::Boss))
         {
-            multiplier = std::max(multiplier, 1.16f);
+            multiplier = std::max(multiplier, 1.26f);
         }
         if (player == PlayerUnit::Paw && (enemy == EnemyUnit::Dust || enemy == EnemyUnit::Skitter))
         {
-            multiplier = std::max(multiplier, 1.10f);
+            multiplier = std::max(multiplier, 1.16f);
         }
         return multiplier;
     }
@@ -1824,15 +1829,15 @@ float PawlineGameImpl::AttackMatchupMultiplier(Team attackerTeam, int attackerKi
         const PlayerUnit player = static_cast<PlayerUnit>(target.kind);
         if ((player == PlayerUnit::Box || player == PlayerUnit::Frost || player == PlayerUnit::Titan) && IsRushEnemy(enemy))
         {
-            return 0.82f;
+            return 0.74f;
         }
         if ((player == PlayerUnit::Box || player == PlayerUnit::Titan) && IsArmoredEnemy(enemy))
         {
-            return 0.90f;
+            return 0.84f;
         }
         if ((player == PlayerUnit::Spark || player == PlayerUnit::Prism || player == PlayerUnit::Mint) && IsRushEnemy(enemy))
         {
-            return 1.10f;
+            return 1.16f;
         }
     }
 
@@ -1914,6 +1919,7 @@ void PawlineGameImpl::FireProjectile(Unit& attacker, const Unit& target)
     projectile.damage = attacker.damage;
     ConfigureProjectileVisual(projectile, attacker);
     m_projectiles.push_back(projectile);
+    PlaySfx(SfxKind::Shoot, 0.06f);
     const Vec2 dir = Normalize(target.pos - muzzle);
     AddBeam(muzzle - dir * 8.0f, muzzle + dir * (58.0f + projectile.radius * 2.0f), 2.4f + projectile.radius * 0.22f, 0.13f, FadeColor(projectile.color, 0.72f));
     AddRing(muzzle, 30.0f + projectile.radius * 2.0f, 0.18f, FadeColor(projectile.color, 0.36f), 1.8f);
@@ -1937,6 +1943,7 @@ void PawlineGameImpl::FireProjectileAtBase(Unit& attacker)
     ConfigureProjectileVisual(projectile, attacker);
     projectile.speed += 18.0f;
     m_projectiles.push_back(projectile);
+    PlaySfx(SfxKind::Shoot, 0.06f);
     const Vec2 dir = Normalize(targetPos - muzzle);
     AddBeam(muzzle - dir * 8.0f, muzzle + dir * (62.0f + projectile.radius * 2.0f), 2.6f + projectile.radius * 0.22f, 0.13f, FadeColor(projectile.color, 0.72f));
     AddRing(muzzle, 32.0f + projectile.radius * 2.0f, 0.18f, FadeColor(projectile.color, 0.36f), 1.8f);
@@ -2165,9 +2172,9 @@ void PawlineGameImpl::AddProjectileImpact(const Projectile& projectile)
                              imageKind == ImageVfxKind::Thrust || imageKind == ImageVfxKind::Explosion ||
                              imageKind == ImageVfxKind::EnergyImpact || imageKind == ImageVfxKind::MagicMirror ||
                              imageKind == ImageVfxKind::WaterBallImpact || imageKind == ImageVfxKind::ThunderSplash;
-    AddImageVfx(imageKind, pos, healingVisual ? 108.0f : (largeVisual ? 124.0f : 86.0f + projectile.radius * 4.0f),
-                healingVisual ? 0.42f : 0.32f, FadeColor(projectile.color, 0.98f), projectile.team == Team::Player ? 1.0f : -1.0f);
-    AddImageVfx(ImageVfxKind::HitFlash, pos, 76.0f + projectile.radius * 2.2f, 0.18f, FadeColor(projectile.color, 0.72f),
+    AddImageVfx(imageKind, pos, healingVisual ? 132.0f : (largeVisual ? 164.0f : 112.0f + projectile.radius * 4.8f),
+                healingVisual ? 0.52f : 0.44f, FadeColor(projectile.color, 1.0f), projectile.team == Team::Player ? 1.0f : -1.0f);
+    AddImageVfx(ImageVfxKind::HitFlash, pos, 96.0f + projectile.radius * 2.8f, 0.24f, FadeColor(projectile.color, 0.84f),
                 projectile.team == Team::Player ? 1.0f : -1.0f);
 
     switch (projectile.visual)
@@ -2238,7 +2245,7 @@ void PawlineGameImpl::AddMeleeClashVfx(const Unit& attacker, Vec2 targetPos, D2D
 
     AddRing(clash, 42.0f + attacker.radius * 1.2f + heavy * 22.0f, 0.24f + heavy * 0.08f, FadeColor(color, 0.46f), 2.4f + heavy * 1.4f);
     AddImageVfx(UnitImageVfxKind(attacker),
-                clash, 82.0f + attacker.radius * 0.9f + heavy * 22.0f, 0.22f + heavy * 0.05f, FadeColor(color, 0.90f), attacker.attackDir);
+                clash, 112.0f + attacker.radius * 1.15f + heavy * 30.0f, 0.34f + heavy * 0.07f, FadeColor(color, 1.0f), attacker.attackDir);
     AddParticleEx(clash, normal * 22.0f + Vec2{0.0f, -18.0f}, 6.0f + heavy * 2.0f, 0.26f, FadeColor(color, 0.70f), ParticleKind::Glow, -2.0f, 0.90f, 18.0f + heavy * 8.0f);
     AddDustPuff({clash.x, clash.y + 18.0f}, D2D1::ColorF(color.r, color.g, color.b, 0.24f), attacker.radius >= 23.0f ? 8 : 4);
     AddParticleEx(clash, dir * 28.0f + Vec2{0.0f, -22.0f}, 5.0f + heavy * 2.0f, 0.24f, FadeColor(color, 0.82f), ParticleKind::Glow, 0.0f, 0.88f, 16.0f + heavy * 8.0f);
@@ -2400,6 +2407,7 @@ void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
 
     const bool heavyHit = damage >= std::max(42.0f, target.maxHp * (target.boss ? 0.060f : 0.120f));
     target.hp -= damage;
+    PlaySfx(SfxKind::Hit, heavyHit ? 0.030f : 0.050f);
     target.hitFlash = 0.12f;
     ShakeUnit(target, 0.18f);
     AddFloatText(target.pos + Vec2{0.0f, -target.radius - 22.0f}, ToWideInt(static_cast<int>(std::round(damage))),

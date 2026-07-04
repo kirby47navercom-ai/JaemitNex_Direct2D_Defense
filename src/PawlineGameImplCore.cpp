@@ -345,6 +345,43 @@ std::wstring PawlineGameImpl::AssetPath(const std::wstring& relativePath) const
     return base + L"..\\..\\" + relativePath;
 }
 
+void PawlineGameImpl::PlaySfx(SfxKind kind, float minGapSeconds)
+{
+    if (!m_soundEnabled)
+    {
+        return;
+    }
+
+    const int index = std::clamp(static_cast<int>(kind), 0, static_cast<int>(m_sfxLastTimes.size()) - 1);
+    if (m_uiTime - m_sfxLastTimes[static_cast<size_t>(index)] < minGapSeconds)
+    {
+        return;
+    }
+    m_sfxLastTimes[static_cast<size_t>(index)] = m_uiTime;
+
+    std::wstring fileName;
+    switch (kind)
+    {
+    case SfxKind::Spawn:
+        fileName = L"spawn.wav";
+        break;
+    case SfxKind::Hit:
+        fileName = L"hit.wav";
+        break;
+    case SfxKind::Shoot:
+        fileName = L"shoot.wav";
+        break;
+    case SfxKind::Upgrade:
+        fileName = L"upgrade.wav";
+        break;
+    case SfxKind::Clear:
+        fileName = L"clear.wav";
+        break;
+    }
+
+    PlaySoundW(AssetPath(L"assets\\sfx\\" + fileName).c_str(), nullptr, SND_FILENAME | SND_ASYNC | SND_NODEFAULT);
+}
+
 HRESULT PawlineGameImpl::LoadBitmapFromFile(const std::wstring& path, ID2D1Bitmap** bitmap) const
 {
     if (!m_wicFactory || !m_renderTarget || !bitmap)
@@ -430,8 +467,8 @@ void PawlineGameImpl::LoadBitmapAssets()
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\thunder_splash_sheet.png"), m_thunderSplashEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\water_ball_impact_sheet.png"), m_waterBallImpactEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\smoke_dust_sheet.png"), m_smokeDustEffectSheet.ReleaseAndGetAddressOf());
-    LoadBitmapFromFile(AssetPath(L"assets\\sprites\\gameart2d_catdog\\cat_motion_sheet.png"), m_playerMotionSheet.ReleaseAndGetAddressOf());
-    LoadBitmapFromFile(AssetPath(L"assets\\sprites\\gameart2d_catdog\\dog_motion_sheet.png"), m_enemyMotionSheet.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\sprites\\kenney_toon_units\\player_unit_atlas.png"), m_playerUnitAtlas.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\sprites\\kenney_toon_units\\enemy_unit_atlas.png"), m_enemyUnitAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\ui\\pawline_ui_atlas.png"), m_uiAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\cutins\\solar_gatekeeper_cutin.png"), m_bossCutin.ReleaseAndGetAddressOf());
 
@@ -476,8 +513,8 @@ void PawlineGameImpl::DiscardBitmapAssets()
     m_thunderSplashEffectSheet.Reset();
     m_waterBallImpactEffectSheet.Reset();
     m_smokeDustEffectSheet.Reset();
-    m_playerMotionSheet.Reset();
-    m_enemyMotionSheet.Reset();
+    m_playerUnitAtlas.Reset();
+    m_enemyUnitAtlas.Reset();
     m_uiAtlas.Reset();
     m_bossCutin.Reset();
     for (auto& bitmap : m_backgroundBitmaps)
@@ -659,6 +696,7 @@ void PawlineGameImpl::GrantStageReward()
     m_lumen += m_lastReward;
     AddFloatText({640.0f, 154.0f}, L"+" + ToWideInt(m_lastReward) + L" LUMEN", D2D1::ColorF(0xF6FF83), 1.5f);
     AddRing({640.0f, kLaneY}, 260.0f, 0.65f, D2D1::ColorF(0xF6FF83, 0.48f), 4.0f);
+    PlaySfx(SfxKind::Clear, 0.80f);
     SaveProgress();
 }
 
