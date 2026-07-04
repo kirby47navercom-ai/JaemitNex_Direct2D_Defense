@@ -2379,14 +2379,14 @@ void PawlineGameImpl::UpdateProjectiles(float dt)
             {
                 ShakeUnitById(projectile.sourceId, 0.15f);
                 AddProjectileImpact(projectile);
-                PlaySfxAt(SfxKind::ProjectileImpact, projectile.pos.x, 0.030f, 0.70f);
+                PlaySfxAt(SfxKind::ProjectileImpact, projectile.pos.x, 0.030f, 0.56f);
                 DamageBase(projectile.team == Team::Player ? Team::Enemy : Team::Player, projectile.damage, projectile.pos);
             }
             else if (target)
             {
                 ShakeUnitById(projectile.sourceId, 0.15f);
                 AddProjectileImpact(projectile);
-                PlaySfxAt(SfxKind::ProjectileImpact, projectile.pos.x, 0.030f, 0.72f);
+                PlaySfxAt(SfxKind::ProjectileImpact, projectile.pos.x, 0.030f, 0.58f);
                 const float matchup = AttackMatchupMultiplier(projectile.team, projectile.sourceKind, target->get());
                 AddCounterFloatText(target->get(), matchup);
                 DamageUnit(target->get(), projectile.damage * matchup, projectile.team);
@@ -2444,7 +2444,7 @@ void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
 
     const bool heavyHit = damage >= std::max(42.0f, target.maxHp * (target.boss ? 0.060f : 0.120f));
     target.hp -= damage;
-    PlaySfxAt(heavyHit ? SfxKind::HeavyHit : SfxKind::Hit, target.pos.x, heavyHit ? 0.030f : 0.050f, heavyHit ? 1.12f : 0.82f);
+    PlaySfxAt(heavyHit ? SfxKind::HeavyHit : SfxKind::Hit, target.pos.x, heavyHit ? 0.030f : 0.050f, heavyHit ? 0.88f : 0.62f);
     target.hitFlash = 0.12f;
     ShakeUnit(target, 0.18f);
     AddFloatText(target.pos + Vec2{0.0f, -target.radius - 22.0f}, ToWideInt(static_cast<int>(std::round(damage))),

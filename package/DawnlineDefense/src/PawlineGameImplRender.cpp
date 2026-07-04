@@ -1382,7 +1382,8 @@ void PawlineGameImpl::DrawBriefing()
                               UnitRoleColor(unit, stats),
                               0.96f);
         DrawPixelTextCentered(stats.name, D2D1::RectF(rect.left + 6.0f, rect.top + 70.0f, rect.right - 6.0f, rect.top + 94.0f), 1.36f, D2D1::ColorF(0xFFFFFF), 1.0f);
-        DrawPixelTextCentered(L"KEY " + ToWideInt(i + 1), D2D1::RectF(rect.left + 8.0f, rect.bottom - 22.0f, rect.right - 8.0f, rect.bottom - 6.0f), 1.35f, D2D1::ColorF(0xE5F6FF), 1.0f);
+        FillRoundRect(D2D1::RectF(rect.left + 13.0f, rect.bottom - 33.0f, rect.right - 13.0f, rect.bottom - 10.0f), 6.0f, D2D1::ColorF(0x061019, hover ? 0.82f : 0.70f));
+        DrawPixelTextCentered(L"KEY " + ToWideInt(i + 1), D2D1::RectF(rect.left + 10.0f, rect.bottom - 31.0f, rect.right - 10.0f, rect.bottom - 12.0f), 1.50f, D2D1::ColorF(0xF3FBFF), 1.0f);
     }
     FillRoundRect(D2D1::RectF(604.0f, 366.0f, 1160.0f, 424.0f), 6.0f, D2D1::ColorF(0x0B1D28, 0.90f));
     DrawString(L"적 기지 체력  " + ToWideInt(static_cast<int>(stage.enemyHp)), D2D1::RectF(622.0f, 374.0f, 836.0f, 400.0f), m_smallFormat, D2D1::ColorF(0xFFB6C2));
@@ -1395,9 +1396,9 @@ void PawlineGameImpl::DrawBriefing()
                        D2D1::ColorF(0xEAF7FF),
                        0.76f);
 
-    const D2D1_RECT_F difficultyPanel = D2D1::RectF(594.0f, 616.0f, 1068.0f, 710.0f);
+    const D2D1_RECT_F difficultyPanel = D2D1::RectF(604.0f, 616.0f, 1196.0f, 710.0f);
     DrawBriefingPanel(difficultyPanel, D2D1::ColorF(0x07131C, 0.90f), D2D1::ColorF(0x476779));
-    DrawPixelText(L"DIFFICULTY", {612.0f, 628.0f}, 2.05f, D2D1::ColorF(0xEAF7FF));
+    DrawPixelText(L"DIFFICULTY", {622.0f, 628.0f}, 2.05f, D2D1::ColorF(0xEAF7FF));
     const std::array<std::wstring, 3> labels = {L"EASY", L"NORMAL", L"HARD"};
     for (int i = 0; i < 3; ++i)
     {
@@ -1569,7 +1570,7 @@ void PawlineGameImpl::DrawLoadoutSlot(int index)
     StrokeRoundRect(rect, 8.0f, active ? stats.accent : D2D1::ColorF(0x2C4A5B), active ? 2.2f : 1.0f);
     DrawPlayerIcon(m_loadout[index], {rect.left + 51.0f, rect.top + 34.0f}, 0.82f, true);
     DrawString(stats.name, D2D1::RectF(rect.left + 8.0f, rect.top + 66.0f, rect.right - 8.0f, rect.top + 92.0f), m_smallFormat, D2D1::ColorF(0xF3FBFF));
-    DrawString(L"레벨 " + ToWideInt(UnitLevel(m_loadout[index])) + L"  키 " + ToWideInt(index + 1), D2D1::RectF(rect.left + 8.0f, rect.bottom - 25.0f, rect.right - 8.0f, rect.bottom - 4.0f), m_smallFormat, D2D1::ColorF(0x9AB2BF));
+    DrawString(L"레벨 " + ToWideInt(UnitLevel(m_loadout[index])) + L"  KEY " + ToWideInt(index + 1), D2D1::RectF(rect.left + 8.0f, rect.bottom - 25.0f, rect.right - 8.0f, rect.bottom - 4.0f), m_smallFormat, D2D1::ColorF(0xCFE8F5));
 }
 
 void PawlineGameImpl::DrawRosterCard(int index)
@@ -4149,7 +4150,7 @@ void PawlineGameImpl::DrawTutorialTips()
 
     if (m_stageTime < 3.25f)
     {
-        const float tipAlpha = tip(D2D1::RectF(58.0f, 512.0f, 390.0f, 590.0f), L"GUIDE 1", L"카드나 1~5 키로 유닛을 소환해.", D2D1::ColorF(0x65B8FF, alpha));
+        const float tipAlpha = tip(D2D1::RectF(58.0f, 512.0f, 390.0f, 590.0f), L"GUIDE 1", L"카드나 KEY 1~5로 유닛을 소환해.", D2D1::ColorF(0x65B8FF, alpha));
         DrawLine({126.0f, 590.0f}, {92.0f, 628.0f}, D2D1::ColorF(0x65B8FF, 0.42f * tipAlpha), 2.4f);
         DrawLine({92.0f, 628.0f}, {106.0f, 616.0f}, D2D1::ColorF(0x65B8FF, 0.42f * tipAlpha), 2.4f);
     }

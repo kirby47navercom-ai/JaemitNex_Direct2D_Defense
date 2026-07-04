@@ -494,6 +494,8 @@ private:
 
     std::wstring AttackSfxPath(const Unit& attacker) const;
 
+    float AttackSfxVolumeScale(const Unit& attacker) const;
+
     void PlayAttackSfxAt(const Unit& attacker, float minGapSeconds = 0.018f);
 
     void AdjustSfxVolume(float delta);

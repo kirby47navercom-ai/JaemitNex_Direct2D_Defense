@@ -546,7 +546,7 @@ std::wstring PawlineGameImpl::AttackSfxPath(const Unit& attacker) const
         case PlayerUnit::Frost:
             return L"kenney\\player_frost.wav";
         case PlayerUnit::Comet:
-            return L"kenney\\player_comet.wav";
+            return L"kenney\\player_comet_short.wav";
         case PlayerUnit::Orbit:
             return L"kenney\\player_orbit.wav";
         case PlayerUnit::Solar:
@@ -589,18 +589,97 @@ std::wstring PawlineGameImpl::AttackSfxPath(const Unit& attacker) const
     case EnemyUnit::Flare:
         return L"kenney\\enemy_flare.wav";
     case EnemyUnit::Spore:
-        return L"kenney\\enemy_spore.wav";
+        return L"kenney\\enemy_spore_short.wav";
     case EnemyUnit::Quake:
         return L"kenney\\enemy_quake.wav";
     case EnemyUnit::Mirror:
         return L"kenney\\enemy_mirror.wav";
     case EnemyUnit::Comet:
-        return L"kenney\\enemy_comet.wav";
+        return L"kenney\\enemy_comet_short.wav";
     case EnemyUnit::Boss:
         return L"kenney\\enemy_boss.wav";
     }
 
     return L"shoot.wav";
+}
+
+float PawlineGameImpl::AttackSfxVolumeScale(const Unit& attacker) const
+{
+    // 파일별 음량 보정 이후에도 캐릭터 콘셉트에 맞게 무기음의 존재감을 한 번 더 맞춘다.
+    if (attacker.team == Team::Player)
+    {
+        switch (static_cast<PlayerUnit>(attacker.kind))
+        {
+        case PlayerUnit::Paw:
+            return 1.10f;
+        case PlayerUnit::Box:
+            return 0.76f;
+        case PlayerUnit::Spark:
+            return 0.74f;
+        case PlayerUnit::Dash:
+            return 0.96f;
+        case PlayerUnit::Bell:
+            return 0.68f;
+        case PlayerUnit::Titan:
+            return 0.92f;
+        case PlayerUnit::Frost:
+            return 0.70f;
+        case PlayerUnit::Comet:
+            return 0.86f;
+        case PlayerUnit::Orbit:
+            return 1.02f;
+        case PlayerUnit::Solar:
+            return 0.88f;
+        case PlayerUnit::Mint:
+            return 0.82f;
+        case PlayerUnit::Drill:
+            return 1.04f;
+        case PlayerUnit::Prism:
+            return 1.06f;
+        case PlayerUnit::Nebula:
+            return 0.92f;
+        }
+    }
+
+    switch (static_cast<EnemyUnit>(attacker.kind))
+    {
+    case EnemyUnit::Dust:
+        return 0.94f;
+    case EnemyUnit::Brute:
+        return 0.96f;
+    case EnemyUnit::Skitter:
+        return 0.68f;
+    case EnemyUnit::Sulfur:
+        return 0.58f;
+    case EnemyUnit::Moss:
+        return 0.98f;
+    case EnemyUnit::Rust:
+        return 0.98f;
+    case EnemyUnit::Storm:
+        return 0.72f;
+    case EnemyUnit::Ring:
+        return 0.92f;
+    case EnemyUnit::Frost:
+        return 0.68f;
+    case EnemyUnit::Tide:
+        return 0.92f;
+    case EnemyUnit::Void:
+        return 0.90f;
+    case EnemyUnit::Flare:
+        return 0.78f;
+    case EnemyUnit::Spore:
+        return 0.86f;
+    case EnemyUnit::Quake:
+        return 0.82f;
+    case EnemyUnit::Mirror:
+        return 0.92f;
+    case EnemyUnit::Comet:
+        return 0.84f;
+    case EnemyUnit::Boss:
+        return 0.88f;
+    }
+
+    return 1.0f;
 }
 
 void PawlineGameImpl::PlayAttackSfxAt(const Unit& attacker, float minGapSeconds)
@@ -636,15 +715,20 @@ void PawlineGameImpl::PlayAttackSfxAt(const Unit& attacker, float minGapSeconds)
     }
     *oldestLane = m_uiTime;
 
-    float volumeScale = attacker.ranged ? 1.04f : 0.98f;
+    float volumeScale = attacker.ranged ? 0.92f : 0.88f;
     if (attacker.team == Team::Enemy)
     {
         volumeScale += 0.02f;
     }
+    if (attacker.elite)
+    {
+        volumeScale += 0.06f;
+    }
     if (attacker.boss)
     {
-        volumeScale = 1.14f;
+        volumeScale = 1.04f;
     }
+    volumeScale *= AttackSfxVolumeScale(attacker);
 
     m_audio.SetVolume(m_sfxVolume);
     m_audio.PlayEffectAt(AssetPath(L"assets\\sfx\\" + AttackSfxPath(attacker)), attacker.pos.x, volumeScale);

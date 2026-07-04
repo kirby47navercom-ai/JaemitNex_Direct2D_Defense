@@ -213,7 +213,7 @@ float AudioManager::EffectGainFor(const std::wstring& absolutePath) const
                 const double loudness = std::max(rms, peak * 0.18);
                 if (loudness > 0.001)
                 {
-                    gain = std::clamp(static_cast<float>(0.145 / loudness), 0.58f, 1.72f);
+                    gain = std::clamp(static_cast<float>(0.145 / loudness), 0.42f, 1.85f);
                 }
             }
         }
