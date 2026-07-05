@@ -1,5 +1,19 @@
 #include "PawlineGameImpl.h"
 
+namespace
+{
+D2D1_RECT_F InflateRect(D2D1_RECT_F rect, float x, float y)
+{
+    return D2D1::RectF(rect.left - x, rect.top - y, rect.right + x, rect.bottom + y);
+}
+
+float SliderValue(D2D1_RECT_F rect, Vec2 point)
+{
+    const float width = std::max(1.0f, rect.right - rect.left);
+    return Clamp01((point.x - rect.left) / width);
+}
+}
+
 // Mouse/keyboard commands and menu/shop state transitions.
 void PawlineGameImpl::SetMessage(const std::wstring& message)
 {
@@ -45,6 +59,133 @@ void PawlineGameImpl::AdjustEscapeMenuSpeed(float delta)
     if (m_screen == GameScreen::Playing)
     {
         m_gameSpeed = std::max(0.5f, std::min(3.0f, m_gameSpeed + delta));
+    }
+}
+
+UiSliderDragTarget PawlineGameImpl::SliderDragTargetAt(Vec2 pos) const
+{
+    const auto hit = [&](D2D1_RECT_F rect) {
+        // 슬라이더는 얇게 보이지만 조작 판정은 넉넉하게 둔다.
+        return Contains(InflateRect(rect, 18.0f, 18.0f), pos);
+    };
+
+    if (m_escapeMenuOpen)
+    {
+        if (hit(EscapeSfxSliderRect()))
+        {
+            return UiSliderDragTarget::EscapeSfx;
+        }
+        if (hit(EscapeUiSliderRect()))
+        {
+            return UiSliderDragTarget::EscapeUi;
+        }
+        if (hit(EscapeBgmSliderRect()))
+        {
+            return UiSliderDragTarget::EscapeBgm;
+        }
+        return UiSliderDragTarget::None;
+    }
+
+    if (m_screen == GameScreen::Options)
+    {
+        if (hit(OptionsSfxSliderRect()))
+        {
+            return UiSliderDragTarget::OptionsSfx;
+        }
+        if (hit(OptionsUiSliderRect()))
+        {
+            return UiSliderDragTarget::OptionsUi;
+        }
+        if (hit(OptionsBgmSliderRect()))
+        {
+            return UiSliderDragTarget::OptionsBgm;
+        }
+        if (hit(OptionsSpeedSliderRect()))
+        {
+            return UiSliderDragTarget::OptionsSpeed;
+        }
+        if (hit(OptionsViewSliderRect()))
+        {
+            return UiSliderDragTarget::OptionsView;
+        }
+    }
+
+    return UiSliderDragTarget::None;
+}
+
+void PawlineGameImpl::BeginSliderDrag(Vec2 pos)
+{
+    m_activeSliderDrag = SliderDragTargetAt(pos);
+    if (m_activeSliderDrag != UiSliderDragTarget::None)
+    {
+        ApplySliderDragValue(m_activeSliderDrag, pos, true);
+    }
+}
+
+void PawlineGameImpl::UpdateSliderDrag(Vec2 pos, bool playFeedback)
+{
+    if (m_activeSliderDrag == UiSliderDragTarget::None)
+    {
+        return;
+    }
+    ApplySliderDragValue(m_activeSliderDrag, pos, playFeedback);
+}
+
+void PawlineGameImpl::EndSliderDrag()
+{
+    m_activeSliderDrag = UiSliderDragTarget::None;
+}
+
+void PawlineGameImpl::ApplySliderDragValue(UiSliderDragTarget target, Vec2 pos, bool playFeedback)
+{
+    switch (target)
+    {
+    case UiSliderDragTarget::OptionsSfx:
+        m_sfxVolume = SliderValue(OptionsSfxSliderRect(), pos);
+        m_soundEnabled = m_sfxVolume > 0.001f || m_uiVolume > 0.001f;
+        m_audio.SetVolume(m_sfxVolume);
+        break;
+    case UiSliderDragTarget::OptionsUi:
+        m_uiVolume = SliderValue(OptionsUiSliderRect(), pos);
+        m_soundEnabled = m_sfxVolume > 0.001f || m_uiVolume > 0.001f;
+        break;
+    case UiSliderDragTarget::OptionsBgm:
+        m_bgmVolume = SliderValue(OptionsBgmSliderRect(), pos);
+        SyncMusicVolume();
+        break;
+    case UiSliderDragTarget::OptionsSpeed:
+    {
+        const float value = SliderValue(OptionsSpeedSliderRect(), pos);
+        m_defaultGameSpeed = 0.5f + std::round(value * 5.0f) * 0.5f;
+        break;
+    }
+    case UiSliderDragTarget::OptionsView:
+    {
+        const float value = SliderValue(OptionsViewSliderRect(), pos);
+        m_userViewScale = std::clamp(0.82f + value * 0.18f, 0.82f, 1.0f);
+        UpdateViewMetrics();
+        break;
+    }
+    case UiSliderDragTarget::EscapeSfx:
+        m_sfxVolume = SliderValue(EscapeSfxSliderRect(), pos);
+        m_soundEnabled = m_sfxVolume > 0.001f || m_uiVolume > 0.001f;
+        m_audio.SetVolume(m_sfxVolume);
+        break;
+    case UiSliderDragTarget::EscapeUi:
+        m_uiVolume = SliderValue(EscapeUiSliderRect(), pos);
+        m_soundEnabled = m_sfxVolume > 0.001f || m_uiVolume > 0.001f;
+        break;
+    case UiSliderDragTarget::EscapeBgm:
+        m_bgmVolume = SliderValue(EscapeBgmSliderRect(), pos);
+        SyncMusicVolume();
+        break;
+    case UiSliderDragTarget::None:
+        return;
+    }
+
+    if (playFeedback)
+    {
+        PlaySfx(SfxKind::Ui, 0.02f);
     }
 }
 

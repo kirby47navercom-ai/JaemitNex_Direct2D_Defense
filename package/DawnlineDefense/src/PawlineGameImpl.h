@@ -205,6 +205,19 @@ enum class SfxKind
 
 constexpr size_t kSfxChannelCount = static_cast<size_t>(SfxKind::Count);
 
+enum class UiSliderDragTarget
+{
+    None,
+    OptionsSfx,
+    OptionsUi,
+    OptionsBgm,
+    OptionsSpeed,
+    OptionsView,
+    EscapeSfx,
+    EscapeUi,
+    EscapeBgm
+};
+
 enum class ImageVfxKind
 {
     Slash,
@@ -850,6 +863,16 @@ private:
 
     void OnLeftClick(Vec2 pos);
 
+    UiSliderDragTarget SliderDragTargetAt(Vec2 pos) const;
+
+    void BeginSliderDrag(Vec2 pos);
+
+    void UpdateSliderDrag(Vec2 pos, bool playFeedback);
+
+    void EndSliderDrag();
+
+    void ApplySliderDragValue(UiSliderDragTarget target, Vec2 pos, bool playFeedback);
+
     bool IsInteractivePoint(Vec2 pos) const;
 
     void OnMenuClick(Vec2 pos);
@@ -1376,6 +1399,7 @@ private:
     int m_lumen = 0;
     int m_lastReward = 0;
     int m_saveSlot = 0;
+    UiSliderDragTarget m_activeSliderDrag = UiSliderDragTarget::None;
 
     // 전투 자원, 기지 체력, 시간 배율 상태.
     float m_energy = 0.0f;

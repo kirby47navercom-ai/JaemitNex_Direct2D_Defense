@@ -4848,8 +4848,8 @@ void PawlineGameImpl::DrawEscapeMenuClean()
     FillRoundRect(panel, 10.0f, D2D1::ColorF(0x0A121A, 0.97f));
     StrokeRoundRect(panel, 10.0f, D2D1::ColorF(0x65B8FF), 1.8f);
 
-    DrawString(L"메뉴", D2D1::RectF(panel.left + 34.0f, panel.top + 28.0f, panel.right - 34.0f, panel.top + 80.0f), m_titleFormat, D2D1::ColorF(0xF3FBFF));
-    DrawString(L"언제든 계속하거나 빠져나갈 수 있어.", D2D1::RectF(panel.left + 34.0f, panel.top + 82.0f, panel.right - 34.0f, panel.top + 110.0f), m_centerFormat, D2D1::ColorF(0xBFD1DB));
+    DrawString(L"메뉴", D2D1::RectF(panel.left + 34.0f, panel.top + 18.0f, panel.right - 34.0f, panel.top + 60.0f), m_titleFormat, D2D1::ColorF(0xF3FBFF));
+    DrawString(L"언제든 계속하거나 빠져나갈 수 있어.", D2D1::RectF(panel.left + 34.0f, panel.top + 66.0f, panel.right - 34.0f, panel.top + 94.0f), m_centerFormat, D2D1::ColorF(0xBFD1DB));
 
     const auto drawEscapeSlider = [&](const std::wstring& label, D2D1_RECT_F bar, float normalized, D2D1_COLOR_F accent) {
         const float value = Clamp01(normalized);
@@ -4864,16 +4864,16 @@ void PawlineGameImpl::DrawEscapeMenuClean()
         StrokeEllipse({knobX, (bar.top + bar.bottom) * 0.5f}, hover ? 11.0f : 9.0f, hover ? 11.0f : 9.0f, accent, 2.0f);
     };
 
-    DrawPixelText(L"COMBAT", {332.0f, 154.0f}, 2.1f, D2D1::ColorF(0x65B8FF));
-    DrawPixelText(L"AUDIO", {682.0f, 154.0f}, 2.1f, D2D1::ColorF(0xF6FF83));
+    DrawPixelText(L"COMBAT", {332.0f, 202.0f}, 2.1f, D2D1::ColorF(0x65B8FF));
+    DrawPixelText(L"AUDIO", {682.0f, 202.0f}, 2.1f, D2D1::ColorF(0xF6FF83));
 
     DrawButton(EscapeResumeButtonRect(), L"RESUME", true, D2D1::ColorF(0x173C4B));
     DrawButton(EscapeShakeButtonRect(), m_hitShakeEnabled ? L"SHAKE ON" : L"SHAKE OFF", true, m_hitShakeEnabled ? D2D1::ColorF(0x173C4B) : D2D1::ColorF(0x302735));
 
     const float speed = m_screen == GameScreen::Playing ? m_gameSpeed : m_defaultGameSpeed;
-    DrawString(L"게임 속도", D2D1::RectF(332.0f, 332.0f, 608.0f, 358.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
+    DrawString(L"게임 속도", D2D1::RectF(332.0f, 356.0f, 608.0f, 382.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
     DrawButton(EscapeSpeedDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));
-    DrawString(L"x" + ToWideFloat(speed), D2D1::RectF(392.0f, 382.0f, 548.0f, 412.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
+    DrawString(L"x" + ToWideFloat(speed), D2D1::RectF(392.0f, 406.0f, 548.0f, 436.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
     DrawButton(EscapeSpeedUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
 
     DrawButton(EscapeSaveButtonRect(), L"SAVE", true, D2D1::ColorF(0x283B27));

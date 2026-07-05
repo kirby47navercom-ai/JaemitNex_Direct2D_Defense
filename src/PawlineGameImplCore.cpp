@@ -177,9 +177,20 @@ LRESULT PawlineGameImpl::HandleMessage(UINT message, WPARAM wParam, LPARAM lPara
             UpdateViewMetrics();
         }
         return 0;
-        case WM_MOUSEMOVE:
+    case WM_MOUSEMOVE:
         {
             const Vec2 nextMouse = ClientToVirtual({static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam))});
+            if ((wParam & MK_LBUTTON) != 0 && m_activeSliderDrag != UiSliderDragTarget::None)
+            {
+                m_mouse = nextMouse;
+                UpdateSliderDrag(nextMouse, false);
+                return 0;
+            }
+            if ((wParam & MK_LBUTTON) == 0 && m_activeSliderDrag != UiSliderDragTarget::None)
+            {
+                EndSliderDrag();
+            }
+
             const bool draggingBattle = (wParam & MK_LBUTTON) != 0 &&
                                         (m_screen == GameScreen::Playing || m_screen == GameScreen::Result) &&
                                         !m_escapeMenuOpen &&
@@ -193,21 +204,39 @@ LRESULT PawlineGameImpl::HandleMessage(UINT message, WPARAM wParam, LPARAM lPara
             m_mouse = nextMouse;
             return 0;
         }
-        case WM_LBUTTONDOWN:
+    case WM_LBUTTONDOWN:
+        {
             SetFocus(m_hwnd);
-            OnLeftClick(ClientToVirtual({static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam))}));
+            SetCapture(m_hwnd);
+            const Vec2 click = ClientToVirtual({static_cast<float>(GET_X_LPARAM(lParam)), static_cast<float>(GET_Y_LPARAM(lParam))});
+            BeginSliderDrag(click);
+            OnLeftClick(click);
             return 0;
-        case WM_MOUSEWHEEL:
-            if (m_screen == GameScreen::Playing || m_screen == GameScreen::Result)
-            {
-                const float steps = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
-                m_cameraTargetX = std::max(0.0f, std::min(kCameraMaxX, m_cameraTargetX - steps * 260.0f));
-                return 0;
-            }
-            break;
-        case WM_KEYDOWN:
-            OnKeyDown(wParam);
+        }
+    case WM_LBUTTONUP:
+        if (GetCapture() == m_hwnd)
+        {
+            ReleaseCapture();
+        }
+        EndSliderDrag();
+        return 0;
+    case WM_CAPTURECHANGED:
+        if (reinterpret_cast<HWND>(lParam) != m_hwnd)
+        {
+            EndSliderDrag();
+        }
+        return 0;
+    case WM_MOUSEWHEEL:
+        if (m_screen == GameScreen::Playing || m_screen == GameScreen::Result)
+        {
+            const float steps = static_cast<float>(GET_WHEEL_DELTA_WPARAM(wParam)) / static_cast<float>(WHEEL_DELTA);
+            m_cameraTargetX = std::max(0.0f, std::min(kCameraMaxX, m_cameraTargetX - steps * 260.0f));
             return 0;
+        }
+        break;
+    case WM_KEYDOWN:
+        OnKeyDown(wParam);
+        return 0;
     }
     return DefWindowProcW(m_hwnd, message, wParam, lParam);
 }
