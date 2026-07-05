@@ -1262,6 +1262,11 @@ private:
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_buttonFormat;
     Microsoft::WRL::ComPtr<IDWriteTextFormat> m_centerFormat;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_deepSpaceBitmap;
+    // 스테이지별 고화질 우주 배경. 없으면 m_deepSpaceBitmap으로 되돌아간다.
+    std::array<Microsoft::WRL::ComPtr<ID2D1Bitmap>, kStageCount> m_stageSpaceBitmaps;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_prologueArtBitmap;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_endingArtBitmap;
+    Microsoft::WRL::ComPtr<ID2D1Bitmap> m_bossCutinBitmap;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_vfxAtlas;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_slashEffectSheet;
     Microsoft::WRL::ComPtr<ID2D1Bitmap> m_enemySlashEffectSheet;

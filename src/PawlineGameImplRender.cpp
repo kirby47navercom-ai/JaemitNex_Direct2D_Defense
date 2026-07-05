@@ -1070,10 +1070,16 @@ void PawlineGameImpl::DrawDeepSpaceBackdrop(D2D1_RECT_F area, int stageIndex, fl
     const float height = area.bottom - area.top;
 
     FillRect(area, D2D1::ColorF(0x01050B));
-    if (m_deepSpaceBitmap)
+    ID2D1Bitmap* backdrop = m_stageSpaceBitmaps[static_cast<size_t>(safeStage)].Get();
+    if (!backdrop)
+    {
+        backdrop = m_deepSpaceBitmap.Get();
+    }
+
+    if (backdrop)
     {
         const bool gameplayBackdrop = (area.right - area.left) > kWidth + 180.0f || std::abs(cameraX) > 0.01f;
-        DrawBitmapCover(m_deepSpaceBitmap.Get(), area, 0.98f, time, cameraX, gameplayBackdrop ? 3.0f : 0.45f);
+        DrawBitmapCover(backdrop, area, 0.98f, time, cameraX, gameplayBackdrop ? 3.0f : 0.45f);
     }
     FillRect(area, D2D1::ColorF(0x01050B, 0.18f));
     // 고화질 우주 사진 자체가 깊이감을 만들기 때문에, 배경 격자는 전면에서 빼서 선이 튀지 않게 한다.
@@ -1160,6 +1166,10 @@ void PawlineGameImpl::DrawTitle()
 void PawlineGameImpl::DrawStoryCrawl()
 {
     DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), 9, m_uiTime, 0.0f, true);
+    if (m_prologueArtBitmap)
+    {
+        DrawBitmapCover(m_prologueArtBitmap.Get(), D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), 0.38f, m_uiTime, 0.0f, 0.35f);
+    }
     FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0x01050B, 0.48f));
 
     const std::array<std::wstring, 14> lines = {
@@ -1216,6 +1226,10 @@ void PawlineGameImpl::DrawStoryCrawl()
 void PawlineGameImpl::DrawEndingScene()
 {
     DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), kStageCount - 1, m_uiTime, 0.0f, true);
+    if (m_endingArtBitmap)
+    {
+        DrawBitmapCover(m_endingArtBitmap.Get(), D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), 0.42f, m_uiTime, 0.0f, 0.25f);
+    }
     FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0x01050B, 0.34f));
 
     const Vec2 sun = {640.0f, 210.0f};
@@ -4293,11 +4307,20 @@ void PawlineGameImpl::DrawBossPresentation()
         DrawCartoonPanel(panel, D2D1::ColorF(0x190D0F, 0.96f * alpha), D2D1::ColorF(0xFF9BA8, alpha), true);
         const D2D1_RECT_F inner = InflateRectF(panel, -16.0f, -14.0f);
         FillRoundRect(inner, 10.0f, D2D1::ColorF(0x071017, 0.62f * alpha));
-        FillEllipse({inner.left + 72.0f, inner.top + 44.0f}, 32.0f, 32.0f, D2D1::ColorF(0xFFB347, 0.11f * alpha));
-        FillEllipse({inner.left + 72.0f, inner.top + 44.0f}, 15.0f, 15.0f, D2D1::ColorF(0xFFB347, 0.42f * alpha));
-        StrokeEllipse({inner.left + 72.0f, inner.top + 44.0f}, 28.0f, 28.0f, D2D1::ColorF(0xFFB347, 0.40f * alpha), 2.0f);
-        DrawLine({inner.left + 116.0f, inner.top + 26.0f}, {inner.right - 24.0f, inner.top + 26.0f}, D2D1::ColorF(0xFFB347, 0.42f * alpha), 2.0f);
-        DrawLine({inner.left + 116.0f, inner.bottom - 24.0f}, {inner.right - 24.0f, inner.bottom - 24.0f}, D2D1::ColorF(0xFF9BA8, 0.32f * alpha), 2.0f);
+        const D2D1_RECT_F cutin = D2D1::RectF(inner.left + 14.0f, inner.top + 10.0f, inner.left + 150.0f, inner.bottom - 10.0f);
+        if (m_bossCutinBitmap)
+        {
+            DrawBitmapCover(m_bossCutinBitmap.Get(), cutin, 0.82f * alpha, m_uiTime, 0.0f, 0.18f);
+            StrokeRoundRect(cutin, 10.0f, D2D1::ColorF(0xFFB347, 0.54f * alpha), 1.8f);
+        }
+        else
+        {
+            FillEllipse({inner.left + 72.0f, inner.top + 44.0f}, 32.0f, 32.0f, D2D1::ColorF(0xFFB347, 0.11f * alpha));
+            FillEllipse({inner.left + 72.0f, inner.top + 44.0f}, 15.0f, 15.0f, D2D1::ColorF(0xFFB347, 0.42f * alpha));
+            StrokeEllipse({inner.left + 72.0f, inner.top + 44.0f}, 28.0f, 28.0f, D2D1::ColorF(0xFFB347, 0.40f * alpha), 2.0f);
+        }
+        DrawLine({inner.left + 166.0f, inner.top + 26.0f}, {inner.right - 24.0f, inner.top + 26.0f}, D2D1::ColorF(0xFFB347, 0.42f * alpha), 2.0f);
+        DrawLine({inner.left + 166.0f, inner.bottom - 24.0f}, {inner.right - 24.0f, inner.bottom - 24.0f}, D2D1::ColorF(0xFF9BA8, 0.32f * alpha), 2.0f);
         for (int i = 0; i < 11; ++i)
         {
             const float x = panel.left + 18.0f + static_cast<float>(i) * 64.0f;

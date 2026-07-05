@@ -444,7 +444,7 @@ void PawlineGameImpl::PlayMusicTrack(const std::wstring& relativePath, float fad
     {
         if (!StartMusicNow(absolutePath, loop, 1.0f))
         {
-            StartMusicNow(AssetPath(L"assets\\music\\outer_space_loop.mp3"), true, 1.0f);
+            StartMusicNow(AssetPath(L"assets\\music\\outer_space_loop.wav"), true, 1.0f);
         }
         m_pendingMusicPath.clear();
         m_musicFadingOut = false;
@@ -464,7 +464,7 @@ void PawlineGameImpl::StartBackgroundMusic()
 {
     // 메뉴와 타이틀에서는 몽환적인 우주 루프를 계속 재생한다.
     StopDangerMusicLayer();
-    PlayMusicTrack(L"assets\\music\\outer_space_loop.mp3", 0.65f, true);
+    PlayMusicTrack(L"assets\\music\\outer_space_loop.wav", 0.65f, true);
 }
 
 std::wstring PawlineGameImpl::StageMusicPath(int stageIndex) const
@@ -585,7 +585,7 @@ void PawlineGameImpl::UpdateMusicSystem(float dt)
 
             if (!StartMusicNow(nextPath, nextLoop, 0.0f))
             {
-                StartMusicNow(AssetPath(L"assets\\music\\outer_space_loop.mp3"), true, 0.0f);
+                StartMusicNow(AssetPath(L"assets\\music\\outer_space_loop.wav"), true, 0.0f);
             }
         }
     }
@@ -1105,6 +1105,18 @@ void PawlineGameImpl::LoadBitmapAssets()
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\water_ball_impact_sheet.png"), m_waterBallImpactEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\vfx\\smoke_dust_sheet.png"), m_smokeDustEffectSheet.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\backgrounds\\deep_space_hudf.jpg"), m_deepSpaceBitmap.ReleaseAndGetAddressOf());
+    const std::array<const wchar_t*, kStageCount> stageBackdrops = {
+        L"stage_00_space_hd.jpg", L"stage_01_space_hd.jpg", L"stage_02_space_hd.jpg", L"stage_03_space_hd.jpg", L"stage_04_space_hd.jpg",
+        L"stage_05_space_hd.jpg", L"stage_06_space_hd.jpg", L"stage_07_space_hd.jpg", L"stage_08_space_hd.jpg", L"stage_09_space_hd.jpg"};
+    for (int i = 0; i < kStageCount; ++i)
+    {
+        // 각 스테이지 배경은 실제 우주 사진 느낌의 큰 레이어이고, 행성 개성은 전장 바닥 패턴에서 보강한다.
+        LoadBitmapFromFile(AssetPath(L"assets\\backgrounds\\" + std::wstring(stageBackdrops[static_cast<size_t>(i)])),
+                           m_stageSpaceBitmaps[static_cast<size_t>(i)].ReleaseAndGetAddressOf());
+    }
+    LoadBitmapFromFile(AssetPath(L"assets\\cutins\\prologue_story_art.jpg"), m_prologueArtBitmap.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\cutins\\ending_solar_route.jpg"), m_endingArtBitmap.ReleaseAndGetAddressOf());
+    LoadBitmapFromFile(AssetPath(L"assets\\cutins\\solar_gatekeeper_cutin.png"), m_bossCutinBitmap.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\sprites\\kenney_toon_units\\player_unit_atlas.png"), m_playerUnitAtlas.ReleaseAndGetAddressOf());
     LoadBitmapFromFile(AssetPath(L"assets\\sprites\\kenney_toon_units\\enemy_unit_atlas.png"), m_enemyUnitAtlas.ReleaseAndGetAddressOf());
     const std::array<const wchar_t*, kRosterCount> playerWeapons = {
@@ -1165,6 +1177,13 @@ void PawlineGameImpl::DiscardBitmapAssets()
     m_waterBallImpactEffectSheet.Reset();
     m_smokeDustEffectSheet.Reset();
     m_deepSpaceBitmap.Reset();
+    for (auto& bitmap : m_stageSpaceBitmaps)
+    {
+        bitmap.Reset();
+    }
+    m_prologueArtBitmap.Reset();
+    m_endingArtBitmap.Reset();
+    m_bossCutinBitmap.Reset();
     m_playerUnitAtlas.Reset();
     m_enemyUnitAtlas.Reset();
     for (auto& bitmap : m_playerWeaponBitmaps)

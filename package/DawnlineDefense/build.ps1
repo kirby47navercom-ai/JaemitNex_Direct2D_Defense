@@ -58,6 +58,9 @@ if (Test-Path (Join-Path $root "assets")) {
 }
 Copy-Item -LiteralPath (Join-Path $root "README.md") -Destination $dist
 Copy-Item -LiteralPath (Join-Path $root "docs") -Destination $dist -Recurse
+if (Test-Path (Join-Path $root "tools")) {
+    Copy-Item -LiteralPath (Join-Path $root "tools") -Destination $dist -Recurse
+}
 Copy-Item -LiteralPath (Join-Path $root "CMakeLists.txt") -Destination $dist
 Copy-Item -LiteralPath (Join-Path $root "build.ps1") -Destination $dist
 Copy-Item -LiteralPath (Join-Path $root "src") -Destination $dist -Recurse
