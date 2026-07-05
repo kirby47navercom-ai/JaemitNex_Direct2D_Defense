@@ -23,11 +23,16 @@ if ($LASTEXITCODE -ne 0) {
     throw "CMake configure failed with exit code $LASTEXITCODE"
 }
 
-# build 폴더가 저장소에 남아 있을 때 AudioManager.obj가 소스보다 새 파일로 판단되어
-# BGM 함수 구현이 빠진 예전 오브젝트가 링크되는 경우가 있어, 이 파일만 안전하게 다시 만들게 한다.
-$staleAudioObj = Join-Path $build "DawnlineDefense.dir\Release\AudioManager.obj"
-if (Test-Path $staleAudioObj) {
-    Remove-Item -LiteralPath $staleAudioObj -Force
+# build 폴더가 저장소에 남아 있으면 예전 .obj와 새 헤더가 섞여 접근 위반이 날 수 있다.
+# 제출 빌드는 안정성이 우선이라, 대상 오브젝트와 tlog를 지워 매번 같은 상태에서 다시 컴파일한다.
+$releaseObjDir = Join-Path $build "DawnlineDefense.dir\Release"
+if (Test-Path $releaseObjDir) {
+    Get-ChildItem -LiteralPath $releaseObjDir -Filter "*.obj" -ErrorAction SilentlyContinue |
+        Remove-Item -Force
+    $tlog = Join-Path $releaseObjDir "DawnlineDefense.tlog"
+    if (Test-Path $tlog) {
+        Remove-Item -LiteralPath $tlog -Recurse -Force
+    }
 }
 
 cmake --build $build --config Release
