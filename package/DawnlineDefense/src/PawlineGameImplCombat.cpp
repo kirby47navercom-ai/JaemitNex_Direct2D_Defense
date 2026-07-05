@@ -2,6 +2,22 @@
 
 namespace
 {
+constexpr size_t kMaxCpuParticles = 420;
+constexpr size_t kMaxRingEffects = 96;
+constexpr size_t kMaxBeamEffects = 48;
+constexpr size_t kMaxSparkLines = 220;
+constexpr size_t kMaxImageVfx = 180;
+
+template <typename T>
+void TrimOldestEffects(std::vector<T>& effects, size_t maxCount)
+{
+    if (effects.size() <= maxCount)
+    {
+        return;
+    }
+    effects.erase(effects.begin(), effects.begin() + static_cast<std::ptrdiff_t>(effects.size() - maxCount));
+}
+
 // 전투 시스템은 유닛 종류만 알고, 렌더러는 ImageVfxKind를 받아 실제 PNG 시트를 고른다.
 // 이렇게 분리하면 새 이펙트를 추가해도 공격 판정 코드를 거의 건드리지 않아도 된다.
 struct VfxCombo
@@ -2584,8 +2600,8 @@ void PawlineGameImpl::AddCameraTrauma(float amount)
 
 void PawlineGameImpl::UpdateParticles(float dt)
 {
-    // Gameplay and visual effects share delta-time cleanup, so speed changes and
-    // pause/menu transitions do not leave stale particles or beams behind.
+    // 파티클 상태는 CPU에서 델타타임으로 갱신한다.
+    // 대신 생성 수량에 상한을 둬서 장시간 전투나 보스 패턴 중에도 프레임 스파이크를 막는다.
     for (Particle& particle : m_particles)
     {
         particle.life -= dt;
@@ -2815,6 +2831,7 @@ void PawlineGameImpl::AddParticleEx(Vec2 pos, Vec2 vel, float radius, float life
     particle.growth = growth;
     particle.spin = Hash01(pos.x, pos.y, m_uiTime) * kPi * 2.0f;
     m_particles.push_back(particle);
+    TrimOldestEffects(m_particles, kMaxCpuParticles);
 }
 
 void PawlineGameImpl::AddRing(Vec2 pos, float maxRadius, float life, D2D1_COLOR_F color, float width)
@@ -2828,6 +2845,7 @@ void PawlineGameImpl::AddRing(Vec2 pos, float maxRadius, float life, D2D1_COLOR_
     ring.width = width;
     ring.color = color;
     m_rings.push_back(ring);
+    TrimOldestEffects(m_rings, kMaxRingEffects);
 }
 
 void PawlineGameImpl::AddBeam(Vec2 start, Vec2 end, float width, float life, D2D1_COLOR_F color)
@@ -2840,6 +2858,7 @@ void PawlineGameImpl::AddBeam(Vec2 start, Vec2 end, float width, float life, D2D
     beam.maxLife = life;
     beam.color = color;
     m_beams.push_back(beam);
+    TrimOldestEffects(m_beams, kMaxBeamEffects);
 }
 
 void PawlineGameImpl::AddSparkLines(Vec2 pos, D2D1_COLOR_F color, int count)
@@ -2863,6 +2882,7 @@ void PawlineGameImpl::AddSparkLines(Vec2 pos, D2D1_COLOR_F color, int count)
         line.color = color;
         m_sparkLines.push_back(line);
     }
+    TrimOldestEffects(m_sparkLines, kMaxSparkLines);
 }
 
 void PawlineGameImpl::AddImageVfx(ImageVfxKind kind, Vec2 pos, float size, float life, D2D1_COLOR_F color, float dir)
@@ -2879,11 +2899,7 @@ void PawlineGameImpl::AddImageVfx(ImageVfxKind kind, Vec2 pos, float size, float
     effect.dir = dir >= 0.0f ? 1.0f : -1.0f;
     effect.frameOffset = Hash01(pos.x, pos.y, m_stageTime) * 0.08f;
     m_imageVfx.push_back(effect);
-
-    if (m_imageVfx.size() > 180)
-    {
-        m_imageVfx.erase(m_imageVfx.begin(), m_imageVfx.begin() + static_cast<std::ptrdiff_t>(m_imageVfx.size() - 180));
-    }
+    TrimOldestEffects(m_imageVfx, kMaxImageVfx);
 }
 
 void PawlineGameImpl::AddBurst(Vec2 pos, D2D1_COLOR_F color, int count)
