@@ -256,6 +256,20 @@ float MissingHpRatio(float hp, float maxHp)
 {
     return 1.0f - Clamp01(hp / std::max(1.0f, maxHp));
 }
+
+// 화면 좌우에 충분한 여유값을 두고, 카메라 범위 안에 들어온 오브젝트만 그린다.
+bool IsCameraVisibleX(float x, float margin, float cameraX)
+{
+    return x + margin >= cameraX && x - margin <= cameraX + kWidth;
+}
+
+// 전투 오브젝트가 카메라 밖에 있으면 렌더링만 건너뛴다. 이동/충돌 판정은 업데이트 루프에서 그대로 처리된다.
+bool IsCameraSegmentVisibleX(float a, float b, float margin, float cameraX)
+{
+    const float left = std::min(a, b) - margin;
+    const float right = std::max(a, b) + margin;
+    return right >= cameraX && left <= cameraX + kWidth;
+}
 }
 
 // Direct2D drawing, including the shader-style procedural VFX pass.
@@ -877,8 +891,14 @@ void PawlineGameImpl::DrawImageVfxFrame(ImageVfxKind kind, int frame, Vec2 cente
 
 void PawlineGameImpl::DrawImageVfxSprites()
 {
+    const bool cameraCull = m_screen == GameScreen::Playing || m_screen == GameScreen::Result;
     for (const ImageVfx& effect : m_imageVfx)
     {
+        if (cameraCull && !IsCameraVisibleX(effect.pos.x, effect.size * 0.65f + 160.0f, m_cameraX))
+        {
+            continue;
+        }
+
         const float alpha = Clamp01(effect.life / effect.maxLife);
         const float progress = 1.0f - alpha;
         const bool heal = effect.kind == ImageVfxKind::Heal || effect.kind == ImageVfxKind::HealSoft;
@@ -2241,6 +2261,10 @@ void PawlineGameImpl::DrawUnitLighting()
         {
             continue;
         }
+        if (!IsCameraVisibleX(unit.pos.x, unit.boss ? 360.0f : std::max(220.0f, unit.radius * 8.0f), m_cameraX))
+        {
+            continue;
+        }
 
         const Vec2 pos = UnitRenderPos(unit);
         const float windup = AttackWindup(unit);
@@ -2282,17 +2306,21 @@ void PawlineGameImpl::DrawUnitLighting()
 
 void PawlineGameImpl::DrawUnits()
 {
-    std::vector<int> order;
-    order.reserve(m_units.size());
+    m_drawOrder.clear();
     for (int i = 0; i < static_cast<int>(m_units.size()); ++i)
     {
-        order.push_back(i);
+        const Unit& unit = m_units[i];
+        const float margin = unit.boss ? 360.0f : std::max(220.0f, unit.radius * 8.0f);
+        if (IsCameraVisibleX(unit.pos.x, margin, m_cameraX))
+        {
+            m_drawOrder.push_back(i);
+        }
     }
-    std::sort(order.begin(), order.end(), [this](int a, int b) {
+    std::sort(m_drawOrder.begin(), m_drawOrder.end(), [this](int a, int b) {
         return m_units[a].pos.y < m_units[b].pos.y;
     });
 
-    for (int index : order)
+    for (int index : m_drawOrder)
     {
         const Unit& unit = m_units[index];
         if (unit.team == Team::Player)
@@ -3649,6 +3677,10 @@ void PawlineGameImpl::DrawProjectiles()
         {
             continue;
         }
+        if (!IsCameraSegmentVisibleX(projectile.pos.x, projectile.lastPos.x, projectile.radius * 8.0f + 180.0f, m_cameraX))
+        {
+            continue;
+        }
 
         Vec2 dir = Normalize(projectile.pos - projectile.lastPos);
         if (Length(dir) <= 0.0001f)
@@ -3791,6 +3823,11 @@ void PawlineGameImpl::DrawBeams()
 {
     for (const BeamEffect& beam : m_beams)
     {
+        if (!IsCameraSegmentVisibleX(beam.start.x, beam.end.x, beam.width * 12.0f + 160.0f, m_cameraX))
+        {
+            continue;
+        }
+
         const float alpha = Clamp01(beam.life / beam.maxLife);
         const Vec2 dir = Normalize(beam.end - beam.start);
         const Vec2 normal = {-dir.y, dir.x};
@@ -3808,6 +3845,11 @@ void PawlineGameImpl::DrawSparkLines()
 {
     for (const SparkLine& line : m_sparkLines)
     {
+        if (!IsCameraSegmentVisibleX(line.start.x, line.end.x, line.width * 14.0f + 120.0f, m_cameraX))
+        {
+            continue;
+        }
+
         const float alpha = Clamp01(line.life / line.maxLife);
         const Vec2 mid = (line.start + line.end) * 0.5f;
         // 충돌 파편은 선 대신 빛점과 작은 블룸으로 표현해, 외부 이펙트 시트가 주인공처럼 보이게 한다.
@@ -3819,8 +3861,14 @@ void PawlineGameImpl::DrawSparkLines()
 
 void PawlineGameImpl::DrawRings()
 {
+    const bool cameraCull = m_screen == GameScreen::Playing || m_screen == GameScreen::Result;
     for (const RingEffect& ring : m_rings)
     {
+        if (cameraCull && !IsCameraVisibleX(ring.pos.x, ring.radius + ring.maxRadius + 140.0f, m_cameraX))
+        {
+            continue;
+        }
+
         const float alpha = Clamp01(ring.life / ring.maxLife);
         D2D1_COLOR_F color = ring.color;
         color.a *= alpha;
@@ -3830,8 +3878,14 @@ void PawlineGameImpl::DrawRings()
 
 void PawlineGameImpl::DrawParticles()
 {
+    const bool cameraCull = m_screen == GameScreen::Playing || m_screen == GameScreen::Result;
     for (const Particle& particle : m_particles)
     {
+        if (cameraCull && !IsCameraVisibleX(particle.pos.x, particle.radius * 4.0f + 120.0f, m_cameraX))
+        {
+            continue;
+        }
+
         const float alpha = Clamp01(particle.life / particle.maxLife);
         D2D1_COLOR_F color = particle.color;
         color.a *= alpha;
@@ -4096,8 +4150,14 @@ void PawlineGameImpl::DrawScreenFlash()
 
 void PawlineGameImpl::DrawFloatTexts()
 {
+    const bool cameraCull = m_screen == GameScreen::Playing || m_screen == GameScreen::Result;
     for (const FloatText& text : m_floatTexts)
     {
+        if (cameraCull && !IsCameraVisibleX(text.pos.x, 160.0f, m_cameraX))
+        {
+            continue;
+        }
+
         const float alpha = Clamp01(text.life / text.maxLife);
         D2D1_COLOR_F color = text.color;
         color.a *= alpha;

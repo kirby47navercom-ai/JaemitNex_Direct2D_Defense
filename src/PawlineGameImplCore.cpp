@@ -68,6 +68,17 @@ HRESULT PawlineGameImpl::Initialize()
 
     LoadProgress();
     ResetToTitle();
+    m_units.reserve(160);
+    m_projectiles.reserve(192);
+    m_particles.reserve(640);
+    m_rings.reserve(96);
+    m_beams.reserve(48);
+    m_sparkLines.reserve(160);
+    m_imageVfx.reserve(160);
+    m_floatTexts.reserve(96);
+    m_uiPulses.reserve(48);
+    m_telegraphs.reserve(48);
+    m_drawOrder.reserve(160);
     m_audio.Initialize();
     StartBackgroundMusic();
 

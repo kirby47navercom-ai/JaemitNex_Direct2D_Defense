@@ -1360,6 +1360,8 @@ private:
     std::vector<FloatText> m_floatTexts;
     std::vector<UiPulse> m_uiPulses;
     std::vector<Telegraph> m_telegraphs;
+    // 전투 유닛을 y좌표 기준으로 정렬할 때 재사용하는 렌더링 전용 인덱스 버퍼.
+    std::vector<int> m_drawOrder;
 
     // 플레이어 성장/편성 저장 대상. SaveProgress/LoadProgress가 이 값을 파일에 기록한다.
     std::array<float, kLoadoutSize> m_cardCooldowns = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
