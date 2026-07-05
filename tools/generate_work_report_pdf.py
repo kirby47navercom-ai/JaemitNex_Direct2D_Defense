@@ -152,6 +152,7 @@ body {{
   background: rgba(7, 19, 28, .72);
   box-shadow: 0 8mm 20mm rgba(0,0,0,.28);
   text-align: center;
+  transform: translateX(7mm);
 }}
 .kicker {{
   font-family: Galmuri, sans-serif;
@@ -178,8 +179,8 @@ h1, h2, h3 {{
   color: #ddf1ff;
 }}
 .meta {{
-  margin-top: 18mm;
-  width: 100%;
+  margin: 18mm auto 0;
+  width: 116mm;
   border-collapse: collapse;
   color: #eaf7ff;
 }}
