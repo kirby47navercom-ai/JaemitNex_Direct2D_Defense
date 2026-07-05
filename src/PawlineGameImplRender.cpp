@@ -1157,7 +1157,9 @@ void PawlineGameImpl::DrawStoryCrawl()
         L"전선이 밀리면 기록은 끝난다.",
         L"하지만 한 걸음이라도 앞으로 나아가면, 어둠은 다시 길이 된다."};
 
-    const float startY = 812.0f - std::max(0.0f, m_storyTimer - 1.4f) * 42.0f;
+    // 첫 화면부터 본문이 보여야 사용자가 멈춘 화면으로 오해하지 않는다.
+    // 이후에는 천천히 위로 올라가는 크롤 느낌만 유지한다.
+    const float startY = 278.0f - m_storyTimer * 34.0f;
     for (size_t i = 0; i < lines.size(); ++i)
     {
         const float y = startY + static_cast<float>(i) * 48.0f;
@@ -1180,11 +1182,8 @@ void PawlineGameImpl::DrawStoryCrawl()
     const float titleFade = Clamp01(1.0f - std::max(0.0f, m_storyTimer - 4.2f) / 2.2f);
     DrawPixelTextCentered(L"MISSION LOG 00", D2D1::RectF(260.0f, 88.0f, 1020.0f, 138.0f), 4.2f, D2D1::ColorF(0xF6FF83), titleFade);
     DrawPixelTextCentered(L"DAWNLINE ARCHIVE", D2D1::RectF(260.0f, 142.0f, 1020.0f, 190.0f), 3.2f, D2D1::ColorF(0xCFE8F5), titleFade);
-    DrawPixelTextCentered(m_storyAutoContinueToMenu ? L"SPACE SKIP / AUTO START" : L"SPACE / CLICK BACK",
-                          D2D1::RectF(360.0f, 734.0f, 920.0f, 770.0f),
-                          2.2f,
-                          D2D1::ColorF(0xCFE8F5),
-                          0.90f);
+    DrawOutlinedString(L"SPACE / ENTER / CLICK", D2D1::RectF(390.0f, 690.0f, 890.0f, 714.0f), m_centerFormat, D2D1::ColorF(0xCFE8F5), 0.70f);
+    DrawButton(StorySkipButtonRect(), m_storyAutoContinueToMenu ? L"SKIP & START" : L"SKIP", true, D2D1::ColorF(0x173C4B));
 }
 
 void PawlineGameImpl::DrawEndingScene()

@@ -1663,7 +1663,7 @@ void PawlineGameImpl::Update(float dt)
     if (m_screen == GameScreen::StoryIntro)
     {
         m_storyTimer += dt;
-        if (m_storyAutoContinueToMenu && m_storyTimer > 32.0f)
+        if (m_storyAutoContinueToMenu && m_storyTimer > 22.0f)
         {
             FinishStoryCrawl();
         }

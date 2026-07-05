@@ -33,6 +33,12 @@ D2D1_RECT_F PawlineGameImpl::TitleQuitButtonRect() const
     return D2D1::RectF(492.0f, 680.0f, 788.0f, 728.0f);
 }
 
+D2D1_RECT_F PawlineGameImpl::StorySkipButtonRect() const
+{
+    // 프롤로그 화면에서 마우스로 즉시 넘길 수 있는 명확한 스킵 버튼 영역이다.
+    return D2D1::RectF(510.0f, 712.0f, 770.0f, 760.0f);
+}
+
 D2D1_RECT_F PawlineGameImpl::OptionsShakeButtonRect() const
 {
     return D2D1::RectF(490.0f, 276.0f, 790.0f, 326.0f);

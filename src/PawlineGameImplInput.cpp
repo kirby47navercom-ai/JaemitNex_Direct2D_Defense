@@ -69,6 +69,7 @@ bool PawlineGameImpl::IsInteractivePoint(Vec2 pos) const
                Contains(TitleOptionsButtonRect(), pos) ||
                Contains(TitleQuitButtonRect(), pos);
     case GameScreen::StoryIntro:
+        return Contains(StorySkipButtonRect(), pos);
     case GameScreen::Ending:
         return true;
     case GameScreen::Options:

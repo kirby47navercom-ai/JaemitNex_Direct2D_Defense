@@ -856,6 +856,8 @@ private:
 
     D2D1_RECT_F TitleQuitButtonRect() const;
 
+    D2D1_RECT_F StorySkipButtonRect() const;
+
     D2D1_RECT_F OptionsShakeButtonRect() const;
 
     D2D1_RECT_F OptionsFlashButtonRect() const;
