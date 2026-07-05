@@ -376,35 +376,55 @@ std::wstring PawlineGameImpl::AssetPath(const std::wstring& relativePath) const
     return base + L"..\\..\\" + relativePath;
 }
 
-void PawlineGameImpl::PlayMusicTrack(const std::wstring& relativePath)
+bool PawlineGameImpl::StartMusicNow(const std::wstring& absolutePath, bool loop, float fadeLevel)
 {
-    // 같은 곡을 다시 틀 때는 끊기지 않게 두고, 볼륨만 최신 옵션값으로 맞춘다.
+    // 실제 스트림을 교체하는 낮은 단계 함수다. 호출자는 페이드 상태만 정리해 주면 된다.
+    m_musicFadeLevel = std::clamp(fadeLevel, 0.0f, 1.0f);
+    if (m_audio.PlayMusic(absolutePath, m_bgmVolume * m_musicFadeLevel, loop))
+    {
+        m_currentMusicPath = absolutePath;
+        return true;
+    }
+
+    m_currentMusicPath.clear();
+    return false;
+}
+
+void PawlineGameImpl::PlayMusicTrack(const std::wstring& relativePath, float fadeSeconds, bool loop)
+{
     const std::wstring absolutePath = AssetPath(relativePath);
-    if (absolutePath == m_currentMusicPath)
+    if (absolutePath == m_currentMusicPath && m_pendingMusicPath.empty())
     {
         SyncMusicVolume();
         return;
     }
 
-    if (m_audio.PlayMusic(absolutePath, m_bgmVolume, true))
+    const float safeFade = std::clamp(fadeSeconds, 0.05f, 2.5f);
+    if (m_currentMusicPath.empty() || safeFade <= 0.06f)
     {
-        m_currentMusicPath = absolutePath;
+        if (!StartMusicNow(absolutePath, loop, 1.0f))
+        {
+            StartMusicNow(AssetPath(L"assets\\music\\outer_space_loop.mp3"), true, 1.0f);
+        }
+        m_pendingMusicPath.clear();
+        m_musicFadingOut = false;
         return;
     }
-    m_currentMusicPath.clear();
 
-    // 스테이지 전용 루프가 누락되어도 게임이 조용해지지 않도록 타이틀 루프로 되돌린다.
-    const std::wstring fallbackPath = AssetPath(L"assets\\music\\outer_space_loop.mp3");
-    if (fallbackPath != absolutePath && m_audio.PlayMusic(fallbackPath, m_bgmVolume, true))
-    {
-        m_currentMusicPath = fallbackPath;
-    }
+    // 이미 다른 곡을 기다리는 중이면 마지막 요청만 남긴다.
+    m_pendingMusicPath = absolutePath;
+    m_pendingMusicLoop = loop;
+    m_musicFadeStartLevel = m_musicFadeLevel;
+    m_musicFadeDuration = safeFade;
+    m_musicFadeTimer = 0.0f;
+    m_musicFadingOut = true;
 }
 
 void PawlineGameImpl::StartBackgroundMusic()
 {
     // 메뉴와 타이틀에서는 몽환적인 우주 루프를 계속 재생한다.
-    PlayMusicTrack(L"assets\\music\\outer_space_loop.mp3");
+    StopDangerMusicLayer();
+    PlayMusicTrack(L"assets\\music\\outer_space_loop.mp3", 0.65f, true);
 }
 
 std::wstring PawlineGameImpl::StageMusicPath(int stageIndex) const
@@ -429,13 +449,134 @@ std::wstring PawlineGameImpl::StageMusicPath(int stageIndex) const
 
 void PawlineGameImpl::StartStageMusic()
 {
-    PlayMusicTrack(StageMusicPath(m_selectedStage));
+    PlayMusicTrack(StageMusicPath(m_selectedStage), 0.70f, true);
+    StartDangerMusicLayer();
+}
+
+std::wstring PawlineGameImpl::ResultMusicPath(bool victory) const
+{
+    return victory ? L"assets\\music\\result_victory.wav" : L"assets\\music\\result_defeat.wav";
+}
+
+void PawlineGameImpl::StartResultMusic(bool victory)
+{
+    StopDangerMusicLayer();
+    PlayMusicTrack(ResultMusicPath(victory), 0.62f, true);
+}
+
+void PawlineGameImpl::PlayMusicStinger(const std::wstring& relativePath, float volumeScale)
+{
+    // 보스 등장처럼 음악적 의미가 있는 짧은 소리는 BGM 볼륨을 따라가게 한다.
+    const float volume = std::clamp(m_bgmVolume * volumeScale, 0.0f, 1.0f);
+    if (volume <= 0.001f)
+    {
+        return;
+    }
+
+    m_audio.SetVolume(volume);
+    m_audio.PlayEffect(AssetPath(relativePath));
+}
+
+void PawlineGameImpl::StartDangerMusicLayer()
+{
+    const std::wstring layerPath = AssetPath(L"assets\\music\\layer_danger.wav");
+    if (layerPath == m_currentMusicLayerPath)
+    {
+        return;
+    }
+
+    if (m_audio.PlayMusicLayer(layerPath, 0.0f, true))
+    {
+        m_currentMusicLayerPath = layerPath;
+        m_musicLayerLevel = 0.0f;
+    }
+}
+
+void PawlineGameImpl::StopDangerMusicLayer()
+{
+    m_currentMusicLayerPath.clear();
+    m_musicLayerLevel = 0.0f;
+    m_audio.SetMusicLayerVolume(0.0f);
+    m_audio.StopMusicLayer();
+}
+
+float PawlineGameImpl::MusicDangerTarget() const
+{
+    if (m_screen != GameScreen::Playing || m_paused || m_gameOver || m_victory)
+    {
+        return 0.0f;
+    }
+
+    const float basePressure = m_playerBaseMaxHp > 1.0f ? 1.0f - Clamp01(m_playerBaseHp / m_playerBaseMaxHp) : 0.0f;
+    float enemyProximity = 0.0f;
+    float bossPressure = 0.0f;
+    for (const Unit& unit : m_units)
+    {
+        if (!unit.alive || unit.team != Team::Enemy)
+        {
+            continue;
+        }
+        enemyProximity = std::max(enemyProximity, Clamp01((520.0f - (unit.pos.x - kPlayerBaseX)) / 520.0f));
+        if (unit.boss)
+        {
+            bossPressure = std::max(bossPressure, 0.70f);
+        }
+    }
+
+    const float director = Clamp01(m_directorPressure * 0.18f);
+    return Clamp01(basePressure * 0.56f + enemyProximity * 0.44f + bossPressure + director * 0.22f);
+}
+
+void PawlineGameImpl::UpdateMusicSystem(float dt)
+{
+    if (m_musicFadingOut)
+    {
+        m_musicFadeTimer += dt;
+        m_musicFadeLevel = Lerp(m_musicFadeStartLevel, 0.0f, Clamp01(m_musicFadeTimer / m_musicFadeDuration));
+        m_audio.SetMusicVolume(m_bgmVolume * m_musicFadeLevel);
+
+        if (m_musicFadeTimer >= m_musicFadeDuration)
+        {
+            const std::wstring nextPath = m_pendingMusicPath;
+            const bool nextLoop = m_pendingMusicLoop;
+            m_pendingMusicPath.clear();
+            m_musicFadingOut = false;
+            m_musicFadeTimer = 0.0f;
+
+            if (!StartMusicNow(nextPath, nextLoop, 0.0f))
+            {
+                StartMusicNow(AssetPath(L"assets\\music\\outer_space_loop.mp3"), true, 0.0f);
+            }
+        }
+    }
+    else if (m_musicFadeLevel < 0.999f)
+    {
+        m_musicFadeTimer += dt;
+        m_musicFadeLevel = Clamp01(m_musicFadeTimer / m_musicFadeDuration);
+        m_audio.SetMusicVolume(m_bgmVolume * m_musicFadeLevel);
+    }
+    else
+    {
+        m_musicFadeLevel = 1.0f;
+    }
+
+    const float targetLayer = MusicDangerTarget() * 0.58f;
+    const float follow = 1.0f - std::exp(-dt * (targetLayer > m_musicLayerLevel ? 2.8f : 4.2f));
+    m_musicLayerLevel = Lerp(m_musicLayerLevel, targetLayer, follow);
+    m_audio.SetMusicLayerVolume(m_bgmVolume * m_musicLayerLevel);
 }
 
 void PawlineGameImpl::SyncMusicVolume()
 {
     // 옵션에서 BGM 볼륨을 바꾸면 이미 재생 중인 채널에도 즉시 반영한다.
-    m_audio.SetMusicVolume(m_bgmVolume);
+    m_audio.SetMusicVolume(m_bgmVolume * m_musicFadeLevel);
+    m_audio.SetMusicLayerVolume(m_bgmVolume * m_musicLayerLevel);
+}
+
+float PawlineGameImpl::VolumeForSfxKind(SfxKind kind) const
+{
+    // 메뉴 클릭음은 UI 볼륨, 전투에서 나는 나머지 소리는 효과음 볼륨을 따른다.
+    return kind == SfxKind::Ui ? m_uiVolume : m_sfxVolume;
 }
 
 void PawlineGameImpl::PlaySfx(SfxKind kind, float minGapSeconds)
@@ -550,7 +691,8 @@ void PawlineGameImpl::PlaySfxAt(SfxKind kind, float worldX, float minGapSeconds,
 
 void PawlineGameImpl::PlaySfxFile(const std::wstring& relativeFileName, SfxKind throttleKind, float minGapSeconds)
 {
-    if (!m_soundEnabled || m_sfxVolume <= 0.001f)
+    const float volume = VolumeForSfxKind(throttleKind);
+    if (volume <= 0.001f)
     {
         return;
     }
@@ -564,13 +706,14 @@ void PawlineGameImpl::PlaySfxFile(const std::wstring& relativeFileName, SfxKind 
     }
     *oldestLane = m_uiTime;
 
-    m_audio.SetVolume(m_sfxVolume);
+    m_audio.SetVolume(volume);
     m_audio.PlayEffect(AssetPath(L"assets\\sfx\\" + relativeFileName));
 }
 
 void PawlineGameImpl::PlaySfxFileAt(const std::wstring& relativeFileName, SfxKind throttleKind, float worldX, float minGapSeconds, float volumeScale)
 {
-    if (!m_soundEnabled || m_sfxVolume <= 0.001f)
+    const float volume = VolumeForSfxKind(throttleKind);
+    if (volume <= 0.001f)
     {
         return;
     }
@@ -584,7 +727,7 @@ void PawlineGameImpl::PlaySfxFileAt(const std::wstring& relativeFileName, SfxKin
     }
     *oldestLane = m_uiTime;
 
-    m_audio.SetVolume(m_sfxVolume);
+    m_audio.SetVolume(volume);
     m_audio.PlayEffectAt(AssetPath(L"assets\\sfx\\" + relativeFileName), worldX, volumeScale);
 }
 
@@ -747,7 +890,7 @@ float PawlineGameImpl::AttackSfxVolumeScale(const Unit& attacker) const
 
 void PawlineGameImpl::PlayAttackSfxAt(const Unit& attacker, float minGapSeconds)
 {
-    if (!m_soundEnabled || m_sfxVolume <= 0.001f)
+    if (m_sfxVolume <= 0.001f)
     {
         return;
     }
@@ -800,8 +943,15 @@ void PawlineGameImpl::PlayAttackSfxAt(const Unit& attacker, float minGapSeconds)
 void PawlineGameImpl::AdjustSfxVolume(float delta)
 {
     m_sfxVolume = std::clamp(m_sfxVolume + delta, 0.0f, 1.0f);
-    m_soundEnabled = m_sfxVolume > 0.001f;
+    m_soundEnabled = m_sfxVolume > 0.001f || m_uiVolume > 0.001f;
     m_audio.SetVolume(m_sfxVolume);
+    PlaySfx(SfxKind::Ui, 0.02f);
+}
+
+void PawlineGameImpl::AdjustUiVolume(float delta)
+{
+    m_uiVolume = std::clamp(m_uiVolume + delta, 0.0f, 1.0f);
+    m_soundEnabled = m_sfxVolume > 0.001f || m_uiVolume > 0.001f;
     PlaySfx(SfxKind::Ui, 0.02f);
 }
 
@@ -816,6 +966,7 @@ void PawlineGameImpl::ResetAudioVolumes()
 {
     // 제출 시 기본값은 효과음이 또렷하고, BGM은 뒤에서 깔리는 정도로 맞춘다.
     m_sfxVolume = 0.86f;
+    m_uiVolume = 0.82f;
     m_bgmVolume = 0.32f;
     m_soundEnabled = true;
     m_audio.SetVolume(m_sfxVolume);
@@ -1357,17 +1508,26 @@ void PawlineGameImpl::LoadProgress(int slot)
             if (file >> savedSfxVolume)
             {
                 m_sfxVolume = std::clamp(savedSfxVolume, 0.0f, 1.0f);
-                m_soundEnabled = m_sfxVolume > 0.001f;
                 m_audio.SetVolume(m_sfxVolume);
                 float savedBgmVolume = m_bgmVolume;
                 if (file >> savedBgmVolume)
                 {
                     m_bgmVolume = std::clamp(savedBgmVolume, 0.0f, 1.0f);
+                    float savedUiVolume = m_uiVolume;
+                    if (file >> savedUiVolume)
+                    {
+                        m_uiVolume = std::clamp(savedUiVolume, 0.0f, 1.0f);
+                    }
+                    else
+                    {
+                        file.clear();
+                    }
                 }
                 else
                 {
                     file.clear();
                 }
+                m_soundEnabled = m_sfxVolume > 0.001f || m_uiVolume > 0.001f;
                 SyncMusicVolume();
             }
             else
@@ -1428,7 +1588,7 @@ void PawlineGameImpl::SaveProgressToSlot(int slot) const
     file << m_selectedStage << L" " << m_selectedLoadoutSlot << L"\n";
     file << m_defaultGameSpeed << L" " << m_userViewScale << L" "
          << (m_hitShakeEnabled ? 1 : 0) << L" " << (m_reduceFlashes ? 1 : 0) << L" "
-         << m_sfxVolume << L" " << m_bgmVolume << L"\n";
+         << m_sfxVolume << L" " << m_bgmVolume << L" " << m_uiVolume << L"\n";
 }
 
 void PawlineGameImpl::SelectSaveSlot(int slot)
@@ -1645,6 +1805,7 @@ void PawlineGameImpl::Update(float dt)
     m_uiTime += dt;
     m_audio.SetListener(m_cameraX + kWidth * 0.5f, kWidth * 1.10f);
     m_audio.Update();
+    UpdateMusicSystem(dt);
     if (m_screen != m_observedScreen)
     {
         // 모든 씬 변경을 한곳에서 감지해 페이드 전환을 켠다.
@@ -1777,6 +1938,7 @@ void PawlineGameImpl::Update(float dt)
         const bool finalClear = m_selectedStage == kStageCount - 1;
         m_victory = true;
         m_screen = GameScreen::Result;
+        StartResultMusic(true);
         m_enemyBaseHp = 0.0f;
         m_resultScore = m_score + static_cast<int>(std::max(0.0f, m_playerBaseHp)) + m_walletLevel * 300;
         m_resultTime = m_stageTime;
@@ -1791,6 +1953,7 @@ void PawlineGameImpl::Update(float dt)
     {
         m_gameOver = true;
         m_screen = GameScreen::Result;
+        StartResultMusic(false);
         m_playerBaseHp = 0.0f;
         m_resultScore = m_score;
         m_resultTime = m_stageTime;

@@ -107,6 +107,7 @@ void PawlineGameImpl::TriggerBossEntrance(Unit& boss, D2D1_COLOR_F color)
     m_bossWarningTimer = 1.20f;
     AddCameraTrauma(0.78f);
     TriggerHitStop(0.095f, 0.34f, 0.44f);
+    PlayMusicStinger(L"assets\\music\\stinger_boss.wav", 1.05f);
     PlaySfxAt(SfxKind::Boss, boss.pos.x, 0.35f, 1.25f);
 
     const std::wstring name = GetEnemyStats(static_cast<EnemyUnit>(boss.kind), ThreatLevel()).name;

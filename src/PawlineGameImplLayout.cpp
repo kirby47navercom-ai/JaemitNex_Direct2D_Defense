@@ -62,7 +62,13 @@ D2D1_RECT_F PawlineGameImpl::OptionsSfxUpButtonRect() const
 D2D1_RECT_F PawlineGameImpl::OptionsSfxSliderRect() const
 {
     // 옵션 화면에서 효과음 볼륨을 클릭으로 바로 조정하는 바 영역이다.
-    return D2D1::RectF(746.0f, 312.0f, 1012.0f, 332.0f);
+    return D2D1::RectF(762.0f, 324.0f, 1022.0f, 344.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::OptionsUiSliderRect() const
+{
+    // 버튼과 메뉴 피드백 소리만 따로 조정하는 바 영역이다.
+    return D2D1::RectF(762.0f, 404.0f, 1022.0f, 424.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsBgmDownButtonRect() const
@@ -78,12 +84,12 @@ D2D1_RECT_F PawlineGameImpl::OptionsBgmUpButtonRect() const
 D2D1_RECT_F PawlineGameImpl::OptionsBgmSliderRect() const
 {
     // 옵션 화면에서 배경음악 볼륨을 클릭으로 바로 조정하는 바 영역이다.
-    return D2D1::RectF(746.0f, 416.0f, 1012.0f, 436.0f);
+    return D2D1::RectF(762.0f, 484.0f, 1022.0f, 504.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsAudioResetButtonRect() const
 {
-    return D2D1::RectF(760.0f, 476.0f, 1000.0f, 522.0f);
+    return D2D1::RectF(782.0f, 538.0f, 1002.0f, 584.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsSpeedDownButtonRect() const

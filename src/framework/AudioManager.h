@@ -34,6 +34,11 @@ public:
     void StopMusic();
     void SetMusicVolume(float volume);
 
+    // 위험도 레이어처럼 메인 BGM 위에 얹는 음악 스트림이다.
+    bool PlayMusicLayer(const std::wstring& absolutePath, float volume, bool loop = true);
+    void StopMusicLayer();
+    void SetMusicLayerVolume(float volume);
+
     void SetListener(float worldX, float audibleWidth);
 
 private:
@@ -49,6 +54,9 @@ private:
     // 현재 BGM 볼륨과 WinMM fallback에서 열린 음악 alias 상태다.
     float m_musicVolume = 0.32f;
     bool m_musicOpen = false;
+    // 메인 BGM 위에 작게 깔리는 보조 음악 레이어 볼륨과 alias 상태다.
+    float m_musicLayerVolume = 0.0f;
+    bool m_musicLayerOpen = false;
 
 #if defined(PAWLINE_WITH_FMOD)
     // 같은 효과음을 반복 재생할 때 매번 디스크에서 읽지 않도록 FMOD Sound를 캐시한다.
@@ -60,6 +68,9 @@ private:
     // 효과음 캐시와 분리된 BGM 스트림이다. Shutdown 때 반드시 먼저 닫는다.
     FMOD::Sound* m_musicSound = nullptr;
     FMOD::Channel* m_musicChannel = nullptr;
+    // 위험도 레이어 전용 스트림이다. 메인 음악과 동시에 재생된다.
+    FMOD::Sound* m_musicLayerSound = nullptr;
+    FMOD::Channel* m_musicLayerChannel = nullptr;
 #endif
 };
 }

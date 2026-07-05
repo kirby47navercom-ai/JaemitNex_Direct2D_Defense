@@ -1298,8 +1298,9 @@ void PawlineGameImpl::DrawOptions()
     drawSlider(L"화면 안전 여백", OptionsViewSliderRect(), (m_userViewScale - 0.82f) / 0.18f, ToWideInt(static_cast<int>(std::round(m_userViewScale * 100.0f))) + L"%", D2D1::ColorF(0xB8FF89));
     DrawButton(OptionsViewResetButtonRect(), L"AUTO FIT", true, D2D1::ColorF(0x2D3722));
 
-    drawSection(D2D1::RectF(724.0f, 238.0f, 1044.0f, 552.0f), L"AUDIO", D2D1::ColorF(0xF6FF83));
+    drawSection(D2D1::RectF(724.0f, 238.0f, 1044.0f, 604.0f), L"AUDIO", D2D1::ColorF(0xF6FF83));
     drawSlider(L"효과음 볼륨", OptionsSfxSliderRect(), m_sfxVolume, ToWideInt(static_cast<int>(std::round(m_sfxVolume * 100.0f))) + L"%", D2D1::ColorF(0x65B8FF));
+    drawSlider(L"UI음 볼륨", OptionsUiSliderRect(), m_uiVolume, ToWideInt(static_cast<int>(std::round(m_uiVolume * 100.0f))) + L"%", D2D1::ColorF(0xC8B7FF));
     drawSlider(L"브금 볼륨", OptionsBgmSliderRect(), m_bgmVolume, ToWideInt(static_cast<int>(std::round(m_bgmVolume * 100.0f))) + L"%", D2D1::ColorF(0xB8FF89));
     DrawButton(OptionsAudioResetButtonRect(), L"AUDIO RESET", true, D2D1::ColorF(0x283B27));
 

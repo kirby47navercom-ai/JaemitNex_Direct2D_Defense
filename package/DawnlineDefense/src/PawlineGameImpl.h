@@ -486,7 +486,9 @@ private:
 
     std::wstring AssetPath(const std::wstring& relativePath) const;
 
-    void PlayMusicTrack(const std::wstring& relativePath);
+    bool StartMusicNow(const std::wstring& absolutePath, bool loop, float fadeLevel);
+
+    void PlayMusicTrack(const std::wstring& relativePath, float fadeSeconds = 0.55f, bool loop = true);
 
     void StartBackgroundMusic();
 
@@ -494,7 +496,23 @@ private:
 
     void StartStageMusic();
 
+    std::wstring ResultMusicPath(bool victory) const;
+
+    void StartResultMusic(bool victory);
+
+    void PlayMusicStinger(const std::wstring& relativePath, float volumeScale = 1.0f);
+
+    void StartDangerMusicLayer();
+
+    void StopDangerMusicLayer();
+
+    float MusicDangerTarget() const;
+
+    void UpdateMusicSystem(float dt);
+
     void SyncMusicVolume();
+
+    float VolumeForSfxKind(SfxKind kind) const;
 
     void PlaySfx(SfxKind kind, float minGapSeconds = 0.05f);
 
@@ -511,6 +529,8 @@ private:
     void PlayAttackSfxAt(const Unit& attacker, float minGapSeconds = 0.018f);
 
     void AdjustSfxVolume(float delta);
+
+    void AdjustUiVolume(float delta);
 
     void AdjustBgmVolume(float delta);
 
@@ -873,6 +893,8 @@ private:
     D2D1_RECT_F OptionsSfxUpButtonRect() const;
 
     D2D1_RECT_F OptionsSfxSliderRect() const;
+
+    D2D1_RECT_F OptionsUiSliderRect() const;
 
     D2D1_RECT_F OptionsBgmDownButtonRect() const;
 
@@ -1284,7 +1306,17 @@ private:
     framework::AudioManager m_audio;
     // 효과음과 배경음악은 옵션에서 따로 조절한다.
     std::wstring m_currentMusicPath;
+    std::wstring m_pendingMusicPath;
+    std::wstring m_currentMusicLayerPath;
+    float m_musicFadeLevel = 1.0f;
+    float m_musicFadeStartLevel = 1.0f;
+    float m_musicFadeTimer = 0.0f;
+    float m_musicFadeDuration = 0.55f;
+    float m_musicLayerLevel = 0.0f;
+    bool m_musicFadingOut = false;
+    bool m_pendingMusicLoop = true;
     float m_sfxVolume = 0.86f;
+    float m_uiVolume = 0.82f;
     float m_bgmVolume = 0.32f;
     bool m_soundEnabled = true;
 

@@ -83,6 +83,7 @@ bool PawlineGameImpl::IsInteractivePoint(Vec2 pos) const
         return Contains(OptionsShakeButtonRect(), pos) ||
                Contains(OptionsFlashButtonRect(), pos) ||
                Contains(OptionsSfxSliderRect(), pos) ||
+               Contains(OptionsUiSliderRect(), pos) ||
                Contains(OptionsBgmSliderRect(), pos) ||
                Contains(OptionsAudioResetButtonRect(), pos) ||
                Contains(OptionsSpeedSliderRect(), pos) ||
@@ -546,8 +547,15 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
     if (Contains(OptionsSfxSliderRect(), pos))
     {
         m_sfxVolume = sliderValue(OptionsSfxSliderRect(), pos);
-        m_soundEnabled = m_sfxVolume > 0.001f;
+        m_soundEnabled = m_sfxVolume > 0.001f || m_uiVolume > 0.001f;
         m_audio.SetVolume(m_sfxVolume);
+        PlaySfx(SfxKind::Ui, 0.02f);
+        return;
+    }
+    if (Contains(OptionsUiSliderRect(), pos))
+    {
+        m_uiVolume = sliderValue(OptionsUiSliderRect(), pos);
+        m_soundEnabled = m_sfxVolume > 0.001f || m_uiVolume > 0.001f;
         PlaySfx(SfxKind::Ui, 0.02f);
         return;
     }
@@ -952,6 +960,14 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         else if (key == 'V')
         {
             AdjustBgmVolume(0.10f);
+        }
+        else if (key == 'U')
+        {
+            AdjustUiVolume(-0.10f);
+        }
+        else if (key == 'I')
+        {
+            AdjustUiVolume(0.10f);
         }
         else if (key == 'R')
         {

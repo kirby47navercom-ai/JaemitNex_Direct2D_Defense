@@ -18,6 +18,7 @@ namespace
 {
 constexpr int kFmodChannelBudget = 256;
 constexpr wchar_t kMusicAlias[] = L"DawnlineBgm";
+constexpr wchar_t kMusicLayerAlias[] = L"DawnlineBgmLayer";
 
 std::string ToUtf8(const std::wstring& text)
 {
@@ -68,6 +69,7 @@ bool AudioManager::Initialize()
 
 void AudioManager::Shutdown()
 {
+    StopMusicLayer();
     StopMusic();
 
 #if defined(PAWLINE_WITH_FMOD)
@@ -208,6 +210,102 @@ void AudioManager::SetMusicVolume(float volume)
     {
         const int mciVolume = static_cast<int>(std::round(m_musicVolume * 1000.0f));
         const std::wstring command = std::wstring(L"setaudio ") + kMusicAlias + L" volume to " + std::to_wstring(mciVolume);
+        mciSendStringW(command.c_str(), nullptr, 0, nullptr);
+    }
+}
+
+bool AudioManager::PlayMusicLayer(const std::wstring& absolutePath, float volume, bool loop)
+{
+    // 전황이 위험할 때 메인 음악 위로 얹는 보조 루프다.
+    // 메인 BGM과 별도 채널/alias를 쓰므로 두 음악이 동시에 들릴 수 있다.
+    StopMusicLayer();
+    SetMusicLayerVolume(volume);
+    if (absolutePath.empty())
+    {
+        return false;
+    }
+
+#if defined(PAWLINE_WITH_FMOD)
+    if (m_fmodSystem)
+    {
+        const std::string utf8Path = ToUtf8(absolutePath);
+        const FMOD_MODE mode = FMOD_2D | FMOD_CREATESTREAM | (loop ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF);
+        if (m_fmodSystem->createSound(utf8Path.c_str(), mode, nullptr, &m_musicLayerSound) != FMOD_OK || !m_musicLayerSound)
+        {
+            return false;
+        }
+
+        if (m_fmodSystem->playSound(m_musicLayerSound, nullptr, false, &m_musicLayerChannel) != FMOD_OK)
+        {
+            m_musicLayerSound->release();
+            m_musicLayerSound = nullptr;
+            m_musicLayerChannel = nullptr;
+            return false;
+        }
+        if (m_musicLayerChannel)
+        {
+            m_musicLayerChannel->setVolume(m_musicLayerVolume);
+        }
+        return true;
+    }
+#endif
+
+    const std::wstring open = L"open \"" + absolutePath + L"\" type mpegvideo alias " + kMusicLayerAlias;
+    if (mciSendStringW(open.c_str(), nullptr, 0, nullptr) != 0)
+    {
+        const std::wstring retry = L"open \"" + absolutePath + L"\" alias " + kMusicLayerAlias;
+        if (mciSendStringW(retry.c_str(), nullptr, 0, nullptr) != 0)
+        {
+            return false;
+        }
+    }
+
+    m_musicLayerOpen = true;
+    SetMusicLayerVolume(m_musicLayerVolume);
+    const std::wstring play = std::wstring(L"play ") + kMusicLayerAlias + (loop ? L" repeat" : L"");
+    return mciSendStringW(play.c_str(), nullptr, 0, nullptr) == 0;
+}
+
+void AudioManager::StopMusicLayer()
+{
+#if defined(PAWLINE_WITH_FMOD)
+    if (m_musicLayerChannel)
+    {
+        m_musicLayerChannel->stop();
+        m_musicLayerChannel = nullptr;
+    }
+    if (m_musicLayerSound)
+    {
+        m_musicLayerSound->release();
+        m_musicLayerSound = nullptr;
+    }
+#endif
+
+    if (m_musicLayerOpen)
+    {
+        const std::wstring stop = std::wstring(L"stop ") + kMusicLayerAlias;
+        const std::wstring close = std::wstring(L"close ") + kMusicLayerAlias;
+        mciSendStringW(stop.c_str(), nullptr, 0, nullptr);
+        mciSendStringW(close.c_str(), nullptr, 0, nullptr);
+        m_musicLayerOpen = false;
+    }
+}
+
+void AudioManager::SetMusicLayerVolume(float volume)
+{
+    m_musicLayerVolume = std::clamp(volume, 0.0f, 1.0f);
+
+#if defined(PAWLINE_WITH_FMOD)
+    if (m_musicLayerChannel)
+    {
+        m_musicLayerChannel->setVolume(m_musicLayerVolume);
+    }
+#endif
+
+    if (m_musicLayerOpen)
+    {
+        const int mciVolume = static_cast<int>(std::round(m_musicLayerVolume * 1000.0f));
+        const std::wstring command = std::wstring(L"setaudio ") + kMusicLayerAlias + L" volume to " + std::to_wstring(mciVolume);
         mciSendStringW(command.c_str(), nullptr, 0, nullptr);
     }
 }
