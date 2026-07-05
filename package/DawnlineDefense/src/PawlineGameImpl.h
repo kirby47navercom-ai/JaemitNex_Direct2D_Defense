@@ -574,7 +574,7 @@ private:
 
     bool HasAnyProgressFile() const;
 
-    void BeginStoryCrawl(bool autoContinueToMenu);
+    void BeginStoryCrawl(bool autoContinueToMenu, GameScreen returnScreen = GameScreen::Title, bool returnToEscapeMenu = false);
 
     void FinishStoryCrawl();
 
@@ -987,6 +987,20 @@ private:
     D2D1_RECT_F EscapeSpeedDownButtonRect() const;
 
     D2D1_RECT_F EscapeSpeedUpButtonRect() const;
+
+    D2D1_RECT_F EscapeSaveButtonRect() const;
+
+    D2D1_RECT_F EscapeLoadButtonRect() const;
+
+    D2D1_RECT_F EscapeStoryButtonRect() const;
+
+    D2D1_RECT_F EscapeSfxSliderRect() const;
+
+    D2D1_RECT_F EscapeUiSliderRect() const;
+
+    D2D1_RECT_F EscapeBgmSliderRect() const;
+
+    D2D1_RECT_F EscapeAudioResetButtonRect() const;
 
     D2D1_RECT_F EscapeStageButtonRect() const;
 
@@ -1438,8 +1452,10 @@ private:
     bool m_showcaseMode = false;
     bool m_debugMode = false;
     bool m_storyAutoContinueToMenu = false;
+    bool m_storyReturnToEscapeMenu = false;
     bool m_introViewedThisSession = false;
     bool m_endingUnlocked = false;
+    GameScreen m_storyReturnScreen = GameScreen::Title;
     int m_bossPhaseBannerLevel = 0;
     std::wstring m_message;
     std::wstring m_autoSaveNotice;

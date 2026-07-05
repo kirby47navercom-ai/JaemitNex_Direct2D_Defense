@@ -310,30 +310,65 @@ D2D1_RECT_F PawlineGameImpl::RestartButtonRect() const
 
 D2D1_RECT_F PawlineGameImpl::EscapeResumeButtonRect() const
 {
-    return D2D1::RectF(492.0f, 238.0f, 788.0f, 292.0f);
+    return D2D1::RectF(332.0f, 194.0f, 608.0f, 244.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::EscapeShakeButtonRect() const
 {
-    return D2D1::RectF(492.0f, 318.0f, 788.0f, 372.0f);
+    return D2D1::RectF(332.0f, 258.0f, 608.0f, 308.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::EscapeSpeedDownButtonRect() const
 {
-    return D2D1::RectF(492.0f, 426.0f, 546.0f, 480.0f);
+    return D2D1::RectF(332.0f, 370.0f, 386.0f, 420.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::EscapeSpeedUpButtonRect() const
 {
-    return D2D1::RectF(734.0f, 426.0f, 788.0f, 480.0f);
+    return D2D1::RectF(554.0f, 370.0f, 608.0f, 420.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::EscapeSaveButtonRect() const
+{
+    return D2D1::RectF(332.0f, 456.0f, 464.0f, 504.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::EscapeLoadButtonRect() const
+{
+    return D2D1::RectF(476.0f, 456.0f, 608.0f, 504.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::EscapeStoryButtonRect() const
+{
+    return D2D1::RectF(332.0f, 520.0f, 608.0f, 570.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::EscapeSfxSliderRect() const
+{
+    return D2D1::RectF(682.0f, 246.0f, 940.0f, 266.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::EscapeUiSliderRect() const
+{
+    return D2D1::RectF(682.0f, 338.0f, 940.0f, 358.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::EscapeBgmSliderRect() const
+{
+    return D2D1::RectF(682.0f, 430.0f, 940.0f, 450.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::EscapeAudioResetButtonRect() const
+{
+    return D2D1::RectF(700.0f, 496.0f, 922.0f, 544.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::EscapeStageButtonRect() const
 {
-    return D2D1::RectF(492.0f, 524.0f, 788.0f, 578.0f);
+    return D2D1::RectF(332.0f, 590.0f, 608.0f, 640.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::EscapeQuitButtonRect() const
 {
-    return D2D1::RectF(492.0f, 596.0f, 788.0f, 650.0f);
+    return D2D1::RectF(332.0f, 654.0f, 608.0f, 704.0f);
 }

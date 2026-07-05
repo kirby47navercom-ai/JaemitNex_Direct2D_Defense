@@ -1330,12 +1330,15 @@ bool PawlineGameImpl::HasAnyProgressFile() const
     return false;
 }
 
-void PawlineGameImpl::BeginStoryCrawl(bool autoContinueToMenu)
+void PawlineGameImpl::BeginStoryCrawl(bool autoContinueToMenu, GameScreen returnScreen, bool returnToEscapeMenu)
 {
-    // 프롤로그 크롤은 타이틀에서 다시 볼 수 있고, 첫 시작 때는 끝난 뒤 메뉴로 이어진다.
+    // 프롤로그 크롤은 타이틀과 ESC 메뉴에서 다시 볼 수 있다.
+    // ESC에서 열면 끝난 뒤 원래 전투/메뉴 상태로 돌아가도록 복귀 지점을 저장한다.
     m_screen = GameScreen::StoryIntro;
     m_storyTimer = 0.0f;
     m_storyAutoContinueToMenu = autoContinueToMenu;
+    m_storyReturnScreen = autoContinueToMenu ? GameScreen::Menu : returnScreen;
+    m_storyReturnToEscapeMenu = returnToEscapeMenu;
     m_introViewedThisSession = true;
     m_escapeMenuOpen = false;
     m_paused = false;
@@ -1354,7 +1357,21 @@ void PawlineGameImpl::FinishStoryCrawl()
         return;
     }
 
-    m_screen = GameScreen::Title;
+    m_screen = m_storyReturnScreen;
+    if (m_storyReturnToEscapeMenu)
+    {
+        m_escapeMenuOpen = true;
+        if (m_screen == GameScreen::Playing)
+        {
+            m_paused = true;
+        }
+    }
+    else if (m_screen == GameScreen::Playing)
+    {
+        m_paused = m_pauseBeforeEscape;
+    }
+    m_storyReturnScreen = GameScreen::Title;
+    m_storyReturnToEscapeMenu = false;
 }
 
 void PawlineGameImpl::BeginEndingScene()

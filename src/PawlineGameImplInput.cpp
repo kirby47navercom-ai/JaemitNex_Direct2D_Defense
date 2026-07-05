@@ -56,6 +56,13 @@ bool PawlineGameImpl::IsInteractivePoint(Vec2 pos) const
                Contains(EscapeShakeButtonRect(), pos) ||
                Contains(EscapeSpeedDownButtonRect(), pos) ||
                Contains(EscapeSpeedUpButtonRect(), pos) ||
+               Contains(EscapeSaveButtonRect(), pos) ||
+               Contains(EscapeLoadButtonRect(), pos) ||
+               Contains(EscapeStoryButtonRect(), pos) ||
+               Contains(EscapeSfxSliderRect(), pos) ||
+               Contains(EscapeUiSliderRect(), pos) ||
+               Contains(EscapeBgmSliderRect(), pos) ||
+               Contains(EscapeAudioResetButtonRect(), pos) ||
                Contains(EscapeStageButtonRect(), pos) ||
                Contains(EscapeQuitButtonRect(), pos);
     }
@@ -196,6 +203,9 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
 {
     // Every screen owns its click handling. The shared rectangle helpers live in
     // PawlineGameImplLayout.cpp, so render and input stay pixel-aligned.
+    AddUiPulse(pos, D2D1::ColorF(0x65B8FF, 0.40f), 24.0f, 0.20f);
+    PlaySfx(SfxKind::Ui, 0.018f);
+
     if (IsInteractivePoint(pos))
     {
         auto centerOf = [](D2D1_RECT_F rect) {
@@ -263,7 +273,6 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
         {
             AddUiPulse(pos, D2D1::ColorF(0x65B8FF, 0.46f), 26.0f, 0.22f);
         }
-        PlaySfx(SfxKind::Ui, 0.025f);
     }
     if (m_escapeMenuOpen)
     {
@@ -304,7 +313,10 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
     }
     if (m_screen == GameScreen::StoryIntro)
     {
-        FinishStoryCrawl();
+        if (Contains(StorySkipButtonRect(), pos))
+        {
+            FinishStoryCrawl();
+        }
         return;
     }
     if (m_screen == GameScreen::Ending)
@@ -637,6 +649,11 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
 
 void PawlineGameImpl::OnEscapeMenuClick(Vec2 pos)
 {
+    const auto sliderValue = [](D2D1_RECT_F rect, Vec2 point) {
+        const float width = std::max(1.0f, rect.right - rect.left);
+        return Clamp01((point.x - rect.left) / width);
+    };
+
     if (Contains(EscapeResumeButtonRect(), pos))
     {
         CloseEscapeMenu();
@@ -655,6 +672,48 @@ void PawlineGameImpl::OnEscapeMenuClick(Vec2 pos)
     if (Contains(EscapeSpeedUpButtonRect(), pos))
     {
         AdjustEscapeMenuSpeed(0.5f);
+        return;
+    }
+    if (Contains(EscapeSaveButtonRect(), pos))
+    {
+        SaveProgress();
+        SetMessage(SaveSlotLabel() + L"에 저장했어.");
+        return;
+    }
+    if (Contains(EscapeLoadButtonRect(), pos))
+    {
+        LoadProgress();
+        UpdateViewMetrics();
+        SetMessage(SaveSlotLabel() + L"에서 불러왔어.");
+        return;
+    }
+    if (Contains(EscapeStoryButtonRect(), pos))
+    {
+        BeginStoryCrawl(false, m_screen, true);
+        return;
+    }
+    if (Contains(EscapeSfxSliderRect(), pos))
+    {
+        m_sfxVolume = sliderValue(EscapeSfxSliderRect(), pos);
+        m_soundEnabled = m_sfxVolume > 0.001f || m_uiVolume > 0.001f;
+        m_audio.SetVolume(m_sfxVolume);
+        return;
+    }
+    if (Contains(EscapeUiSliderRect(), pos))
+    {
+        m_uiVolume = sliderValue(EscapeUiSliderRect(), pos);
+        m_soundEnabled = m_sfxVolume > 0.001f || m_uiVolume > 0.001f;
+        return;
+    }
+    if (Contains(EscapeBgmSliderRect(), pos))
+    {
+        m_bgmVolume = sliderValue(EscapeBgmSliderRect(), pos);
+        SyncMusicVolume();
+        return;
+    }
+    if (Contains(EscapeAudioResetButtonRect(), pos))
+    {
+        ResetAudioVolumes();
         return;
     }
     if (Contains(EscapeStageButtonRect(), pos))
@@ -782,6 +841,33 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         else if (key == VK_RIGHT || key == VK_OEM_PLUS || key == VK_OEM_6)
         {
             AdjustEscapeMenuSpeed(0.5f);
+        }
+        else if (key == 'S')
+        {
+            SaveProgress();
+            SetMessage(SaveSlotLabel() + L"에 저장했어.");
+        }
+        else if (key == 'L')
+        {
+            LoadProgress();
+            UpdateViewMetrics();
+            SetMessage(SaveSlotLabel() + L"에서 불러왔어.");
+        }
+        else if (key == 'C')
+        {
+            BeginStoryCrawl(false, m_screen, true);
+        }
+        else if (key == 'N')
+        {
+            AdjustSfxVolume(0.10f);
+        }
+        else if (key == 'U')
+        {
+            AdjustUiVolume(0.10f);
+        }
+        else if (key == 'B')
+        {
+            AdjustBgmVolume(0.10f);
         }
         else if (key == 'M')
         {

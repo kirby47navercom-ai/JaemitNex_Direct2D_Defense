@@ -1300,7 +1300,7 @@ void PawlineGameImpl::DrawOptions()
 
     drawSection(D2D1::RectF(724.0f, 238.0f, 1044.0f, 604.0f), L"AUDIO", D2D1::ColorF(0xF6FF83));
     drawSlider(L"효과음 볼륨", OptionsSfxSliderRect(), m_sfxVolume, ToWideInt(static_cast<int>(std::round(m_sfxVolume * 100.0f))) + L"%", D2D1::ColorF(0x65B8FF));
-    drawSlider(L"UI음 볼륨", OptionsUiSliderRect(), m_uiVolume, ToWideInt(static_cast<int>(std::round(m_uiVolume * 100.0f))) + L"%", D2D1::ColorF(0xC8B7FF));
+    drawSlider(L"UI 볼륨", OptionsUiSliderRect(), m_uiVolume, ToWideInt(static_cast<int>(std::round(m_uiVolume * 100.0f))) + L"%", D2D1::ColorF(0xC8B7FF));
     drawSlider(L"브금 볼륨", OptionsBgmSliderRect(), m_bgmVolume, ToWideInt(static_cast<int>(std::round(m_bgmVolume * 100.0f))) + L"%", D2D1::ColorF(0xB8FF89));
     DrawButton(OptionsAudioResetButtonRect(), L"AUDIO RESET", true, D2D1::ColorF(0x283B27));
 
@@ -4844,24 +4844,48 @@ void PawlineGameImpl::DrawSceneTransition()
 void PawlineGameImpl::DrawEscapeMenuClean()
 {
     FillViewport(D2D1::ColorF(0x000000, 0.68f));
-    const D2D1_RECT_F panel = D2D1::RectF(412.0f, 156.0f, 868.0f, 684.0f);
+    const D2D1_RECT_F panel = D2D1::RectF(286.0f, 104.0f, 994.0f, 734.0f);
     FillRoundRect(panel, 10.0f, D2D1::ColorF(0x0A121A, 0.97f));
     StrokeRoundRect(panel, 10.0f, D2D1::ColorF(0x65B8FF), 1.8f);
 
     DrawString(L"메뉴", D2D1::RectF(panel.left + 34.0f, panel.top + 28.0f, panel.right - 34.0f, panel.top + 80.0f), m_titleFormat, D2D1::ColorF(0xF3FBFF));
     DrawString(L"언제든 계속하거나 빠져나갈 수 있어.", D2D1::RectF(panel.left + 34.0f, panel.top + 82.0f, panel.right - 34.0f, panel.top + 110.0f), m_centerFormat, D2D1::ColorF(0xBFD1DB));
 
+    const auto drawEscapeSlider = [&](const std::wstring& label, D2D1_RECT_F bar, float normalized, D2D1_COLOR_F accent) {
+        const float value = Clamp01(normalized);
+        const bool hover = Contains(bar, m_mouse);
+        DrawString(label, D2D1::RectF(bar.left, bar.top - 34.0f, bar.right - 92.0f, bar.top - 8.0f), m_smallFormat, D2D1::ColorF(0xEAF7FF));
+        DrawString(ToWideInt(static_cast<int>(std::round(value * 100.0f))) + L"%", D2D1::RectF(bar.right - 76.0f, bar.top - 34.0f, bar.right + 10.0f, bar.top - 8.0f), m_smallFormat, D2D1::ColorF(0xF6FF83));
+        FillRoundRect(bar, 9.0f, D2D1::ColorF(0x02080D, 0.92f));
+        const float knobX = Lerp(bar.left, bar.right, value);
+        FillRoundRect(D2D1::RectF(bar.left, bar.top, knobX, bar.bottom), 9.0f, D2D1::ColorF(accent.r, accent.g, accent.b, 0.72f));
+        StrokeRoundRect(bar, 9.0f, D2D1::ColorF(accent.r, accent.g, accent.b, hover ? 0.92f : 0.54f), hover ? 2.0f : 1.2f);
+        FillEllipse({knobX, (bar.top + bar.bottom) * 0.5f}, hover ? 11.0f : 9.0f, hover ? 11.0f : 9.0f, D2D1::ColorF(0xF3FBFF, 0.96f));
+        StrokeEllipse({knobX, (bar.top + bar.bottom) * 0.5f}, hover ? 11.0f : 9.0f, hover ? 11.0f : 9.0f, accent, 2.0f);
+    };
+
+    DrawPixelText(L"COMBAT", {332.0f, 154.0f}, 2.1f, D2D1::ColorF(0x65B8FF));
+    DrawPixelText(L"AUDIO", {682.0f, 154.0f}, 2.1f, D2D1::ColorF(0xF6FF83));
+
     DrawButton(EscapeResumeButtonRect(), L"RESUME", true, D2D1::ColorF(0x173C4B));
     DrawButton(EscapeShakeButtonRect(), m_hitShakeEnabled ? L"SHAKE ON" : L"SHAKE OFF", true, m_hitShakeEnabled ? D2D1::ColorF(0x173C4B) : D2D1::ColorF(0x302735));
 
     const float speed = m_screen == GameScreen::Playing ? m_gameSpeed : m_defaultGameSpeed;
-    DrawString(L"게임 속도", D2D1::RectF(492.0f, 392.0f, 788.0f, 420.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
+    DrawString(L"게임 속도", D2D1::RectF(332.0f, 332.0f, 608.0f, 358.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
     DrawButton(EscapeSpeedDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));
-    DrawString(L"x" + ToWideFloat(speed), D2D1::RectF(552.0f, 438.0f, 728.0f, 470.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
+    DrawString(L"x" + ToWideFloat(speed), D2D1::RectF(392.0f, 382.0f, 548.0f, 412.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
     DrawButton(EscapeSpeedUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
 
+    DrawButton(EscapeSaveButtonRect(), L"SAVE", true, D2D1::ColorF(0x283B27));
+    DrawButton(EscapeLoadButtonRect(), L"LOAD", true, D2D1::ColorF(0x22323F));
+    DrawButton(EscapeStoryButtonRect(), L"STORY", true, D2D1::ColorF(0x2D3722));
     DrawButton(EscapeStageButtonRect(), L"STAGE SELECT", true, D2D1::ColorF(0x283B27));
     DrawButton(EscapeQuitButtonRect(), L"QUIT GAME", true, D2D1::ColorF(0x332337));
+
+    drawEscapeSlider(L"효과음 볼륨", EscapeSfxSliderRect(), m_sfxVolume, D2D1::ColorF(0x65B8FF));
+    drawEscapeSlider(L"UI 볼륨", EscapeUiSliderRect(), m_uiVolume, D2D1::ColorF(0xC8B7FF));
+    drawEscapeSlider(L"브금 볼륨", EscapeBgmSliderRect(), m_bgmVolume, D2D1::ColorF(0xB8FF89));
+    DrawButton(EscapeAudioResetButtonRect(), L"AUDIO RESET", true, D2D1::ColorF(0x283B27));
 }
 
 void PawlineGameImpl::DrawResultScreen()
