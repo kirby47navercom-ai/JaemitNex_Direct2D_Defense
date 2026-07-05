@@ -53,8 +53,7 @@ def build_html() -> str:
     """제출 폼에 올릴 작업물 리포트 HTML을 만든다."""
     font_dir = ROOT / "assets" / "fonts"
     cover = ROOT / "package" / "SpaceDefanse" / "assets" / "backgrounds" / "stage_09_space_hd.jpg"
-    prologue = ROOT / "package" / "SpaceDefanse" / "assets" / "cutins" / "prologue_story_art.jpg"
-    ending = ROOT / "package" / "SpaceDefanse" / "assets" / "cutins" / "ending_solar_route.jpg"
+    ingame = ROOT / "package" / "report_ingame_combat.png"
 
     feature_rows = [
         ["전투", "긴 전장, 카메라 스크롤, 자동 타깃팅, 근접/원거리 공격, 투사체, 기지 파괴"],
@@ -89,10 +88,10 @@ def build_html() -> str:
         ["AudioManager", "FMOD가 있으면 위치음향, 없으면 WinMM 대체 재생"],
     ]
     ai_rows = [
-        ["OpenAI 기반 코딩 AI", "Direct2D/Win32 구조 설계, C++ 구현 보조, 파일 분리, 델타타임/전투/VFX/입력 코드 작성 보조", "실행 가능성, 과제 범위, 최종 기능 우선순위 결정"],
-        ["OpenAI 기반 코딩 AI", "UI 겹침, 화면 잘림, 보스 밸런스, 효과음, 저장, README 같은 QA와 문서 정리 보조", "실제 화면 확인 후 수정 방향 선택"],
-        ["AI 기획 보조", "행성별 스테이지 기믹, 유닛/적 역할, 상점/성장 구조, 시너지와 난이도 곡선 아이디어 정리", "기능을 과제 기간 안에 구현 가능한 크기로 줄임"],
-        ["AI 문서 보조", "작업 과정, AI 사용 내역, 어려웠던 점과 해결 과정 초안 정리", "최종 표현, 라이선스/기술 사실 검증"],
+        ["기획 보조", "라인 디펜스 구조, 행성 스테이지, 성장 요소, 보스전 아이디어를 빠르게 비교하고 정리하는 데 사용", "최종 장르 방향, 기능 우선순위, 과제 기간 안에 구현할 범위는 직접 결정"],
+        ["코딩 보조", "Direct2D/Win32 코드 초안, 델타타임 루프, 파일 분리, 전투/VFX/입력 처리 구현을 보조", "실행해 보며 오류를 고치고, UI 위치와 전투 감각을 직접 확인하며 수정"],
+        ["QA 보조", "글자 겹침, 화면 잘림, 보스 체력바와 전투 로그 충돌, 효과음 크기 같은 문제를 찾고 수정 방향을 제안받음", "실제 화면을 보고 무엇을 남기고 무엇을 빼야 하는지 판단"],
+        ["문서 보조", "README, 코드 구조 설명, AI 사용 기록, 리포트 초안 정리에 사용", "최종 표현, 사람의 작업 비중, 라이선스/기술 사실은 직접 검증"],
     ]
     problem_rows = [
         ["특정 게임과 너무 비슷해지는 문제", "장르 구조만 참고하고 캐릭터명, 그래픽, 수치, 스테이지 규칙은 모두 오리지널로 재설계했습니다."],
@@ -268,6 +267,9 @@ tbody tr:nth-child(odd) td {{ background: #ffffff; }}
   gap: 5mm;
   margin: 5mm 0;
 }}
+.figure-wide {{
+  margin: 5mm 0;
+}}
 .figure {{
   border: 1px solid #c7d8e6;
   border-radius: 4mm;
@@ -279,6 +281,9 @@ tbody tr:nth-child(odd) td {{ background: #ffffff; }}
   display: block;
   aspect-ratio: 16 / 9;
   object-fit: cover;
+}}
+.figure-wide img {{
+  aspect-ratio: 16 / 10;
 }}
 .caption {{
   padding: 2.2mm 3mm;
@@ -325,17 +330,10 @@ code {{
   {p("Space Defanse는 수성에서 태양까지 이어지는 전선을 배경으로 한 탑뷰 라인 디펜스 게임입니다. 플레이어는 14종 유닛 중 5종을 편성하고, 전투 중 에너지를 소비해 유닛을 소환하며, 월렛과 문빔 캐논을 활용해 적 기지를 밀어냅니다. 유명 유닛 소환형 디펜스의 장르 구조는 참고했지만, 캐릭터명, 그래픽, 밸런스, 스테이지 기믹은 모두 새로 구성했습니다.")}
   {table(["구분", "구현 내용"], feature_rows)}
   <div class="callout">최종 패키지는 <code>package/SpaceDefanse/SpaceDefanse.exe</code>로 바로 실행할 수 있고, 제출용 압축 파일은 <code>package/SpaceDefanse.zip</code>입니다. 고화질 우주 배경, 컷신, BGM, 효과음, VFX 시트를 포함하면서도 200MB 제출 제한 안에 들어가도록 관리했습니다.</div>
-  <div class="grid-2">
-    <div class="figure"><img src="{uri(prologue)}" /><div class="caption">프롤로그/스토리 분위기</div></div>
-    <div class="figure"><img src="{uri(ending)}" /><div class="caption">태양 루트 엔딩 분위기</div></div>
+  <div class="figure figure-wide">
+    <img src="{uri(ingame)}" />
+    <div class="caption">최신 빌드에서 직접 캡처한 인게임 전투 화면 - 유닛 카드, 월렛, 카메라 HUD, 전투 로그, 데모 모드 표시</div>
   </div>
-  <h3>핵심 플레이</h3>
-  {bullets([
-      "유닛 카드 쿨타임과 에너지 비용을 관리하며 전선을 밀어냅니다.",
-      "수성, 금성, 지구, 화성, 목성, 토성, 천왕성, 해왕성, 명왕성, 태양으로 이어지는 10개 스테이지를 순차 해금합니다.",
-      "스테이지 클리어 보상 LUMEN으로 잠긴 유닛을 구매하거나 보유 유닛을 Lv.5까지 강화합니다.",
-      "보스는 한 번 등장하고, 체력 구간에 따라 페이즈와 패턴이 강화됩니다.",
-  ])}
 </section>
 
 <section class="page">
@@ -381,13 +379,19 @@ code {{
 <section class="page">
   <div class="section-title"><h2>5. 사용한 AI와 용도</h2></div>
   {table(["사용 AI", "사용 용도", "사람이 판단한 부분"], ai_rows)}
-  <div class="callout">AI는 단순히 코드를 대신 작성하는 도구가 아니라, 구현 범위 조절, 디버깅, 문서화, 제출물 정리까지 함께 검토하는 제작 보조자로 사용했습니다. 다만 최종 기능 선택, 외부 에셋 라이선스 확인, 제출 안정성 판단은 사람이 직접 기준을 세워 결정했습니다.</div>
-  <h3>AI 활용 범위</h3>
+  <div class="callout">AI는 제작 속도를 높이는 보조 도구로 사용했습니다. 어떤 기능을 넣을지, 어떤 기능을 줄일지, 실제 화면에서 무엇이 어색한지, 제출 안정성을 위해 어느 정도에서 멈출지는 직접 판단했습니다.</div>
+  <h3>직접 맡은 작업</h3>
   {bullets([
-      "Direct2D 기반 Win32 게임 구조와 C++ 구현 보조",
-      "유닛/적/스테이지 밸런스 초안과 행성별 기믹 아이디어 정리",
-      "UI 겹침, 버튼 판정, 화면 안전 여백, 보스 체력바 같은 QA 항목 탐색",
-      "README, 코드 구조 설명, AI 사용 기록, 제출 리포트 초안 작성 보조",
+      "게임 방향과 기능 우선순위를 정하고, 구현 가능한 범위로 계속 조정했습니다.",
+      "빌드된 게임을 직접 실행하며 UI 겹침, 화면 잘림, 전투 로그와 보스 체력바 충돌 같은 문제를 확인했습니다.",
+      "유닛명, 스테이지명, 제출 파일명, README 내용이 서로 맞는지 반복해서 정리했습니다.",
+      "외부 에셋 라이선스, 패키지 용량, 실행 가능 여부, 제출 폼 요구사항을 직접 확인했습니다.",
+  ])}
+  <h3>AI가 도와준 작업</h3>
+  {bullets([
+      "C++/Direct2D 코드 초안 작성과 오류 수정 방향 제안",
+      "행성별 기믹, 보스 패턴, 유닛 역할, 밸런스 표 정리",
+      "문서 초안 작성, QA 체크리스트 정리, 코드 구조 설명 보조",
   ])}
 </section>
 
