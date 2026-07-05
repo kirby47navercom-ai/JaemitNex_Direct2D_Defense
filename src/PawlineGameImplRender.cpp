@@ -4481,39 +4481,13 @@ void PawlineGameImpl::DrawBattleLogo()
     FillEllipse({paw.x, paw.y - 15.0f}, 4.8f, 5.8f, D2D1::ColorF(0xF3FBFF));
     FillEllipse({paw.x + 18.0f, paw.y - 10.0f}, 4.8f, 5.8f, D2D1::ColorF(0xF3FBFF));
 
-    auto glyph = [](wchar_t c) {
-        switch (c)
-        {
-        case L'A':
-            return std::array<std::wstring, 7>{L"01110", L"10001", L"10001", L"11111", L"10001", L"10001", L"10001"};
-        case L'D':
-            return std::array<std::wstring, 7>{L"11110", L"10001", L"10001", L"10001", L"10001", L"10001", L"11110"};
-        case L'E':
-            return std::array<std::wstring, 7>{L"11111", L"10000", L"10000", L"11110", L"10000", L"10000", L"11111"};
-        case L'F':
-            return std::array<std::wstring, 7>{L"11111", L"10000", L"10000", L"11110", L"10000", L"10000", L"10000"};
-        case L'I':
-            return std::array<std::wstring, 7>{L"11111", L"00100", L"00100", L"00100", L"00100", L"00100", L"11111"};
-        case L'L':
-            return std::array<std::wstring, 7>{L"10000", L"10000", L"10000", L"10000", L"10000", L"10000", L"11111"};
-        case L'N':
-            return std::array<std::wstring, 7>{L"10001", L"11001", L"10101", L"10011", L"10001", L"10001", L"10001"};
-        case L'P':
-            return std::array<std::wstring, 7>{L"11110", L"10001", L"10001", L"11110", L"10000", L"10000", L"10000"};
-        case L'S':
-            return std::array<std::wstring, 7>{L"01111", L"10000", L"10000", L"01110", L"00001", L"00001", L"11110"};
-        case L'W':
-            return std::array<std::wstring, 7>{L"10001", L"10001", L"10001", L"10101", L"10101", L"10101", L"01010"};
-        default:
-            return std::array<std::wstring, 7>{L"00000", L"00000", L"00000", L"00000", L"00000", L"00000", L"00000"};
-        }
-    };
-
     auto drawWord = [&](const std::wstring& word, Vec2 origin, float cell, D2D1_COLOR_F color) {
         float cursor = origin.x;
         for (wchar_t c : word)
         {
-            const auto rows = glyph(c);
+            // 전투 로고도 공용 픽셀 글리프를 사용한다.
+            // 별도 글리프 표를 두면 C/G처럼 특정 글자가 빠져 로고가 비어 보일 수 있다.
+            const auto rows = PixelGlyph(c);
             for (int r = 0; r < 7; ++r)
             {
                 for (int col = 0; col < 5; ++col)
