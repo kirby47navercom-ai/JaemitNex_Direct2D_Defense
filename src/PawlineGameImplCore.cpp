@@ -69,6 +69,7 @@ HRESULT PawlineGameImpl::Initialize()
     LoadProgress();
     ResetToTitle();
     m_audio.Initialize();
+    StartBackgroundMusic();
 
     const wchar_t className[] = L"PawlineDefenseWindow";
     WNDCLASSEXW wc = {};
@@ -373,6 +374,20 @@ std::wstring PawlineGameImpl::AssetPath(const std::wstring& relativePath) const
         return direct;
     }
     return base + L"..\\..\\" + relativePath;
+}
+
+void PawlineGameImpl::StartBackgroundMusic()
+{
+    // 효과음 볼륨 슬라이더를 전체 오디오 볼륨처럼 쓰되, BGM은 전투음을 덮지 않게 낮게 둔다.
+    const float musicVolume = m_soundEnabled ? m_sfxVolume * 0.34f : 0.0f;
+    m_audio.PlayMusic(AssetPath(L"assets\\music\\outer_space_loop.mp3"), musicVolume, true);
+}
+
+void PawlineGameImpl::SyncMusicVolume()
+{
+    // 옵션에서 볼륨을 바꾸면 이미 재생 중인 배경음악에도 즉시 반영한다.
+    const float musicVolume = m_soundEnabled ? m_sfxVolume * 0.34f : 0.0f;
+    m_audio.SetMusicVolume(musicVolume);
 }
 
 void PawlineGameImpl::PlaySfx(SfxKind kind, float minGapSeconds)
@@ -739,6 +754,7 @@ void PawlineGameImpl::AdjustSfxVolume(float delta)
     m_sfxVolume = std::clamp(m_sfxVolume + delta, 0.0f, 1.0f);
     m_soundEnabled = m_sfxVolume > 0.001f;
     m_audio.SetVolume(m_sfxVolume);
+    SyncMusicVolume();
     PlaySfx(SfxKind::Ui, 0.02f);
 }
 
@@ -1212,6 +1228,7 @@ void PawlineGameImpl::LoadProgress(int slot)
                 m_sfxVolume = std::clamp(savedSfxVolume, 0.0f, 1.0f);
                 m_soundEnabled = m_sfxVolume > 0.001f;
                 m_audio.SetVolume(m_sfxVolume);
+                SyncMusicVolume();
             }
             else
             {

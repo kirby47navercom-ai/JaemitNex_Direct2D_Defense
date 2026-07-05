@@ -17,6 +17,7 @@ namespace framework
 namespace
 {
 constexpr int kFmodChannelBudget = 256;
+constexpr wchar_t kMusicAlias[] = L"DawnlineBgm";
 
 std::string ToUtf8(const std::wstring& text)
 {
@@ -67,6 +68,8 @@ bool AudioManager::Initialize()
 
 void AudioManager::Shutdown()
 {
+    StopMusic();
+
 #if defined(PAWLINE_WITH_FMOD)
     for (auto& [path, sound] : m_fmodSounds)
     {
@@ -111,6 +114,100 @@ void AudioManager::SetVolume(float volume)
 float AudioManager::Volume() const
 {
     return m_volume;
+}
+
+bool AudioManager::PlayMusic(const std::wstring& absolutePath, float volume, bool loop)
+{
+    StopMusic();
+    SetMusicVolume(volume);
+    if (absolutePath.empty())
+    {
+        return false;
+    }
+
+#if defined(PAWLINE_WITH_FMOD)
+    if (m_fmodSystem)
+    {
+        const std::string utf8Path = ToUtf8(absolutePath);
+        const FMOD_MODE mode = FMOD_2D | FMOD_CREATESTREAM | (loop ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF);
+        if (m_fmodSystem->createSound(utf8Path.c_str(), mode, nullptr, &m_musicSound) != FMOD_OK || !m_musicSound)
+        {
+            return false;
+        }
+
+        if (m_fmodSystem->playSound(m_musicSound, nullptr, false, &m_musicChannel) != FMOD_OK)
+        {
+            m_musicSound->release();
+            m_musicSound = nullptr;
+            m_musicChannel = nullptr;
+            return false;
+        }
+        if (m_musicChannel)
+        {
+            m_musicChannel->setVolume(m_musicVolume);
+        }
+        return true;
+    }
+#endif
+
+    const std::wstring open = L"open \"" + absolutePath + L"\" type mpegvideo alias " + kMusicAlias;
+    if (mciSendStringW(open.c_str(), nullptr, 0, nullptr) != 0)
+    {
+        const std::wstring retry = L"open \"" + absolutePath + L"\" alias " + kMusicAlias;
+        if (mciSendStringW(retry.c_str(), nullptr, 0, nullptr) != 0)
+        {
+            return false;
+        }
+    }
+
+    m_musicOpen = true;
+    SetMusicVolume(m_musicVolume);
+    const std::wstring play = std::wstring(L"play ") + kMusicAlias + (loop ? L" repeat" : L"");
+    return mciSendStringW(play.c_str(), nullptr, 0, nullptr) == 0;
+}
+
+void AudioManager::StopMusic()
+{
+#if defined(PAWLINE_WITH_FMOD)
+    if (m_musicChannel)
+    {
+        m_musicChannel->stop();
+        m_musicChannel = nullptr;
+    }
+    if (m_musicSound)
+    {
+        m_musicSound->release();
+        m_musicSound = nullptr;
+    }
+#endif
+
+    if (m_musicOpen)
+    {
+        const std::wstring stop = std::wstring(L"stop ") + kMusicAlias;
+        const std::wstring close = std::wstring(L"close ") + kMusicAlias;
+        mciSendStringW(stop.c_str(), nullptr, 0, nullptr);
+        mciSendStringW(close.c_str(), nullptr, 0, nullptr);
+        m_musicOpen = false;
+    }
+}
+
+void AudioManager::SetMusicVolume(float volume)
+{
+    m_musicVolume = std::clamp(volume, 0.0f, 1.0f);
+
+#if defined(PAWLINE_WITH_FMOD)
+    if (m_musicChannel)
+    {
+        m_musicChannel->setVolume(m_musicVolume);
+    }
+#endif
+
+    if (m_musicOpen)
+    {
+        const int mciVolume = static_cast<int>(std::round(m_musicVolume * 1000.0f));
+        const std::wstring command = std::wstring(L"setaudio ") + kMusicAlias + L" volume to " + std::to_wstring(mciVolume);
+        mciSendStringW(command.c_str(), nullptr, 0, nullptr);
+    }
 }
 
 float AudioManager::EffectGainFor(const std::wstring& absolutePath) const

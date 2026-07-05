@@ -1137,7 +1137,7 @@ void PawlineGameImpl::DrawOptions()
     DrawButton(OptionsFlashButtonRect(), m_reduceFlashes ? L"FLASH LESS" : L"FLASH FULL", true, m_reduceFlashes ? D2D1::ColorF(0x283B27) : D2D1::ColorF(0x302735));
     DrawString(L"F", D2D1::RectF(OptionsFlashButtonRect().right + 16.0f, OptionsFlashButtonRect().top + 12.0f, OptionsFlashButtonRect().right + 56.0f, OptionsFlashButtonRect().bottom), m_centerFormat, D2D1::ColorF(0x8EA9B8));
 
-    DrawString(L"효과음 볼륨", D2D1::RectF(830.0f, 306.0f, 1130.0f, 330.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
+    DrawString(L"오디오 볼륨", D2D1::RectF(830.0f, 306.0f, 1130.0f, 330.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
     DrawButton(OptionsSfxDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));
     DrawString(ToWideInt(static_cast<int>(std::round(m_sfxVolume * 100.0f))) + L"%", D2D1::RectF(892.0f, 348.0f, 1068.0f, 378.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
     DrawButton(OptionsSfxUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
@@ -1372,18 +1372,18 @@ void PawlineGameImpl::DrawBriefing()
         const UnitStats stats = PlayerStats(unit);
         const bool hover = Contains(rect, m_mouse);
         DrawCartoonPanel(rect, hover ? D2D1::ColorF(0x123044, 0.99f) : D2D1::ColorF(0x06131C, 0.99f), stats.accent, hover);
-        DrawPlayerIcon(unit, {rect.left + 48.0f, rect.top + 38.0f}, 0.72f, true);
-        FillRoundRect(D2D1::RectF(rect.right - 55.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 28.0f),
+        DrawPlayerIcon(unit, {rect.left + 48.0f, rect.top + 42.0f}, 0.66f, true);
+        FillRoundRect(D2D1::RectF(rect.right - 53.0f, rect.top + 8.0f, rect.right - 8.0f, rect.top + 29.0f),
                       5.0f,
                       D2D1::ColorF(UnitRoleColor(unit, stats).r, UnitRoleColor(unit, stats).g, UnitRoleColor(unit, stats).b, 0.22f));
         DrawPixelTextCentered(UnitRoleLabel(unit, stats),
-                              D2D1::RectF(rect.right - 54.0f, rect.top + 7.0f, rect.right - 8.0f, rect.top + 28.0f),
-                              0.78f,
+                              D2D1::RectF(rect.right - 52.0f, rect.top + 8.0f, rect.right - 8.0f, rect.top + 29.0f),
+                              0.72f,
                               UnitRoleColor(unit, stats),
                               0.96f);
-        DrawPixelTextCentered(stats.name, D2D1::RectF(rect.left + 6.0f, rect.top + 70.0f, rect.right - 6.0f, rect.top + 94.0f), 1.36f, D2D1::ColorF(0xFFFFFF), 1.0f);
-        FillRoundRect(D2D1::RectF(rect.left + 13.0f, rect.bottom - 33.0f, rect.right - 13.0f, rect.bottom - 10.0f), 6.0f, D2D1::ColorF(0x061019, hover ? 0.82f : 0.70f));
-        DrawPixelTextCentered(L"KEY " + ToWideInt(i + 1), D2D1::RectF(rect.left + 10.0f, rect.bottom - 31.0f, rect.right - 10.0f, rect.bottom - 12.0f), 1.50f, D2D1::ColorF(0xF3FBFF), 1.0f);
+        DrawPixelTextCentered(stats.name, D2D1::RectF(rect.left + 6.0f, rect.top + 72.0f, rect.right - 6.0f, rect.top + 94.0f), 1.18f, D2D1::ColorF(0xFFFFFF), 1.0f);
+        FillRoundRect(D2D1::RectF(rect.left + 14.0f, rect.bottom - 26.0f, rect.right - 14.0f, rect.bottom - 5.0f), 6.0f, D2D1::ColorF(0x061019, hover ? 0.84f : 0.72f));
+        DrawPixelTextCentered(L"KEY " + ToWideInt(i + 1), D2D1::RectF(rect.left + 12.0f, rect.bottom - 23.0f, rect.right - 12.0f, rect.bottom - 7.0f), 1.08f, D2D1::ColorF(0xF3FBFF), 1.0f);
     }
     FillRoundRect(D2D1::RectF(604.0f, 366.0f, 1160.0f, 424.0f), 6.0f, D2D1::ColorF(0x0B1D28, 0.90f));
     DrawString(L"적 기지 체력  " + ToWideInt(static_cast<int>(stage.enemyHp)), D2D1::RectF(622.0f, 374.0f, 836.0f, 400.0f), m_smallFormat, D2D1::ColorF(0xFFB6C2));

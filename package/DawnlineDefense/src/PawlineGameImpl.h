@@ -484,6 +484,10 @@ private:
 
     std::wstring AssetPath(const std::wstring& relativePath) const;
 
+    void StartBackgroundMusic();
+
+    void SyncMusicVolume();
+
     void PlaySfx(SfxKind kind, float minGapSeconds = 0.05f);
 
     void PlaySfxFile(const std::wstring& relativeFileName, SfxKind throttleKind, float minGapSeconds = 0.05f);

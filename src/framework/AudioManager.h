@@ -29,6 +29,10 @@ public:
     bool PlayEffect(const std::wstring& absolutePath) const;
     bool PlayEffectAt(const std::wstring& absolutePath, float worldX, float volumeScale = 1.0f) const;
 
+    bool PlayMusic(const std::wstring& absolutePath, float volume, bool loop = true);
+    void StopMusic();
+    void SetMusicVolume(float volume);
+
     void SetListener(float worldX, float audibleWidth);
 
 private:
@@ -41,6 +45,8 @@ private:
     float m_audibleWidth = 1280.0f;
     // WAV 파일마다 다른 녹음 레벨을 한 번 계산해서 재생 볼륨 보정에 사용한다.
     mutable std::unordered_map<std::wstring, float> m_effectGainCache;
+    float m_musicVolume = 0.32f;
+    bool m_musicOpen = false;
 
 #if defined(PAWLINE_WITH_FMOD)
     // 같은 효과음을 반복 재생할 때 매번 디스크에서 읽지 않도록 FMOD Sound를 캐시한다.
@@ -49,6 +55,8 @@ private:
     // FMOD Core API 시스템과 로드된 사운드 캐시다.
     mutable FMOD::System* m_fmodSystem = nullptr;
     mutable std::unordered_map<std::wstring, FMOD::Sound*> m_fmodSounds;
+    FMOD::Sound* m_musicSound = nullptr;
+    FMOD::Channel* m_musicChannel = nullptr;
 #endif
 };
 }

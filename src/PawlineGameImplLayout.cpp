@@ -177,7 +177,7 @@ D2D1_RECT_F PawlineGameImpl::BriefingDifficultyRect(int index) const
 D2D1_RECT_F PawlineGameImpl::BriefingLoadoutSlotRect(int index) const
 {
     const float x = 604.0f + static_cast<float>(index) * 112.0f;
-    return D2D1::RectF(x, 236.0f, x + 96.0f, 348.0f);
+    return D2D1::RectF(x, 236.0f, x + 96.0f, 358.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::ShopBackButtonRect() const
