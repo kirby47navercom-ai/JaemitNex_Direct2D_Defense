@@ -16,6 +16,10 @@ UI_DIR = ROOT / "assets" / "ui"
 VFX_DIR = ROOT / "assets" / "vfx"
 MUSIC_DIR = ROOT / "assets" / "music"
 
+# VFX는 외부 무료 에셋을 손으로 골라 맞춘 상태를 유지한다.
+# True로 바꾸면 절차형 시트로 다시 덮어쓰므로 기본값은 꺼둔다.
+REGENERATE_VFX = False
+
 STAGE_NAMES = [
     "mercury",
     "venus",
@@ -337,7 +341,8 @@ def main() -> None:
         make_space_background(stage, BACKGROUND_DIR / f"stage_{stage:02d}_space_hd.jpg")
     make_cutin_art()
     make_ui_atlas()
-    make_vfx_sheets()
+    if REGENERATE_VFX:
+        make_vfx_sheets()
     make_music()
 
 
