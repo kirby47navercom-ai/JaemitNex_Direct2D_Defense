@@ -134,8 +134,8 @@ body {{
 }}
 .page:last-child {{ break-after: auto; }}
 .cover {{
-  width: 100%;
-  min-height: 267mm;
+  width: 210mm;
+  min-height: 297mm;
   margin: -15mm -16mm -16mm;
   padding: 70mm 26mm 24mm;
   color: #f3fbff;
