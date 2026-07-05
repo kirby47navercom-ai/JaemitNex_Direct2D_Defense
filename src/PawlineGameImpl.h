@@ -486,7 +486,13 @@ private:
 
     std::wstring AssetPath(const std::wstring& relativePath) const;
 
+    void PlayMusicTrack(const std::wstring& relativePath);
+
     void StartBackgroundMusic();
+
+    std::wstring StageMusicPath(int stageIndex) const;
+
+    void StartStageMusic();
 
     void SyncMusicVolume();
 
@@ -1277,6 +1283,7 @@ private:
     }();
     framework::AudioManager m_audio;
     // 효과음과 배경음악은 옵션에서 따로 조절한다.
+    std::wstring m_currentMusicPath;
     float m_sfxVolume = 0.86f;
     float m_bgmVolume = 0.32f;
     bool m_soundEnabled = true;

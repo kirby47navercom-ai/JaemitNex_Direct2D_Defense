@@ -376,11 +376,60 @@ std::wstring PawlineGameImpl::AssetPath(const std::wstring& relativePath) const
     return base + L"..\\..\\" + relativePath;
 }
 
+void PawlineGameImpl::PlayMusicTrack(const std::wstring& relativePath)
+{
+    // 같은 곡을 다시 틀 때는 끊기지 않게 두고, 볼륨만 최신 옵션값으로 맞춘다.
+    const std::wstring absolutePath = AssetPath(relativePath);
+    if (absolutePath == m_currentMusicPath)
+    {
+        SyncMusicVolume();
+        return;
+    }
+
+    if (m_audio.PlayMusic(absolutePath, m_bgmVolume, true))
+    {
+        m_currentMusicPath = absolutePath;
+        return;
+    }
+    m_currentMusicPath.clear();
+
+    // 스테이지 전용 루프가 누락되어도 게임이 조용해지지 않도록 타이틀 루프로 되돌린다.
+    const std::wstring fallbackPath = AssetPath(L"assets\\music\\outer_space_loop.mp3");
+    if (fallbackPath != absolutePath && m_audio.PlayMusic(fallbackPath, m_bgmVolume, true))
+    {
+        m_currentMusicPath = fallbackPath;
+    }
+}
+
 void PawlineGameImpl::StartBackgroundMusic()
 {
-    // 게임을 켜면 몽환적인 우주 루프를 계속 재생한다.
-    // 실제 볼륨은 옵션의 BGM 슬라이더가 담당한다.
-    m_audio.PlayMusic(AssetPath(L"assets\\music\\outer_space_loop.mp3"), m_bgmVolume, true);
+    // 메뉴와 타이틀에서는 몽환적인 우주 루프를 계속 재생한다.
+    PlayMusicTrack(L"assets\\music\\outer_space_loop.mp3");
+}
+
+std::wstring PawlineGameImpl::StageMusicPath(int stageIndex) const
+{
+    // 수성부터 태양까지 각 스테이지의 분위기를 나누는 전투용 루프 목록이다.
+    constexpr std::array<const wchar_t*, kStageCount> kStageMusic = {
+        L"assets\\music\\stage_mercury.wav",
+        L"assets\\music\\stage_venus.wav",
+        L"assets\\music\\stage_earth.wav",
+        L"assets\\music\\stage_mars.wav",
+        L"assets\\music\\stage_jupiter.wav",
+        L"assets\\music\\stage_saturn.wav",
+        L"assets\\music\\stage_uranus.wav",
+        L"assets\\music\\stage_neptune.wav",
+        L"assets\\music\\stage_pluto.wav",
+        L"assets\\music\\stage_sun.wav",
+    };
+
+    const int index = std::clamp(stageIndex, 0, kStageCount - 1);
+    return kStageMusic[static_cast<size_t>(index)];
+}
+
+void PawlineGameImpl::StartStageMusic()
+{
+    PlayMusicTrack(StageMusicPath(m_selectedStage));
 }
 
 void PawlineGameImpl::SyncMusicVolume()
@@ -1490,6 +1539,7 @@ void PawlineGameImpl::ResetToTitle()
 void PawlineGameImpl::ResetToMenu()
 {
     m_screen = GameScreen::Menu;
+    StartBackgroundMusic();
     m_units.clear();
     m_projectiles.clear();
     m_particles.clear();
@@ -1520,6 +1570,7 @@ void PawlineGameImpl::ResetToMenu()
 void PawlineGameImpl::ResetGame()
 {
     const StageDefinition stage = CurrentStage();
+    StartStageMusic();
     m_screen = GameScreen::Playing;
     m_units.clear();
     m_projectiles.clear();
