@@ -149,13 +149,15 @@ enum class Team
 enum class GameScreen
 {
     Title,
+    StoryIntro,
     Options,
     Menu,
     Archive,
     Shop,
     Briefing,
     Playing,
-    Result
+    Result,
+    Ending
 };
 
 enum class UnitAnimState
@@ -544,6 +546,16 @@ private:
 
     int HighestUnlockedStage() const;
 
+    bool HasAnyProgressFile() const;
+
+    void BeginStoryCrawl(bool autoContinueToMenu);
+
+    void FinishStoryCrawl();
+
+    void BeginEndingScene();
+
+    void FinishEndingScene();
+
     void SelectStage(int index);
 
     void GrantStageReward();
@@ -837,6 +849,8 @@ private:
     D2D1_RECT_F TitleStartButtonRect() const;
 
     D2D1_RECT_F TitleDemoButtonRect() const;
+
+    D2D1_RECT_F TitleStoryButtonRect() const;
 
     D2D1_RECT_F TitleOptionsButtonRect() const;
 
@@ -1148,6 +1162,10 @@ private:
 
     void DrawButton(D2D1_RECT_F rect, const std::wstring& label, bool enabled, D2D1_COLOR_F fill);
 
+    void DrawStoryCrawl();
+
+    void DrawEndingScene();
+
     void DrawMessage();
 
     void DrawOverlay();
@@ -1350,6 +1368,8 @@ private:
     float m_resetConfirmTimer = 0.0f;
     float m_deleteConfirmTimer = 0.0f;
     float m_autoSaveNoticeTimer = 0.0f;
+    float m_storyTimer = 0.0f;
+    float m_endingTimer = 0.0f;
     // 화면이 바뀌면 자동으로 켜지는 짧은 페이드 연출 타이머다.
     float m_sceneTransitionTimer = 0.0f;
     float m_sceneTransitionMax = 0.46f;
@@ -1368,6 +1388,9 @@ private:
     bool m_bossPhaseThreeTriggered = false;
     bool m_showcaseMode = false;
     bool m_debugMode = false;
+    bool m_storyAutoContinueToMenu = false;
+    bool m_introViewedThisSession = false;
+    bool m_endingUnlocked = false;
     int m_bossPhaseBannerLevel = 0;
     std::wstring m_message;
     std::wstring m_autoSaveNotice;

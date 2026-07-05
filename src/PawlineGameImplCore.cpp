@@ -1111,6 +1111,71 @@ void PawlineGameImpl::GrantStageReward()
     SaveProgress();
 }
 
+bool PawlineGameImpl::HasAnyProgressFile() const
+{
+    // 첫 실행 연출은 "저장 파일이 전혀 없는 상태"에서만 자동 재생한다.
+    // 실행 파일 옆의 현재 슬롯 저장 파일과 예전 단일 저장 파일을 모두 확인한다.
+    if (GetFileAttributesW(LegacyProgressPath().c_str()) != INVALID_FILE_ATTRIBUTES)
+    {
+        return true;
+    }
+
+    for (int slot = 0; slot < kSaveSlotCount; ++slot)
+    {
+        if (GetFileAttributesW(ProgressPath(slot).c_str()) != INVALID_FILE_ATTRIBUTES)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void PawlineGameImpl::BeginStoryCrawl(bool autoContinueToMenu)
+{
+    // 프롤로그 크롤은 타이틀에서 다시 볼 수 있고, 첫 시작 때는 끝난 뒤 메뉴로 이어진다.
+    m_screen = GameScreen::StoryIntro;
+    m_storyTimer = 0.0f;
+    m_storyAutoContinueToMenu = autoContinueToMenu;
+    m_introViewedThisSession = true;
+    m_escapeMenuOpen = false;
+    m_paused = false;
+    m_sceneTransitionTimer = m_sceneTransitionMax;
+    SetMessage(autoContinueToMenu ? L"첫 출격 전 기록을 재생해." : L"개전 기록을 다시 읽어.");
+}
+
+void PawlineGameImpl::FinishStoryCrawl()
+{
+    m_storyTimer = 0.0f;
+    m_sceneTransitionTimer = m_sceneTransitionMax;
+    if (m_storyAutoContinueToMenu)
+    {
+        m_storyAutoContinueToMenu = false;
+        ResetToMenu();
+        return;
+    }
+
+    m_screen = GameScreen::Title;
+}
+
+void PawlineGameImpl::BeginEndingScene()
+{
+    // 태양을 처음 클리어했을 때 짧은 엔딩을 먼저 보여주고, 이후 결과 화면으로 돌아간다.
+    m_screen = GameScreen::Ending;
+    m_endingTimer = 0.0f;
+    m_endingUnlocked = true;
+    m_escapeMenuOpen = false;
+    m_paused = false;
+    m_sceneTransitionTimer = m_sceneTransitionMax;
+    PlaySfx(SfxKind::Clear, 0.50f);
+}
+
+void PawlineGameImpl::FinishEndingScene()
+{
+    m_endingTimer = 0.0f;
+    m_screen = GameScreen::Result;
+    m_sceneTransitionTimer = m_sceneTransitionMax;
+}
+
 std::wstring PawlineGameImpl::ProgressPath() const
 {
     return ProgressPath(m_saveSlot);
@@ -1363,6 +1428,8 @@ void PawlineGameImpl::ResetProgressMemory()
     m_shopSelectedUnit = 0;
     m_resetConfirmTimer = 0.0f;
     m_deleteConfirmTimer = 0.0f;
+    m_introViewedThisSession = false;
+    m_endingUnlocked = false;
 }
 
 void PawlineGameImpl::DeleteSelectedSaveSlot()
@@ -1593,7 +1660,24 @@ void PawlineGameImpl::Update(float dt)
         m_showcaseTimer += dt;
     }
 
-    if (m_screen == GameScreen::Title || m_screen == GameScreen::Options || m_screen == GameScreen::Menu || m_screen == GameScreen::Archive || m_screen == GameScreen::Shop || m_screen == GameScreen::Briefing || m_screen == GameScreen::Result)
+    if (m_screen == GameScreen::StoryIntro)
+    {
+        m_storyTimer += dt;
+        if (m_storyAutoContinueToMenu && m_storyTimer > 32.0f)
+        {
+            FinishStoryCrawl();
+        }
+    }
+    if (m_screen == GameScreen::Ending)
+    {
+        m_endingTimer += dt;
+        if (m_endingTimer > 19.0f)
+        {
+            FinishEndingScene();
+        }
+    }
+
+    if (m_screen == GameScreen::Title || m_screen == GameScreen::StoryIntro || m_screen == GameScreen::Ending || m_screen == GameScreen::Options || m_screen == GameScreen::Menu || m_screen == GameScreen::Archive || m_screen == GameScreen::Shop || m_screen == GameScreen::Briefing || m_screen == GameScreen::Result)
     {
         if (m_screen == GameScreen::Result)
         {
@@ -1639,12 +1723,17 @@ void PawlineGameImpl::Update(float dt)
 
     if (m_enemyBaseHp <= 0.0f)
     {
+        const bool finalClear = m_selectedStage == kStageCount - 1;
         m_victory = true;
         m_screen = GameScreen::Result;
         m_enemyBaseHp = 0.0f;
         m_resultScore = m_score + static_cast<int>(std::max(0.0f, m_playerBaseHp)) + m_walletLevel * 300;
         m_resultTime = m_stageTime;
         GrantStageReward();
+        if (finalClear && !m_endingUnlocked)
+        {
+            BeginEndingScene();
+        }
         SetMessage(L"적 기지 파괴. LUMEN 획득.");
     }
     if (m_playerBaseHp <= 0.0f)

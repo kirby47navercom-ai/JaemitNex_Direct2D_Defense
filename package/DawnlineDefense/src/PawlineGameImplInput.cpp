@@ -64,9 +64,13 @@ bool PawlineGameImpl::IsInteractivePoint(Vec2 pos) const
     {
     case GameScreen::Title:
         return Contains(TitleStartButtonRect(), pos) ||
+               Contains(TitleStoryButtonRect(), pos) ||
                Contains(TitleDemoButtonRect(), pos) ||
                Contains(TitleOptionsButtonRect(), pos) ||
                Contains(TitleQuitButtonRect(), pos);
+    case GameScreen::StoryIntro:
+    case GameScreen::Ending:
+        return true;
     case GameScreen::Options:
         for (int i = 0; i < kSaveSlotCount; ++i)
         {
@@ -273,7 +277,18 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
     {
         if (Contains(TitleStartButtonRect(), pos))
         {
-            ResetToMenu();
+            if (!m_introViewedThisSession && !HasAnyProgressFile())
+            {
+                BeginStoryCrawl(true);
+            }
+            else
+            {
+                ResetToMenu();
+            }
+        }
+        else if (Contains(TitleStoryButtonRect(), pos))
+        {
+            BeginStoryCrawl(false);
         }
         else if (Contains(TitleDemoButtonRect(), pos))
         {
@@ -287,6 +302,16 @@ void PawlineGameImpl::OnLeftClick(Vec2 pos)
         {
             PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
         }
+        return;
+    }
+    if (m_screen == GameScreen::StoryIntro)
+    {
+        FinishStoryCrawl();
+        return;
+    }
+    if (m_screen == GameScreen::Ending)
+    {
+        FinishEndingScene();
         return;
     }
     if (m_screen == GameScreen::Options)
@@ -849,7 +874,11 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         return;
     }
 
-    if (key == VK_ESCAPE && m_screen != GameScreen::Title && m_screen != GameScreen::Options)
+    if (key == VK_ESCAPE &&
+        m_screen != GameScreen::Title &&
+        m_screen != GameScreen::StoryIntro &&
+        m_screen != GameScreen::Ending &&
+        m_screen != GameScreen::Options)
     {
         OpenEscapeMenu();
         return;
@@ -859,7 +888,18 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
     {
         if (key == VK_RETURN || key == VK_SPACE)
         {
-            ResetToMenu();
+            if (!m_introViewedThisSession && !HasAnyProgressFile())
+            {
+                BeginStoryCrawl(true);
+            }
+            else
+            {
+                ResetToMenu();
+            }
+        }
+        else if (key == 'S')
+        {
+            BeginStoryCrawl(false);
         }
         else if (key == 'D')
         {
@@ -872,6 +912,24 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         else if (key == VK_ESCAPE || key == 'Q')
         {
             PostMessageW(m_hwnd, WM_CLOSE, 0, 0);
+        }
+        return;
+    }
+
+    if (m_screen == GameScreen::StoryIntro)
+    {
+        if (key == VK_RETURN || key == VK_SPACE || key == VK_ESCAPE || key == VK_BACK)
+        {
+            FinishStoryCrawl();
+        }
+        return;
+    }
+
+    if (m_screen == GameScreen::Ending)
+    {
+        if (key == VK_RETURN || key == VK_SPACE || key == VK_ESCAPE || key == VK_BACK)
+        {
+            FinishEndingScene();
         }
         return;
     }

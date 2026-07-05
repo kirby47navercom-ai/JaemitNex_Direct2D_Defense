@@ -9,22 +9,28 @@ D2D1_RECT_F PawlineGameImpl::CardRect(int index) const
 
 D2D1_RECT_F PawlineGameImpl::TitleStartButtonRect() const
 {
-    return D2D1::RectF(492.0f, 486.0f, 788.0f, 540.0f);
+    return D2D1::RectF(492.0f, 464.0f, 788.0f, 512.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::TitleDemoButtonRect() const
 {
-    return D2D1::RectF(492.0f, 552.0f, 788.0f, 606.0f);
+    return D2D1::RectF(492.0f, 572.0f, 788.0f, 620.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::TitleStoryButtonRect() const
+{
+    // 타이틀에서 프롤로그를 다시 볼 수 있는 전용 버튼 영역이다.
+    return D2D1::RectF(492.0f, 518.0f, 788.0f, 566.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::TitleOptionsButtonRect() const
 {
-    return D2D1::RectF(492.0f, 618.0f, 788.0f, 672.0f);
+    return D2D1::RectF(492.0f, 626.0f, 788.0f, 674.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::TitleQuitButtonRect() const
 {
-    return D2D1::RectF(492.0f, 684.0f, 788.0f, 738.0f);
+    return D2D1::RectF(492.0f, 680.0f, 788.0f, 728.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsShakeButtonRect() const

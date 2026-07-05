@@ -286,6 +286,32 @@ void PawlineGameImpl::Render()
         return;
     }
 
+    if (m_screen == GameScreen::StoryIntro)
+    {
+        DrawStoryCrawl();
+        DrawUiPulses();
+        DrawSceneTransition();
+        hr = m_renderTarget->EndDraw();
+        if (hr == D2DERR_RECREATE_TARGET)
+        {
+            DiscardDeviceResources();
+        }
+        return;
+    }
+
+    if (m_screen == GameScreen::Ending)
+    {
+        DrawEndingScene();
+        DrawUiPulses();
+        DrawSceneTransition();
+        hr = m_renderTarget->EndDraw();
+        if (hr == D2DERR_RECREATE_TARGET)
+        {
+            DiscardDeviceResources();
+        }
+        return;
+    }
+
     if (m_screen == GameScreen::Options)
     {
         DrawOptions();
@@ -1104,12 +1130,119 @@ void PawlineGameImpl::DrawTitle()
     DrawOutlinedString(L"수성에서 태양까지 이어지는 탑뷰 라인 디펜스", D2D1::RectF(250.0f, 428.0f, 1030.0f, 458.0f), m_centerFormat, D2D1::ColorF(0xCFE8F5), 0.72f);
 
     DrawButton(TitleStartButtonRect(), L"START", true, D2D1::ColorF(0x173C4B));
+    DrawButton(TitleStoryButtonRect(), L"STORY", true, D2D1::ColorF(0x22324D));
     DrawButton(TitleDemoButtonRect(), L"DEMO", true, D2D1::ColorF(0x4B4321));
     DrawButton(TitleOptionsButtonRect(), L"OPTIONS", true, D2D1::ColorF(0x283B27));
     DrawButton(TitleQuitButtonRect(), L"QUIT", true, D2D1::ColorF(0x332337));
 
     const std::wstring route = L"수성  금성  지구  화성  목성  토성  천왕성  해왕성  명왕성  태양";
     DrawOutlinedString(route, D2D1::RectF(120.0f, 748.0f, 1160.0f, 778.0f), m_centerFormat, D2D1::ColorF(0xF6FF83), 0.60f);
+}
+
+void PawlineGameImpl::DrawStoryCrawl()
+{
+    DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), 9, m_uiTime, 0.0f, true);
+    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0x01050B, 0.42f));
+
+    const std::array<std::wstring, 11> lines = {
+        L"먼 행성들의 항로가 하나씩 꺼지던 밤,",
+        L"작은 기지 하나가 수성 궤도에 남았다.",
+        L"그곳의 이름은 파울라인.",
+        L"병사도 함대도 충분하지 않았지만,",
+        L"아직 전선을 밀어낼 불빛은 남아 있었다.",
+        L"너는 다섯 유닛을 골라 길어진 방어선을 열고,",
+        L"수성에서 태양까지 이어진 침묵의 항로를 되찾아야 한다.",
+        L"적은 행성마다 다른 방식으로 몰려오고,",
+        L"마지막 빛 앞에는 태양의 보스가 기다린다.",
+        L"전선이 밀리면 기록은 끝난다.",
+        L"하지만 한 걸음이라도 앞으로 나아가면, 어둠은 다시 길이 된다."};
+
+    const float startY = 812.0f - std::max(0.0f, m_storyTimer - 1.4f) * 42.0f;
+    for (size_t i = 0; i < lines.size(); ++i)
+    {
+        const float y = startY + static_cast<float>(i) * 48.0f;
+        if (y < 126.0f || y > 756.0f)
+        {
+            continue;
+        }
+
+        const float topFade = Clamp01((y - 126.0f) / 86.0f);
+        const float bottomFade = Clamp01((756.0f - y) / 110.0f);
+        const float alpha = topFade * bottomFade;
+        const float depth = Clamp01((y - 126.0f) / 630.0f);
+        const float inset = 164.0f + (1.0f - depth) * 142.0f;
+        const D2D1_RECT_F textRect = D2D1::RectF(inset, y, kWidth - inset, y + 34.0f);
+        DrawOutlinedString(lines[i], textRect, m_centerFormat, D2D1::ColorF(0xFFF0B5, 0.92f * alpha), 0.82f * alpha);
+    }
+
+    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, 116.0f), D2D1::ColorF(0x01050B, 0.62f));
+    FillRect(D2D1::RectF(0.0f, 708.0f, kWidth, kHeight), D2D1::ColorF(0x01050B, 0.58f));
+    const float titleFade = Clamp01(1.0f - std::max(0.0f, m_storyTimer - 4.2f) / 2.2f);
+    DrawPixelTextCentered(L"MISSION LOG 00", D2D1::RectF(260.0f, 88.0f, 1020.0f, 138.0f), 4.2f, D2D1::ColorF(0xF6FF83), titleFade);
+    DrawPixelTextCentered(L"DAWNLINE ARCHIVE", D2D1::RectF(260.0f, 142.0f, 1020.0f, 190.0f), 3.2f, D2D1::ColorF(0xCFE8F5), titleFade);
+    DrawPixelTextCentered(m_storyAutoContinueToMenu ? L"SPACE SKIP / AUTO START" : L"SPACE / CLICK BACK",
+                          D2D1::RectF(360.0f, 734.0f, 920.0f, 770.0f),
+                          2.2f,
+                          D2D1::ColorF(0xCFE8F5),
+                          0.90f);
+}
+
+void PawlineGameImpl::DrawEndingScene()
+{
+    DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), kStageCount - 1, m_uiTime, 0.0f, true);
+    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0x01050B, 0.34f));
+
+    const Vec2 sun = {640.0f, 210.0f};
+    const float pulse = 0.5f + 0.5f * std::sin(m_uiTime * 1.4f);
+    for (int i = 0; i < 24; ++i)
+    {
+        const float angle = static_cast<float>(i) / 24.0f * kPi * 2.0f + m_uiTime * 0.16f;
+        DrawLine({sun.x + std::cos(angle) * 54.0f, sun.y + std::sin(angle) * 54.0f},
+                 {sun.x + std::cos(angle) * (160.0f + pulse * 18.0f), sun.y + std::sin(angle) * (160.0f + pulse * 18.0f)},
+                 D2D1::ColorF(0xFFB347, 0.10f),
+                 3.0f);
+    }
+    FillEllipse(sun, 128.0f + pulse * 18.0f, 128.0f + pulse * 18.0f, D2D1::ColorF(0xFFB347, 0.08f));
+    FillEllipse(sun, 74.0f, 74.0f, D2D1::ColorF(0xFFB347, 0.28f));
+    FillEllipse(sun, 42.0f, 42.0f, D2D1::ColorF(0xFFF0B5, 0.72f));
+
+    DrawPixelTextCentered(L"SOLAR LINE RESTORED", D2D1::RectF(130.0f, 330.0f, 1150.0f, 392.0f), 4.6f, D2D1::ColorF(0xF6FF83), Clamp01(m_endingTimer / 1.2f));
+
+    const std::array<std::wstring, 5> lines = {
+        L"태양의 플레어가 잦아들고,",
+        L"수성에서 명왕성까지 흩어진 신호가 하나의 선으로 이어졌다.",
+        L"파울라인은 거대한 함대가 아니었다.",
+        L"하지만 작은 불빛들은 끝까지 버텼고,",
+        L"그 빛은 이제 항로가 되었다."};
+
+    for (size_t i = 0; i < lines.size(); ++i)
+    {
+        const float alpha = Clamp01((m_endingTimer - 1.6f - static_cast<float>(i) * 1.35f) / 0.9f);
+        DrawOutlinedString(lines[i],
+                           D2D1::RectF(170.0f, 424.0f + static_cast<float>(i) * 42.0f, 1110.0f, 458.0f + static_cast<float>(i) * 42.0f),
+                           m_centerFormat,
+                           D2D1::ColorF(0xEAF7FF, alpha),
+                           0.80f * alpha);
+    }
+
+    const float routeAlpha = Clamp01((m_endingTimer - 8.4f) / 1.4f);
+    Vec2 previous = {};
+    const float routeY = 676.0f;
+    for (int i = 0; i < kStageCount; ++i)
+    {
+        const float t = static_cast<float>(i) / static_cast<float>(kStageCount - 1);
+        const Vec2 node = {146.0f + t * 988.0f, routeY + std::sin(m_uiTime * 0.6f + t * kPi * 2.0f) * 12.0f};
+        if (i > 0)
+        {
+            DrawLine(previous, node, D2D1::ColorF(0xF6FF83, 0.26f * routeAlpha), 2.4f);
+        }
+        const StageDefinition stage = GetStageDefinition(i);
+        FillEllipse(node, 9.0f + static_cast<float>(i == kStageCount - 1) * 7.0f, 9.0f + static_cast<float>(i == kStageCount - 1) * 7.0f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.78f * routeAlpha));
+        StrokeEllipse(node, 9.0f + static_cast<float>(i == kStageCount - 1) * 7.0f, 9.0f + static_cast<float>(i == kStageCount - 1) * 7.0f, D2D1::ColorF(0xF3FBFF, 0.62f * routeAlpha), 1.7f);
+        previous = node;
+    }
+
+    DrawPixelTextCentered(L"ENTER / SPACE CLOSE", D2D1::RectF(380.0f, 734.0f, 900.0f, 770.0f), 2.2f, D2D1::ColorF(0xCFE8F5), 0.90f);
 }
 
 void PawlineGameImpl::DrawOptions()

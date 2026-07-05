@@ -118,6 +118,8 @@ float AudioManager::Volume() const
 
 bool AudioManager::PlayMusic(const std::wstring& absolutePath, float volume, bool loop)
 {
+    // BGM은 효과음 캐시와 분리해서 스트리밍으로 재생한다.
+    // FMOD가 있으면 FMOD 채널을 쓰고, 없으면 WinMM MCI fallback으로 같은 인터페이스를 유지한다.
     StopMusic();
     SetMusicVolume(volume);
     if (absolutePath.empty())
