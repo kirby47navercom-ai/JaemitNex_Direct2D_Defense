@@ -3,7 +3,7 @@
 - [ ] `build.ps1` 실행 후 `package/SpaceDefence.zip` 생성 확인
 - [ ] zip 압축 해제 후 `SpaceDefence.exe` 단독 실행 확인
 - [ ] 3분 이내 시연 영상 촬영
-- [ ] 시연 영상 링크 공개 범위 확인
+- [x] 시연 영상 링크 공개 범위 확인: https://www.youtube.com/watch?v=7fT5tFRw4E4
 - [ ] 작업물 리포트 PDF 작성
 - [ ] 리포트에 결과물 설명 포함
 - [ ] 리포트에 제작 과정 포함

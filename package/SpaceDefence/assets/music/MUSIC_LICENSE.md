@@ -7,8 +7,8 @@
 - Source: generated inside this project as original procedural audio through `tools/generate_quality_assets.py`.
 - License note: no external music samples are included in these files.
 
-## Archived Reference
-- `outer_space_loop.mp3` remains in the asset folder as an unused CC0 reference track.
+## Removed Reference
+- The old CC0 MP3 reference track was used only during early testing and has been removed from the final asset/package set.
 - Source: https://opengameart.org/content/outer-space-loop
 - Author: wipics
 - License: CC0 / Public Domain

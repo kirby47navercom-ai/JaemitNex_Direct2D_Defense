@@ -11,7 +11,7 @@ TMP_DIR = ROOT / "tmp" / "pdfs" / "work_report"
 PACKAGE_DIR = ROOT / "package"
 PDF_NAME = "SpaceDefence_작업물_리포트.pdf"
 GITHUB_URL = "https://github.com/kirby47navercom-ai/JaemitNex_Direct2D_Defense"
-DEMO_VIDEO_NOTE = "제출 전 실제 YouTube 또는 Google Drive 시연 영상 URL로 교체 필요"
+DEMO_VIDEO_URL = "https://www.youtube.com/watch?v=7fT5tFRw4E4"
 
 
 def uri(path: Path) -> str:
@@ -433,7 +433,7 @@ a {{
     <thead><tr><th>항목</th><th>링크</th></tr></thead>
     <tbody>
       <tr><td>GitHub 저장소</td><td><a href="{e(GITHUB_URL)}">{e(GITHUB_URL)}</a></td></tr>
-      <tr><td>시연 영상</td><td><span class="todo-link">{e(DEMO_VIDEO_NOTE)}</span></td></tr>
+      <tr><td>시연 영상</td><td><a href="{e(DEMO_VIDEO_URL)}">{e(DEMO_VIDEO_URL)}</a></td></tr>
     </tbody>
   </table>
   <h3>마무리</h3>

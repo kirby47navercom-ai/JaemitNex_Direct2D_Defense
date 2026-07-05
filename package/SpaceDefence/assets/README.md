@@ -8,9 +8,6 @@
   - 스테이지별 고화질 우주 배경 레이어.
   - `tools/generate_quality_assets.py`로 직접 생성한다.
   - 전투 무대는 행성 표면처럼 보이게 하고, 뒤쪽은 실제 우주 공간처럼 보이도록 분리해서 사용한다.
-- `backgrounds/stage_00_space.png` ~ `stage_09_space.png`
-  - 이전 버전의 스테이지 배경 레이어.
-  - 현재 게임에서는 HD JPG 배경을 우선 사용한다.
 - `cutins/prologue_story_art.jpg`
   - 프롤로그 스토리 화면 배경 아트.
 - `cutins/ending_solar_route.jpg`
@@ -27,21 +24,12 @@
 - 라이선스: Creative Commons CC0
 - 적용 방식: 원본 PNG를 128x128 단위 아틀라스로 재구성하고, 유닛 종류별 역할 차이가 보이도록 보정했다.
 
-## 백업 스프라이트
-
-- `sprites/gameart2d_catdog/*`
-- 원본: GameArt2D Cat and Dog Free Sprites
-- 출처: https://www.gameart2d.com/cat-and-dog-free-sprites.html
-- 현재 메인 렌더링은 Kenney 통합 아틀라스를 사용하며, 이 폴더는 백업/참고용으로 남겨두었다.
-
 ## 전투 VFX
 
 - `vfx/*.png`
   - 게임에서 실제로 로드하는 전투 이펙트 시트.
   - 사용자가 제공한 이펙트와 외부 무료 에셋 기반 시트를 우선 사용한다.
   - 프레임 크기와 열/행 구조는 코드의 `ImageVfxSpec`과 맞춰야 한다.
-- `vfx/source_effects/`
-  - 사용자가 제공한 원본 이펙트와 참고용 시트 모음.
 - `tools/generate_quality_assets.py`
   - 기본 실행에서는 VFX를 덮어쓰지 않는다.
   - `REGENERATE_VFX = True`로 바꾸면 절차형 VFX 시트가 다시 생성되므로 주의해야 한다.
@@ -51,8 +39,6 @@
 - `weapons/external_roles/*.png`
   - 플레이어/적 유닛 역할별 무기 이미지.
   - 유닛 손 위치 기준으로 회전/이동하며 수동 공격 애니메이션에 연결된다.
-- `weapons/kenney_blaster/*`
-  - Kenney 무기 에셋 백업/참고 자료.
 
 ## UI
 
