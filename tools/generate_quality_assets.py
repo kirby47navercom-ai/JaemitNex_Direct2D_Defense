@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import math
 import random
@@ -186,7 +186,7 @@ def make_ui_atlas() -> None:
             x = tx + 28 + i * 22
             draw.line((x, ty + 48, x + 18, ty + 102), fill=(255, 255, 255, 10), width=1)
         draw.line((tx + 28, ty + 100, tx + 228, ty + 100), fill=(accent[0], accent[1], accent[2], 82), width=3)
-    atlas.save(UI_DIR / "space_defanse_ui_atlas.png")
+    atlas.save(UI_DIR / "space_defence_ui_atlas.png")
 
 
 def draw_vfx_sheet(path: Path, columns: int, rows: int, fw: int, fh: int, palette: tuple[tuple[int, int, int], ...], style: str) -> None:

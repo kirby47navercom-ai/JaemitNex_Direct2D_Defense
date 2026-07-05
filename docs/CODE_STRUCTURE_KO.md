@@ -1,23 +1,23 @@
-﻿# 코드 구조 설명
+# 코드 구조 설명
 
-이 문서는 `Space Defanse`의 코드를 처음 읽는 사람이 어디서부터 보면 되는지 정리한 안내서다. 게임잼 리포트나 코드 설명을 쓸 때도 이 흐름을 따라가면 된다.
+이 문서는 `Space Defence`의 코드를 처음 읽는 사람이 어디서부터 보면 되는지 정리한 안내서다. 게임잼 리포트나 코드 설명을 쓸 때도 이 흐름을 따라가면 된다.
 
 ## 전체 흐름
 
-1. `src/main.cpp`가 Win32 창을 만들고 `SpaceDefanseGame`을 실행한다.
-2. `SpaceDefanseGame`은 외부에 보이는 얇은 껍데기이고, 실제 게임 상태는 `SpaceDefanseGameImpl`이 가진다.
+1. `src/main.cpp`가 Win32 창을 만들고 `SpaceDefenceGame`을 실행한다.
+2. `SpaceDefenceGame`은 외부에 보이는 얇은 껍데기이고, 실제 게임 상태는 `SpaceDefenceGameImpl`이 가진다.
 3. 매 프레임 `DeltaTimer`가 델타타임을 계산한다.
-4. `SpaceDefanseGameImplCore.cpp`의 업데이트 루프가 입력, 전투, VFX, 사운드, 저장 상태를 갱신한다.
-5. `SpaceDefanseGameImplRender.cpp`가 현재 화면 상태에 맞춰 타이틀, 메뉴, 브리핑, 전투, 결과 화면을 그린다.
+4. `SpaceDefenceGameImplCore.cpp`의 업데이트 루프가 입력, 전투, VFX, 사운드, 저장 상태를 갱신한다.
+5. `SpaceDefenceGameImplRender.cpp`가 현재 화면 상태에 맞춰 타이틀, 메뉴, 브리핑, 전투, 결과 화면을 그린다.
 
 ## 파일별 역할
 
-- `SpaceDefanseGameImpl.h`: 전투 유닛, 투사체, 파티클, 저장 데이터, 화면 상태 같은 핵심 구조체와 멤버 변수를 모아둔 중심 헤더다.
-- `SpaceDefanseGameImplCore.cpp`: 초기화, 리소스 로딩, 저장/불러오기, 전체 프레임 업데이트, 효과음 호출을 담당한다.
-- `SpaceDefanseGameImplCombat.cpp`: 유닛 이동, 타겟 탐색, 공격, 피해 처리, 스폰, 스테이지 기믹, 월렛, 문빔 캐논을 담당한다.
-- `SpaceDefanseGameImplInput.cpp`: 키보드와 마우스 입력을 화면별로 해석한다.
-- `SpaceDefanseGameImplLayout.cpp`: 버튼과 카드의 좌표를 한곳에서 관리한다. 입력 판정과 렌더링이 같은 좌표를 쓰게 하기 위한 파일이다.
-- `SpaceDefanseGameImplRender.cpp`: Direct2D 렌더링, UI, 캐릭터, 무기, 배경, 이미지 VFX, 후처리 느낌의 빛 효과를 담당한다.
+- `SpaceDefenceGameImpl.h`: 전투 유닛, 투사체, 파티클, 저장 데이터, 화면 상태 같은 핵심 구조체와 멤버 변수를 모아둔 중심 헤더다.
+- `SpaceDefenceGameImplCore.cpp`: 초기화, 리소스 로딩, 저장/불러오기, 전체 프레임 업데이트, 효과음 호출을 담당한다.
+- `SpaceDefenceGameImplCombat.cpp`: 유닛 이동, 타겟 탐색, 공격, 피해 처리, 스폰, 스테이지 기믹, 월렛, 문빔 캐논을 담당한다.
+- `SpaceDefenceGameImplInput.cpp`: 키보드와 마우스 입력을 화면별로 해석한다.
+- `SpaceDefenceGameImplLayout.cpp`: 버튼과 카드의 좌표를 한곳에서 관리한다. 입력 판정과 렌더링이 같은 좌표를 쓰게 하기 위한 파일이다.
+- `SpaceDefenceGameImplRender.cpp`: Direct2D 렌더링, UI, 캐릭터, 무기, 배경, 이미지 VFX, 후처리 느낌의 빛 효과를 담당한다.
 - `GameData.cpp`: 유닛, 적, 스테이지의 밸런스 수치를 가진다. 수치 조정은 되도록 이 파일에서 끝내는 것이 좋다.
 - `framework/AudioManager.cpp`: FMOD가 있으면 위치음향을 쓰고, 없으면 WinMM으로 대체 재생한다.
 - `framework/DeltaTimer.cpp`: 프레임마다 실제 경과 시간을 계산해 게임 속도가 PC 성능에 덜 흔들리게 한다.
@@ -35,7 +35,7 @@
 - `Playing`: 실제 전투
 - `Result`: 승패 결과
 
-화면을 바꾸는 코드는 대부분 `SpaceDefanseGameImplInput.cpp`와 `SpaceDefanseGameImplCore.cpp`에 있다. 화면 전환 연출은 커튼 타이머와 사운드 이벤트를 통해 처리한다.
+화면을 바꾸는 코드는 대부분 `SpaceDefenceGameImplInput.cpp`와 `SpaceDefenceGameImplCore.cpp`에 있다. 화면 전환 연출은 커튼 타이머와 사운드 이벤트를 통해 처리한다.
 
 ## 전투 구조
 
@@ -65,7 +65,7 @@
 - `DrawStageGimmickOverlay`: 행성 이벤트 게이지와 발동 표시
 - `DrawHud`: 상단/하단 전투 UI
 
-UI 위치가 이상하면 먼저 `SpaceDefanseGameImplLayout.cpp`의 좌표 함수를 확인한다. 전투 중 월드 위치가 이상하면 `SpaceDefanseGameImplCombat.cpp`의 `pos` 계산과 `SpaceDefanseGameImplRender.cpp`의 카메라 변환을 같이 확인한다.
+UI 위치가 이상하면 먼저 `SpaceDefenceGameImplLayout.cpp`의 좌표 함수를 확인한다. 전투 중 월드 위치가 이상하면 `SpaceDefenceGameImplCombat.cpp`의 `pos` 계산과 `SpaceDefenceGameImplRender.cpp`의 카메라 변환을 같이 확인한다.
 
 ## 사운드 구조
 
@@ -80,9 +80,9 @@ FMOD 빌드에서는 3D 채널을 사용하고, 기본 빌드에서는 WinMM 대
 ## 새 기능을 추가할 때
 
 1. 밸런스 수치가 필요하면 `GameData.cpp`에 먼저 추가한다.
-2. 전투 규칙이면 `SpaceDefanseGameImplCombat.cpp`에 구현한다.
-3. 클릭 영역이 필요하면 `SpaceDefanseGameImplLayout.cpp`에 좌표 함수를 만든다.
-4. 화면 표시가 필요하면 `SpaceDefanseGameImplRender.cpp`에 렌더 함수를 추가한다.
+2. 전투 규칙이면 `SpaceDefenceGameImplCombat.cpp`에 구현한다.
+3. 클릭 영역이 필요하면 `SpaceDefenceGameImplLayout.cpp`에 좌표 함수를 만든다.
+4. 화면 표시가 필요하면 `SpaceDefenceGameImplRender.cpp`에 렌더 함수를 추가한다.
 5. 저장되어야 하는 값이면 저장/로드 함수에 버전 호환을 고려해서 넣는다.
 6. 마지막으로 `build.ps1`을 실행하고, 타이틀/메뉴/브리핑/전투/결과 화면을 직접 확인한다.
 

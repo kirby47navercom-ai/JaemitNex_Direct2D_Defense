@@ -3,8 +3,8 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $build = Join-Path $root "build"
 $packageRoot = Join-Path $root "package"
-$dist = Join-Path $packageRoot "SpaceDefanse"
-$zip = Join-Path $packageRoot "SpaceDefanse.zip"
+$dist = Join-Path $packageRoot "SpaceDefence"
+$zip = Join-Path $packageRoot "SpaceDefence.zip"
 
 # FMOD SDK가 설치되어 있으면 자동으로 FMOD 빌드를 사용한다.
 # 없을 때는 WinMM fallback으로 빌드되므로 실행 파일은 계속 만들 수 있다.
@@ -27,11 +27,11 @@ if ($LASTEXITCODE -ne 0) {
 
 # 이전 빌드의 object/tlog가 남아 있으면 파일명 변경 뒤에도 예전 오브젝트를 참조할 수 있다.
 # 제출 빌드는 항상 같은 조건에서 다시 컴파일되도록 Release 중간 산출물을 지운다.
-$releaseObjDir = Join-Path $build "SpaceDefanse.dir\Release"
+$releaseObjDir = Join-Path $build "SpaceDefence.dir\Release"
 if (Test-Path $releaseObjDir) {
     Get-ChildItem -LiteralPath $releaseObjDir -Filter "*.obj" -ErrorAction SilentlyContinue |
         Remove-Item -Force
-    $tlog = Join-Path $releaseObjDir "SpaceDefanse.tlog"
+    $tlog = Join-Path $releaseObjDir "SpaceDefence.tlog"
     if (Test-Path $tlog) {
         Remove-Item -LiteralPath $tlog -Recurse -Force
     }
@@ -47,7 +47,7 @@ if (Test-Path $dist) {
 }
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 
-Copy-Item -LiteralPath (Join-Path $build "Release\SpaceDefanse.exe") -Destination $dist
+Copy-Item -LiteralPath (Join-Path $build "Release\SpaceDefence.exe") -Destination $dist
 $fmodDll = Join-Path $build "Release\fmod.dll"
 if (Test-Path $fmodDll) {
     Copy-Item -LiteralPath $fmodDll -Destination $dist
@@ -85,5 +85,5 @@ if (Test-Path $zip) {
 }
 Compress-Archive -Path (Join-Path $dist "*") -DestinationPath $zip -Force
 
-Write-Host "Built: $($dist)\SpaceDefanse.exe"
+Write-Host "Built: $($dist)\SpaceDefence.exe"
 Write-Host "Packaged: $zip"

@@ -1,4 +1,4 @@
-﻿# Asset Notes
+# Asset Notes
 
 이 폴더의 에셋은 과제 기간 중 프로젝트에 맞춰 직접 생성했거나, 무료/CC0 범위의 자료를 확인해서 사용한 것이다.
 
@@ -56,7 +56,7 @@
 
 ## UI
 
-- `ui/space_defanse_ui_atlas.png`
+- `ui/space_defence_ui_atlas.png`
   - 버튼과 패널 질감을 위한 2x2 UI 아틀라스.
   - 256x128 타일 4개 구조를 사용한다.
 

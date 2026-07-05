@@ -1,4 +1,4 @@
-﻿#include "AudioManager.h"
+#include "AudioManager.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -8,7 +8,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
 #include <fmod.hpp>
 #endif
 
@@ -17,8 +17,8 @@ namespace framework
 namespace
 {
 constexpr int kFmodChannelBudget = 256;
-constexpr wchar_t kMusicAlias[] = L"SpaceDefanseBgm";
-constexpr wchar_t kMusicLayerAlias[] = L"SpaceDefanseBgmLayer";
+constexpr wchar_t kMusicAlias[] = L"SpaceDefenceBgm";
+constexpr wchar_t kMusicLayerAlias[] = L"SpaceDefenceBgmLayer";
 
 std::string ToUtf8(const std::wstring& text)
 {
@@ -41,7 +41,7 @@ std::string ToUtf8(const std::wstring& text)
 
 bool AudioManager::Initialize()
 {
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
     if (m_fmodSystem)
     {
         return true;
@@ -72,7 +72,7 @@ void AudioManager::Shutdown()
     StopMusicLayer();
     StopMusic();
 
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
     for (auto& [path, sound] : m_fmodSounds)
     {
         if (sound)
@@ -93,7 +93,7 @@ void AudioManager::Shutdown()
 
 void AudioManager::Update()
 {
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
     if (!m_fmodSystem)
     {
         return;
@@ -129,7 +129,7 @@ bool AudioManager::PlayMusic(const std::wstring& absolutePath, float volume, boo
         return false;
     }
 
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
     if (m_fmodSystem)
     {
         const std::string utf8Path = ToUtf8(absolutePath);
@@ -172,7 +172,7 @@ bool AudioManager::PlayMusic(const std::wstring& absolutePath, float volume, boo
 
 void AudioManager::StopMusic()
 {
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
     if (m_musicChannel)
     {
         m_musicChannel->stop();
@@ -199,7 +199,7 @@ void AudioManager::SetMusicVolume(float volume)
 {
     m_musicVolume = std::clamp(volume, 0.0f, 1.0f);
 
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
     if (m_musicChannel)
     {
         m_musicChannel->setVolume(m_musicVolume);
@@ -225,7 +225,7 @@ bool AudioManager::PlayMusicLayer(const std::wstring& absolutePath, float volume
         return false;
     }
 
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
     if (m_fmodSystem)
     {
         const std::string utf8Path = ToUtf8(absolutePath);
@@ -268,7 +268,7 @@ bool AudioManager::PlayMusicLayer(const std::wstring& absolutePath, float volume
 
 void AudioManager::StopMusicLayer()
 {
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
     if (m_musicLayerChannel)
     {
         m_musicLayerChannel->stop();
@@ -295,7 +295,7 @@ void AudioManager::SetMusicLayerVolume(float volume)
 {
     m_musicLayerVolume = std::clamp(volume, 0.0f, 1.0f);
 
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
     if (m_musicLayerChannel)
     {
         m_musicLayerChannel->setVolume(m_musicLayerVolume);
@@ -427,7 +427,7 @@ bool AudioManager::PlayEffect(const std::wstring& absolutePath) const
         return false;
     }
 
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
     if (m_fmodSystem)
     {
         FMOD::Sound* sound = LoadFmodSound(absolutePath);
@@ -469,7 +469,7 @@ bool AudioManager::PlayEffectAt(const std::wstring& absolutePath, float worldX, 
     const float attenuation = std::clamp(1.0f - distance * 0.48f, 0.34f, 1.0f) * std::clamp(volumeScale, 0.0f, 1.8f);
     const float fileGain = EffectGainFor(absolutePath);
 
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
     if (m_fmodSystem)
     {
         FMOD::Sound* sound = LoadFmodSound(absolutePath);
@@ -512,7 +512,7 @@ void AudioManager::SetListener(float worldX, float audibleWidth)
     m_audibleWidth = std::max(320.0f, audibleWidth);
 }
 
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
 FMOD::Sound* AudioManager::LoadFmodSound(const std::wstring& absolutePath) const
 {
     const auto found = m_fmodSounds.find(absolutePath);

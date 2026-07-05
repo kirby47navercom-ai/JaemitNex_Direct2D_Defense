@@ -1,4 +1,4 @@
-﻿# Balance Tables
+# Balance Tables
 
 This document mirrors the runtime values in `src/GameData.cpp` so the stage curve can be reviewed without reading C++ switch logic.
 
@@ -22,7 +22,7 @@ This document mirrors the runtime values in `src/GameData.cpp` so the stage curv
 - `Enemy Interval` decreases across the campaign so later stages feel denser.
 - `Threat` scales enemy stats and boss cadence.
 - `First Boss` gets earlier in later stages to make the final planets feel more urgent.
-- Gimmicks are implemented in `UpdateStageGimmicks()` and `TriggerStageGimmick()` in `src/SpaceDefanseGameImplCombat.cpp`.
+- Gimmicks are implemented in `UpdateStageGimmicks()` and `TriggerStageGimmick()` in `src/SpaceDefenceGameImplCombat.cpp`.
 
 ## Difficulty
 

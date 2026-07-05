@@ -9,7 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT_DIR = ROOT / "output" / "pdf"
 TMP_DIR = ROOT / "tmp" / "pdfs" / "work_report"
 PACKAGE_DIR = ROOT / "package"
-PDF_NAME = "SpaceDefanse_작업물_리포트.pdf"
+PDF_NAME = "SpaceDefence_작업물_리포트.pdf"
+GITHUB_URL = "https://github.com/kirby47navercom-ai/JaemitNex_Direct2D_Defense"
+DEMO_VIDEO_NOTE = "제출 전 실제 YouTube 또는 Google Drive 시연 영상 URL로 교체 필요"
 
 
 def uri(path: Path) -> str:
@@ -52,7 +54,7 @@ def table(headers: list[str], rows: list[list[str]], class_name: str = "") -> st
 def build_html() -> str:
     """제출 폼에 올릴 작업물 리포트 HTML을 만든다."""
     font_dir = ROOT / "assets" / "fonts"
-    cover = ROOT / "package" / "SpaceDefanse" / "assets" / "backgrounds" / "stage_09_space_hd.jpg"
+    cover = ROOT / "package" / "SpaceDefence" / "assets" / "backgrounds" / "stage_09_space_hd.jpg"
     ingame = ROOT / "package" / "report_ingame_combat.png"
 
     feature_rows = [
@@ -78,7 +80,7 @@ def build_html() -> str:
         ["6. 정리와 제출", "파일을 Core/Combat/Input/Layout/Render로 분리하고, README/문서/빌드/패키지/QA를 정리했습니다."],
     ]
     tech_rows = [
-        ["SpaceDefanseGame / Impl", "공개 래퍼와 내부 게임 상태를 분리한 pimpl 구조"],
+        ["SpaceDefenceGame / Impl", "공개 래퍼와 내부 게임 상태를 분리한 pimpl 구조"],
         ["Core", "초기화, 리소스 로딩, 저장/로드, 프레임 업데이트"],
         ["Combat", "스폰, 이동, 타깃 탐색, 공격, 피해, 보스 패턴, VFX 수명 갱신"],
         ["Input", "키보드/마우스 입력, 화면별 버튼 판정, 슬라이더 조작"],
@@ -107,7 +109,7 @@ def build_html() -> str:
 <html lang="ko">
 <head>
 <meta charset="utf-8" />
-<title>Space Defanse 작업물 리포트</title>
+<title>Space Defence 작업물 리포트</title>
 <style>
 @font-face {{ font-family: GyeonggiTitle; src: url("{uri(font_dir / 'GyeonggiTitle_Medium.otf')}"); }}
 @font-face {{ font-family: GyeonggiTitle; src: url("{uri(font_dir / 'GyeonggiTitle_Bold.otf')}"); font-weight: 700; }}
@@ -308,13 +310,22 @@ code {{
   color: #1b5b88;
   font-size: 8.8pt;
 }}
+a {{
+  color: #1b5b88;
+  text-decoration: none;
+  font-weight: 700;
+}}
+.todo-link {{
+  color: #9b3a24;
+  font-weight: 700;
+}}
 </style>
 </head>
 <body>
 <section class="cover page">
   <div class="cover-card">
     <div class="kicker">JAEMITNEX AI NATIVE GAMEJAM</div>
-    <h1>Space Defanse</h1>
+    <h1>Space Defence</h1>
     <div class="sub">2026 넥슨 대학생 게임잼 '재밌넥'<br/>2차 과제 작업물 리포트</div>
     <table class="meta">
       <tr><th>장르</th><td>탑뷰 라인 디펜스 / 행성 탐사 전선</td></tr>
@@ -327,9 +338,9 @@ code {{
 
 <section class="page">
   <div class="section-title"><h2>1. 결과물 설명</h2></div>
-  {p("Space Defanse는 수성에서 태양까지 이어지는 전선을 배경으로 한 탑뷰 라인 디펜스 게임입니다. 플레이어는 14종 유닛 중 5종을 편성하고, 전투 중 에너지를 소비해 유닛을 소환하며, 월렛과 문빔 캐논을 활용해 적 기지를 밀어냅니다. 유명 유닛 소환형 디펜스의 장르 구조는 참고했지만, 캐릭터명, 그래픽, 밸런스, 스테이지 기믹은 모두 새로 구성했습니다.")}
+  {p("Space Defence는 수성에서 태양까지 이어지는 전선을 배경으로 한 탑뷰 라인 디펜스 게임입니다. 플레이어는 14종 유닛 중 5종을 편성하고, 전투 중 에너지를 소비해 유닛을 소환하며, 월렛과 문빔 캐논을 활용해 적 기지를 밀어냅니다. 유명 유닛 소환형 디펜스의 장르 구조는 참고했지만, 캐릭터명, 그래픽, 밸런스, 스테이지 기믹은 모두 새로 구성했습니다.")}
   {table(["구분", "구현 내용"], feature_rows)}
-  <div class="callout">최종 패키지는 <code>package/SpaceDefanse/SpaceDefanse.exe</code>로 바로 실행할 수 있고, 제출용 압축 파일은 <code>package/SpaceDefanse.zip</code>입니다. 고화질 우주 배경, 컷신, BGM, 효과음, VFX 시트를 포함하면서도 200MB 제출 제한 안에 들어가도록 관리했습니다.</div>
+  <div class="callout">최종 패키지는 <code>package/SpaceDefence/SpaceDefence.exe</code>로 바로 실행할 수 있고, 제출용 압축 파일은 <code>package/SpaceDefence.zip</code>입니다. 고화질 우주 배경, 컷신, BGM, 효과음, VFX 시트를 포함하면서도 200MB 제출 제한 안에 들어가도록 관리했습니다.</div>
   <div class="figure figure-wide">
     <img src="{uri(ingame)}" />
     <div class="caption">최신 빌드에서 직접 캡처한 인게임 전투 화면 - 유닛 카드, 월렛, 카메라 HUD, 전투 로그, 데모 모드 표시</div>
@@ -353,7 +364,7 @@ code {{
 <section class="page">
   <div class="section-title"><h2>3. 제작 과정</h2></div>
   {table(["단계", "작업 내용"], process_rows)}
-  {p("제작 중에는 작은 기능을 추가할 때마다 실제 화면에서 글자 겹침, 버튼 판정, 전체 화면 잘림, 효과음 크기, 보스 난이도, 패키지 용량을 반복 확인했습니다. 마지막에는 게임명이 Space Defanse로 통일되도록 코드, 문서, 패키지명을 다시 검색해 정리했습니다.")}
+  {p("제작 중에는 작은 기능을 추가할 때마다 실제 화면에서 글자 겹침, 버튼 판정, 전체 화면 잘림, 효과음 크기, 보스 난이도, 패키지 용량을 반복 확인했습니다. 마지막에는 게임명이 Space Defence로 통일되도록 코드, 문서, 패키지명을 다시 검색해 정리했습니다.")}
   <h3>제작 흐름 요약</h3>
   {bullets([
       "먼저 실행 가능한 전투 루프를 만들고, 이후 UI와 성장 구조를 붙였습니다.",
@@ -412,15 +423,23 @@ code {{
       "패키지 용량은 200MB 제한 안에 들어가도록 유지했습니다.",
   ])}
   {table(["제출 항목", "파일"], [
-      ["제작 결과물 ZIP", "package/SpaceDefanse.zip"],
-      ["실행 파일", "package/SpaceDefanse/SpaceDefanse.exe"],
+      ["제작 결과물 ZIP", "package/SpaceDefence.zip"],
+      ["실행 파일", "package/SpaceDefence/SpaceDefence.exe"],
       ["작업물 리포트", f"output/pdf/{PDF_NAME}"],
       ["주요 문서", "README.md, docs/AI_USAGE.md, docs/CODE_STRUCTURE_KO.md, docs/BALANCE_TABLES.md"],
   ])}
+  <h3>외부 확인 링크</h3>
+  <table>
+    <thead><tr><th>항목</th><th>링크</th></tr></thead>
+    <tbody>
+      <tr><td>GitHub 저장소</td><td><a href="{e(GITHUB_URL)}">{e(GITHUB_URL)}</a></td></tr>
+      <tr><td>시연 영상</td><td><span class="todo-link">{e(DEMO_VIDEO_NOTE)}</span></td></tr>
+    </tbody>
+  </table>
   <h3>마무리</h3>
-  {p("Space Defanse는 짧은 과제 기간 안에서 AI를 적극 활용해 기획, 구현, 연출, QA, 문서화를 모두 이어 붙인 결과물입니다. 완성형 상용 게임보다는 게임잼 과제에 맞춘 프로토타입이지만, 실행 가능한 빌드, 성장 구조, 여러 스테이지, 보스전, 사운드, 저장, 옵션, 제출 문서까지 갖추는 것을 목표로 했습니다.")}
+  {p("Space Defence는 짧은 과제 기간 안에서 AI를 적극 활용해 기획, 구현, 연출, QA, 문서화를 모두 이어 붙인 결과물입니다. 완성형 상용 게임보다는 게임잼 과제에 맞춘 프로토타입이지만, 실행 가능한 빌드, 성장 구조, 여러 스테이지, 보스전, 사운드, 저장, 옵션, 제출 문서까지 갖추는 것을 목표로 했습니다.")}
   {p("가장 중요하게 본 기준은 'AI가 만든 코드'가 아니라, AI를 활용해 어떤 판단을 하고 어떤 부분을 직접 고쳐 나갔는지였습니다. 그래서 반복적인 UI 수정, 밸런스 조정, 에셋 교체, 파일 분리, 문서 최신화까지 제작 과정 전체를 남겼습니다.")}
-  <p class="footer-note">작성자: 양현빈 / 프로젝트: Space Defanse / 문서 파일: {e(PDF_NAME)}</p>
+  <p class="footer-note">작성자: 양현빈 / 프로젝트: Space Defence / 문서 파일: {e(PDF_NAME)}</p>
 </section>
 </body>
 </html>"""
@@ -431,7 +450,7 @@ def build_pdf() -> Path:
     TMP_DIR.mkdir(parents=True, exist_ok=True)
     PACKAGE_DIR.mkdir(parents=True, exist_ok=True)
 
-    html_path = TMP_DIR / "SpaceDefanse_작업물_리포트.html"
+    html_path = TMP_DIR / "SpaceDefence_작업물_리포트.html"
     pdf_path = OUT_DIR / PDF_NAME
     package_pdf = PACKAGE_DIR / PDF_NAME
     html_path.write_text(build_html(), encoding="utf-8")

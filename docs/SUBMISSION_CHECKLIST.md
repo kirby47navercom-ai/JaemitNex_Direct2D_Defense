@@ -1,7 +1,7 @@
-﻿# 제출 체크리스트
+# 제출 체크리스트
 
-- [ ] `build.ps1` 실행 후 `package/SpaceDefanse.zip` 생성 확인
-- [ ] zip 압축 해제 후 `SpaceDefanse.exe` 단독 실행 확인
+- [ ] `build.ps1` 실행 후 `package/SpaceDefence.zip` 생성 확인
+- [ ] zip 압축 해제 후 `SpaceDefence.exe` 단독 실행 확인
 - [ ] 3분 이내 시연 영상 촬영
 - [ ] 시연 영상 링크 공개 범위 확인
 - [ ] 작업물 리포트 PDF 작성

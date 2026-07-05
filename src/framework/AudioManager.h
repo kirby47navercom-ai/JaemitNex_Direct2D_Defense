@@ -1,9 +1,9 @@
-﻿#pragma once
+#pragma once
 
 #include <string>
 #include <unordered_map>
 
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
 namespace FMOD
 {
 class Channel;
@@ -58,7 +58,7 @@ private:
     float m_musicLayerVolume = 0.0f;
     bool m_musicLayerOpen = false;
 
-#if defined(SPACE_DEFANSE_WITH_FMOD)
+#if defined(SPACE_DEFENCE_WITH_FMOD)
     // 같은 효과음을 반복 재생할 때 매번 디스크에서 읽지 않도록 FMOD Sound를 캐시한다.
     FMOD::Sound* LoadFmodSound(const std::wstring& absolutePath) const;
 
