@@ -378,16 +378,15 @@ std::wstring PawlineGameImpl::AssetPath(const std::wstring& relativePath) const
 
 void PawlineGameImpl::StartBackgroundMusic()
 {
-    // 효과음 볼륨 슬라이더를 전체 오디오 볼륨처럼 쓰되, BGM은 전투음을 덮지 않게 낮게 둔다.
-    const float musicVolume = m_soundEnabled ? m_sfxVolume * 0.34f : 0.0f;
-    m_audio.PlayMusic(AssetPath(L"assets\\music\\outer_space_loop.mp3"), musicVolume, true);
+    // 게임을 켜면 몽환적인 우주 루프를 계속 재생한다.
+    // 실제 볼륨은 옵션의 BGM 슬라이더가 담당한다.
+    m_audio.PlayMusic(AssetPath(L"assets\\music\\outer_space_loop.mp3"), m_bgmVolume, true);
 }
 
 void PawlineGameImpl::SyncMusicVolume()
 {
-    // 옵션에서 볼륨을 바꾸면 이미 재생 중인 배경음악에도 즉시 반영한다.
-    const float musicVolume = m_soundEnabled ? m_sfxVolume * 0.34f : 0.0f;
-    m_audio.SetMusicVolume(musicVolume);
+    // 옵션에서 BGM 볼륨을 바꾸면 이미 재생 중인 채널에도 즉시 반영한다.
+    m_audio.SetMusicVolume(m_bgmVolume);
 }
 
 void PawlineGameImpl::PlaySfx(SfxKind kind, float minGapSeconds)
@@ -754,8 +753,26 @@ void PawlineGameImpl::AdjustSfxVolume(float delta)
     m_sfxVolume = std::clamp(m_sfxVolume + delta, 0.0f, 1.0f);
     m_soundEnabled = m_sfxVolume > 0.001f;
     m_audio.SetVolume(m_sfxVolume);
+    PlaySfx(SfxKind::Ui, 0.02f);
+}
+
+void PawlineGameImpl::AdjustBgmVolume(float delta)
+{
+    m_bgmVolume = std::clamp(m_bgmVolume + delta, 0.0f, 1.0f);
     SyncMusicVolume();
     PlaySfx(SfxKind::Ui, 0.02f);
+}
+
+void PawlineGameImpl::ResetAudioVolumes()
+{
+    // 제출 시 기본값은 효과음이 또렷하고, BGM은 뒤에서 깔리는 정도로 맞춘다.
+    m_sfxVolume = 0.86f;
+    m_bgmVolume = 0.32f;
+    m_soundEnabled = true;
+    m_audio.SetVolume(m_sfxVolume);
+    SyncMusicVolume();
+    PlaySfx(SfxKind::Ui, 0.02f);
+    SetMessage(L"오디오 볼륨을 기본값으로 돌렸어.");
 }
 
 HRESULT PawlineGameImpl::LoadBitmapFromFile(const std::wstring& path, ID2D1Bitmap** bitmap) const
@@ -1228,6 +1245,15 @@ void PawlineGameImpl::LoadProgress(int slot)
                 m_sfxVolume = std::clamp(savedSfxVolume, 0.0f, 1.0f);
                 m_soundEnabled = m_sfxVolume > 0.001f;
                 m_audio.SetVolume(m_sfxVolume);
+                float savedBgmVolume = m_bgmVolume;
+                if (file >> savedBgmVolume)
+                {
+                    m_bgmVolume = std::clamp(savedBgmVolume, 0.0f, 1.0f);
+                }
+                else
+                {
+                    file.clear();
+                }
                 SyncMusicVolume();
             }
             else
@@ -1288,7 +1314,7 @@ void PawlineGameImpl::SaveProgressToSlot(int slot) const
     file << m_selectedStage << L" " << m_selectedLoadoutSlot << L"\n";
     file << m_defaultGameSpeed << L" " << m_userViewScale << L" "
          << (m_hitShakeEnabled ? 1 : 0) << L" " << (m_reduceFlashes ? 1 : 0) << L" "
-         << m_sfxVolume << L"\n";
+         << m_sfxVolume << L" " << m_bgmVolume << L"\n";
 }
 
 void PawlineGameImpl::SelectSaveSlot(int slot)

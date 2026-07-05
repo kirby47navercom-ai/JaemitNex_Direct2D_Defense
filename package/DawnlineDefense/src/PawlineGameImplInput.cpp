@@ -79,6 +79,9 @@ bool PawlineGameImpl::IsInteractivePoint(Vec2 pos) const
                Contains(OptionsFlashButtonRect(), pos) ||
                Contains(OptionsSfxDownButtonRect(), pos) ||
                Contains(OptionsSfxUpButtonRect(), pos) ||
+               Contains(OptionsBgmDownButtonRect(), pos) ||
+               Contains(OptionsBgmUpButtonRect(), pos) ||
+               Contains(OptionsAudioResetButtonRect(), pos) ||
                Contains(OptionsSpeedDownButtonRect(), pos) ||
                Contains(OptionsSpeedUpButtonRect(), pos) ||
                Contains(OptionsViewDownButtonRect(), pos) ||
@@ -523,6 +526,21 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
         AdjustSfxVolume(0.10f);
         return;
     }
+    if (Contains(OptionsBgmDownButtonRect(), pos))
+    {
+        AdjustBgmVolume(-0.10f);
+        return;
+    }
+    if (Contains(OptionsBgmUpButtonRect(), pos))
+    {
+        AdjustBgmVolume(0.10f);
+        return;
+    }
+    if (Contains(OptionsAudioResetButtonRect(), pos))
+    {
+        ResetAudioVolumes();
+        return;
+    }
     if (Contains(OptionsSpeedDownButtonRect(), pos))
     {
         m_defaultGameSpeed = std::max(0.5f, m_defaultGameSpeed - 0.5f);
@@ -881,6 +899,18 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         {
             AdjustSfxVolume(0.10f);
         }
+        else if (key == 'B')
+        {
+            AdjustBgmVolume(-0.10f);
+        }
+        else if (key == 'V')
+        {
+            AdjustBgmVolume(0.10f);
+        }
+        else if (key == 'R')
+        {
+            ResetAudioVolumes();
+        }
         else if (key == VK_LEFT || key == VK_OEM_MINUS || key == VK_OEM_4)
         {
             m_defaultGameSpeed = std::max(0.5f, m_defaultGameSpeed - 0.5f);
@@ -1018,7 +1048,7 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         if (!m_units.empty())
         {
             Unit& boss = m_units.back();
-            boss.boss = true;
+            PromoteBossUnit(boss);
             TriggerBossEntrance(boss, GetEnemyStats(static_cast<EnemyUnit>(boss.kind), ThreatLevel()).accent);
         }
         m_bossSpawned = true;

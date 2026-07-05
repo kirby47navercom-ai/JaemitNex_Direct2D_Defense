@@ -1137,11 +1137,19 @@ void PawlineGameImpl::DrawOptions()
     DrawButton(OptionsFlashButtonRect(), m_reduceFlashes ? L"FLASH LESS" : L"FLASH FULL", true, m_reduceFlashes ? D2D1::ColorF(0x283B27) : D2D1::ColorF(0x302735));
     DrawString(L"F", D2D1::RectF(OptionsFlashButtonRect().right + 16.0f, OptionsFlashButtonRect().top + 12.0f, OptionsFlashButtonRect().right + 56.0f, OptionsFlashButtonRect().bottom), m_centerFormat, D2D1::ColorF(0x8EA9B8));
 
-    DrawString(L"오디오 볼륨", D2D1::RectF(830.0f, 306.0f, 1130.0f, 330.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
+    DrawString(L"효과음 볼륨", D2D1::RectF(830.0f, 306.0f, 1130.0f, 330.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
     DrawButton(OptionsSfxDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));
     DrawString(ToWideInt(static_cast<int>(std::round(m_sfxVolume * 100.0f))) + L"%", D2D1::RectF(892.0f, 348.0f, 1068.0f, 378.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
     DrawButton(OptionsSfxUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
     DrawString(L"M / N", D2D1::RectF(830.0f, 386.0f, 1130.0f, 410.0f), m_smallFormat, D2D1::ColorF(0x8EA9B8));
+
+    DrawString(L"브금 볼륨", D2D1::RectF(830.0f, 408.0f, 1130.0f, 432.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
+    DrawButton(OptionsBgmDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));
+    DrawString(ToWideInt(static_cast<int>(std::round(m_bgmVolume * 100.0f))) + L"%", D2D1::RectF(892.0f, 448.0f, 1068.0f, 478.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
+    DrawButton(OptionsBgmUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
+    DrawString(L"B / V", D2D1::RectF(830.0f, 486.0f, 1130.0f, 508.0f), m_smallFormat, D2D1::ColorF(0x8EA9B8));
+    DrawButton(OptionsAudioResetButtonRect(), L"AUDIO RESET", true, D2D1::ColorF(0x283B27));
+    DrawString(L"R", D2D1::RectF(OptionsAudioResetButtonRect().right + 12.0f, OptionsAudioResetButtonRect().top + 8.0f, OptionsAudioResetButtonRect().right + 42.0f, OptionsAudioResetButtonRect().bottom), m_smallFormat, D2D1::ColorF(0x8EA9B8));
 
     DrawString(L"기본 게임 속도", D2D1::RectF(490.0f, 408.0f, 790.0f, 432.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
     DrawButton(OptionsSpeedDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));

@@ -101,7 +101,7 @@ void PawlineGameImpl::TriggerBossEntrance(Unit& boss, D2D1_COLOR_F color)
     boss.stunTimer = 0.0f;
     boss.knockbackTimer = 0.0f;
     boss.knockbackVelocity = 0.0f;
-    boss.nextKnockbackPct = 0.78f;
+    boss.nextKnockbackPct = 0.82f;
     m_bossFocusX = std::max(0.0f, std::min(kCameraMaxX, boss.pos.x - 760.0f));
     m_bossBannerTimer = 3.15f;
     m_bossWarningTimer = 1.20f;
@@ -141,7 +141,9 @@ void PawlineGameImpl::TriggerBossPhaseChange(Unit& boss, int phase)
     boss.damage *= finalPhase ? 1.13f : 1.08f;
     boss.attackDelay = std::max(0.52f, boss.attackDelay * (finalPhase ? 0.86f : 0.93f));
     boss.speed *= finalPhase ? 1.06f : 1.03f;
+    boss.hp = std::min(boss.maxHp, boss.hp + boss.maxHp * (finalPhase ? 0.055f : 0.035f));
     boss.hitFlash = std::max(boss.hitFlash, 0.28f);
+    AddFloatText(boss.pos + Vec2{0.0f, -boss.radius - 34.0f}, L"PHASE SHIELD", D2D1::ColorF(0xF6FF83), 0.86f);
 
     SetMessage(finalPhase ? L"보스 최종 페이즈. 전선 붕괴 주의!" : L"보스 2페이즈. 패턴 강화!");
     AddCameraTrauma(finalPhase ? 0.82f : 0.62f);

@@ -147,11 +147,11 @@ bool IsRangedEnemy(EnemyUnit unit)
 }
 }
 
-// Gameplay simulation, combat resolution, and short-lived VFX spawning.
+// 전투 시뮬레이션, 공격 판정, 짧게 사라지는 VFX 생성을 맡는 파일이다.
 void PawlineGameImpl::UpdateEnemyDirector(float dt)
 {
-    // The director scales spawn timing from the selected stage and elapsed time,
-    // giving later planets denser waves without hard-coding every spawn.
+    // 디렉터는 스테이지, 경과 시간, 현재 전황을 보고 적 생성 템포를 미세 조정한다.
+    // 모든 웨이브를 하드코딩하지 않아도 후반 행성일수록 더 빽빽하게 몰아치게 만든다.
     UpdateDirectorPressure(dt);
     m_enemyTimer -= dt;
     const float threat = ThreatLevel();
@@ -166,7 +166,7 @@ void PawlineGameImpl::UpdateEnemyDirector(float dt)
         if (!m_units.empty())
         {
             Unit& boss = m_units.back();
-            boss.boss = true;
+            PromoteBossUnit(boss);
             TriggerBossEntrance(boss, GetEnemyStats(bossType, threat).accent);
         }
         m_bossSpawned = true;
@@ -240,8 +240,53 @@ float PawlineGameImpl::DirectorSpawnMultiplier() const
 
 float PawlineGameImpl::BossTriggerHpRatio() const
 {
-    // 후반 행성은 전투 템포가 빠르므로 보스가 조금 더 일찍 개입한다.
+    // 적 기지가 일정 체력 이하로 내려갔을 때 보스가 한 번만 전장에 개입한다.
+    // 뒤쪽 스테이지일수록 플레이어 화력이 높아지므로 문턱을 조금씩 올린다.
     return std::min(0.72f, 0.66f + static_cast<float>(m_selectedStage) * 0.0065f);
+}
+
+void PawlineGameImpl::PromoteBossUnit(Unit& boss)
+{
+    // SpawnEnemy는 일반/엘리트 공통 생성만 담당한다.
+    // 이 함수는 "스테이지 보스"로 지정된 유닛에만 추가 체력, 보상, 패턴용 플래그를 얹는다.
+    const bool finalBoss = static_cast<EnemyUnit>(boss.kind) == EnemyUnit::Boss;
+    const float stageBonus = static_cast<float>(m_selectedStage) * 0.14f;
+    const float difficultyBonus = m_difficulty == Difficulty::Easy ? 0.92f : (m_difficulty == Difficulty::Hard ? 1.14f : 1.0f);
+    const float hpMultiplier = (1.85f + stageBonus + (finalBoss ? 0.55f : 0.0f)) * difficultyBonus;
+
+    boss.boss = true;
+    boss.elite = true;
+    boss.maxHp *= hpMultiplier;
+    boss.hp = boss.maxHp;
+    boss.damage *= finalBoss ? 1.24f : 1.16f;
+    boss.range += finalBoss ? 18.0f : 12.0f;
+    boss.attackDelay = std::max(0.54f, boss.attackDelay * (finalBoss ? 0.84f : 0.90f));
+    boss.speed *= finalBoss ? 0.84f : 0.88f;
+    boss.radius += finalBoss ? 12.0f : 8.0f;
+    boss.reward = static_cast<int>(std::round(static_cast<float>(boss.reward) * (finalBoss ? 4.4f : 3.2f)));
+    boss.nextKnockbackPct = 0.82f;
+}
+
+float PawlineGameImpl::BossDamageTakenScale(const Unit& boss) const
+{
+    if (!boss.boss || boss.maxHp <= 0.0f)
+    {
+        return 1.0f;
+    }
+
+    // 보스는 체력만 큰 샌드백이 아니라, 페이즈별 방어막으로 버티는 대상이다.
+    // 마지막 25%에서는 방어를 조금 풀어 전투가 질질 늘어지지 않게 한다.
+    const float hpPct = Clamp01(boss.hp / boss.maxHp);
+    const float difficultyScale = m_difficulty == Difficulty::Easy ? 0.84f : (m_difficulty == Difficulty::Hard ? 0.64f : 0.72f);
+    if (hpPct <= 0.25f)
+    {
+        return std::min(0.90f, difficultyScale + 0.10f);
+    }
+    if (hpPct <= 0.50f)
+    {
+        return std::min(0.86f, difficultyScale + 0.05f);
+    }
+    return difficultyScale;
 }
 
 EnemyUnit PawlineGameImpl::PickStageEnemy(int value, int phase) const
@@ -2442,14 +2487,15 @@ void PawlineGameImpl::DamageUnit(Unit& target, float damage, Team sourceTeam)
         return;
     }
 
-    const bool heavyHit = damage >= std::max(42.0f, target.maxHp * (target.boss ? 0.060f : 0.120f));
-    target.hp -= damage;
+    const float resolvedDamage = target.boss ? damage * BossDamageTakenScale(target) : damage;
+    const bool heavyHit = resolvedDamage >= std::max(42.0f, target.maxHp * (target.boss ? 0.060f : 0.120f));
+    target.hp -= resolvedDamage;
     PlaySfxAt(heavyHit ? SfxKind::HeavyHit : SfxKind::Hit, target.pos.x, heavyHit ? 0.030f : 0.050f, heavyHit ? 0.88f : 0.62f);
     target.hitFlash = 0.12f;
     ShakeUnit(target, 0.18f);
-    AddFloatText(target.pos + Vec2{0.0f, -target.radius - 22.0f}, ToWideInt(static_cast<int>(std::round(damage))),
+    AddFloatText(target.pos + Vec2{0.0f, -target.radius - 22.0f}, ToWideInt(static_cast<int>(std::round(resolvedDamage))),
                  sourceTeam == Team::Player ? D2D1::ColorF(0xBBD7FF) : D2D1::ColorF(0xFFB6C2), 0.58f);
-    ApplyImpactReaction(target, sourceTeam, damage, sourceTeam == Team::Player ? D2D1::ColorF(0xBBD7FF) : D2D1::ColorF(0xFFB6C2));
+    ApplyImpactReaction(target, sourceTeam, resolvedDamage, sourceTeam == Team::Player ? D2D1::ColorF(0xBBD7FF) : D2D1::ColorF(0xFFB6C2));
 
     if (target.hp <= 0.0f)
     {

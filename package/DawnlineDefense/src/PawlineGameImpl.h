@@ -504,6 +504,10 @@ private:
 
     void AdjustSfxVolume(float delta);
 
+    void AdjustBgmVolume(float delta);
+
+    void ResetAudioVolumes();
+
     HRESULT LoadBitmapFromFile(const std::wstring& path, ID2D1Bitmap** bitmap) const;
 
     void LoadBitmapAssets();
@@ -611,6 +615,10 @@ private:
     EnemyUnit PickStageEnemy(int value, int phase) const;
 
     EnemyUnit StageBossType() const;
+
+    void PromoteBossUnit(Unit& boss);
+
+    float BossDamageTakenScale(const Unit& boss) const;
 
     std::wstring StageEnemySummary() const;
 
@@ -841,6 +849,12 @@ private:
     D2D1_RECT_F OptionsSfxDownButtonRect() const;
 
     D2D1_RECT_F OptionsSfxUpButtonRect() const;
+
+    D2D1_RECT_F OptionsBgmDownButtonRect() const;
+
+    D2D1_RECT_F OptionsBgmUpButtonRect() const;
+
+    D2D1_RECT_F OptionsAudioResetButtonRect() const;
 
     D2D1_RECT_F OptionsSpeedDownButtonRect() const;
 
@@ -1234,7 +1248,9 @@ private:
         return values;
     }();
     framework::AudioManager m_audio;
+    // 효과음과 배경음악은 옵션에서 따로 조절한다.
     float m_sfxVolume = 0.86f;
+    float m_bgmVolume = 0.32f;
     bool m_soundEnabled = true;
 
     // 전투 중 살아 움직이는 객체와 짧게 사라지는 VFX 컨테이너.

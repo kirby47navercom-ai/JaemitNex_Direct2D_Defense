@@ -29,6 +29,7 @@ public:
     bool PlayEffect(const std::wstring& absolutePath) const;
     bool PlayEffectAt(const std::wstring& absolutePath, float worldX, float volumeScale = 1.0f) const;
 
+    // 배경음악은 긴 파일을 스트리밍으로 틀고, 옵션에서 독립적으로 볼륨을 바꾼다.
     bool PlayMusic(const std::wstring& absolutePath, float volume, bool loop = true);
     void StopMusic();
     void SetMusicVolume(float volume);
@@ -45,6 +46,7 @@ private:
     float m_audibleWidth = 1280.0f;
     // WAV 파일마다 다른 녹음 레벨을 한 번 계산해서 재생 볼륨 보정에 사용한다.
     mutable std::unordered_map<std::wstring, float> m_effectGainCache;
+    // 현재 BGM 볼륨과 WinMM fallback에서 열린 음악 alias 상태다.
     float m_musicVolume = 0.32f;
     bool m_musicOpen = false;
 
@@ -55,6 +57,7 @@ private:
     // FMOD Core API 시스템과 로드된 사운드 캐시다.
     mutable FMOD::System* m_fmodSystem = nullptr;
     mutable std::unordered_map<std::wstring, FMOD::Sound*> m_fmodSounds;
+    // 효과음 캐시와 분리된 BGM 스트림이다. Shutdown 때 반드시 먼저 닫는다.
     FMOD::Sound* m_musicSound = nullptr;
     FMOD::Channel* m_musicChannel = nullptr;
 #endif
