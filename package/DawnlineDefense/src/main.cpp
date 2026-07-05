@@ -13,7 +13,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
     const HRESULT hr = game.Initialize();
     if (FAILED(hr))
     {
-        MessageBoxW(nullptr, L"Failed to initialize Pawline Defense.", L"Pawline Defense", MB_ICONERROR | MB_OK);
+        MessageBoxW(nullptr, L"Failed to initialize Space Defanse.", L"Space Defanse", MB_ICONERROR | MB_OK);
         return -1;
     }
 

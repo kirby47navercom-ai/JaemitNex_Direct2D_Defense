@@ -135,24 +135,14 @@ D2D1_RECT_F PawlineGameImpl::OptionsSaveSlotButtonRect(int index) const
     return D2D1::RectF(x, 164.0f, x + 160.0f, 208.0f);
 }
 
-D2D1_RECT_F PawlineGameImpl::OptionsSaveProgressButtonRect() const
-{
-    return D2D1::RectF(270.0f, 650.0f, 430.0f, 692.0f);
-}
-
-D2D1_RECT_F PawlineGameImpl::OptionsLoadProgressButtonRect() const
-{
-    return D2D1::RectF(450.0f, 650.0f, 610.0f, 692.0f);
-}
-
 D2D1_RECT_F PawlineGameImpl::OptionsDeleteProgressButtonRect() const
 {
-    return D2D1::RectF(670.0f, 650.0f, 830.0f, 692.0f);
+    return D2D1::RectF(350.0f, 650.0f, 530.0f, 692.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsResetProgressButtonRect() const
 {
-    return D2D1::RectF(850.0f, 650.0f, 1010.0f, 692.0f);
+    return D2D1::RectF(750.0f, 650.0f, 930.0f, 692.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsBackButtonRect() const
@@ -328,19 +318,9 @@ D2D1_RECT_F PawlineGameImpl::EscapeSpeedUpButtonRect() const
     return D2D1::RectF(554.0f, 394.0f, 608.0f, 444.0f);
 }
 
-D2D1_RECT_F PawlineGameImpl::EscapeSaveButtonRect() const
-{
-    return D2D1::RectF(332.0f, 480.0f, 464.0f, 528.0f);
-}
-
-D2D1_RECT_F PawlineGameImpl::EscapeLoadButtonRect() const
-{
-    return D2D1::RectF(476.0f, 480.0f, 608.0f, 528.0f);
-}
-
 D2D1_RECT_F PawlineGameImpl::EscapeStoryButtonRect() const
 {
-    return D2D1::RectF(332.0f, 548.0f, 608.0f, 596.0f);
+    return D2D1::RectF(332.0f, 480.0f, 608.0f, 530.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::EscapeSfxSliderRect() const
@@ -365,10 +345,10 @@ D2D1_RECT_F PawlineGameImpl::EscapeAudioResetButtonRect() const
 
 D2D1_RECT_F PawlineGameImpl::EscapeStageButtonRect() const
 {
-    return D2D1::RectF(332.0f, 614.0f, 608.0f, 664.0f);
+    return D2D1::RectF(332.0f, 548.0f, 608.0f, 598.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::EscapeQuitButtonRect() const
 {
-    return D2D1::RectF(332.0f, 678.0f, 608.0f, 728.0f);
+    return D2D1::RectF(332.0f, 616.0f, 608.0f, 666.0f);
 }

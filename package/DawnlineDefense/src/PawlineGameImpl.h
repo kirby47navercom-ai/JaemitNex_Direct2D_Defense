@@ -943,10 +943,6 @@ private:
 
     D2D1_RECT_F OptionsSaveSlotButtonRect(int index) const;
 
-    D2D1_RECT_F OptionsSaveProgressButtonRect() const;
-
-    D2D1_RECT_F OptionsLoadProgressButtonRect() const;
-
     D2D1_RECT_F OptionsDeleteProgressButtonRect() const;
 
     D2D1_RECT_F OptionsResetProgressButtonRect() const;
@@ -1010,10 +1006,6 @@ private:
     D2D1_RECT_F EscapeSpeedDownButtonRect() const;
 
     D2D1_RECT_F EscapeSpeedUpButtonRect() const;
-
-    D2D1_RECT_F EscapeSaveButtonRect() const;
-
-    D2D1_RECT_F EscapeLoadButtonRect() const;
 
     D2D1_RECT_F EscapeStoryButtonRect() const;
 

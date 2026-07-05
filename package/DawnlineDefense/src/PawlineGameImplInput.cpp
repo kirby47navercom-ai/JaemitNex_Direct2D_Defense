@@ -60,6 +60,7 @@ void PawlineGameImpl::AdjustEscapeMenuSpeed(float delta)
     {
         m_gameSpeed = std::max(0.5f, std::min(3.0f, m_gameSpeed + delta));
     }
+    SaveProgress();
 }
 
 UiSliderDragTarget PawlineGameImpl::SliderDragTargetAt(Vec2 pos) const
@@ -133,6 +134,10 @@ void PawlineGameImpl::UpdateSliderDrag(Vec2 pos, bool playFeedback)
 
 void PawlineGameImpl::EndSliderDrag()
 {
+    if (m_activeSliderDrag != UiSliderDragTarget::None)
+    {
+        SaveProgress();
+    }
     m_activeSliderDrag = UiSliderDragTarget::None;
 }
 
@@ -197,8 +202,6 @@ bool PawlineGameImpl::IsInteractivePoint(Vec2 pos) const
                Contains(EscapeShakeButtonRect(), pos) ||
                Contains(EscapeSpeedDownButtonRect(), pos) ||
                Contains(EscapeSpeedUpButtonRect(), pos) ||
-               Contains(EscapeSaveButtonRect(), pos) ||
-               Contains(EscapeLoadButtonRect(), pos) ||
                Contains(EscapeStoryButtonRect(), pos) ||
                Contains(EscapeSfxSliderRect(), pos) ||
                Contains(EscapeUiSliderRect(), pos) ||
@@ -237,8 +240,6 @@ bool PawlineGameImpl::IsInteractivePoint(Vec2 pos) const
                Contains(OptionsSpeedSliderRect(), pos) ||
                Contains(OptionsViewSliderRect(), pos) ||
                Contains(OptionsViewResetButtonRect(), pos) ||
-               Contains(OptionsSaveProgressButtonRect(), pos) ||
-               Contains(OptionsLoadProgressButtonRect(), pos) ||
                Contains(OptionsDeleteProgressButtonRect(), pos) ||
                Contains(OptionsResetProgressButtonRect(), pos) ||
                Contains(OptionsBackButtonRect(), pos);
@@ -577,6 +578,7 @@ void PawlineGameImpl::OnMenuClick(Vec2 pos)
         if (Contains(MenuLoadoutSlotRect(i), pos))
         {
             m_selectedLoadoutSlot = i;
+            SaveProgress();
             return;
         }
     }
@@ -636,6 +638,7 @@ void PawlineGameImpl::OnBriefingClick(Vec2 pos)
         {
             m_selectedLoadoutSlot = i;
             m_screen = GameScreen::Menu;
+            SaveProgress();
             SetMessage(L"교체할 유닛을 골라줘.");
             return;
         }
@@ -646,6 +649,7 @@ void PawlineGameImpl::OnBriefingClick(Vec2 pos)
         if (Contains(BriefingDifficultyRect(i), pos))
         {
             m_difficulty = static_cast<Difficulty>(i);
+            SaveProgress();
             SetMessage(std::wstring(L"난이도 ") + DifficultyLabel());
             return;
         }
@@ -689,11 +693,13 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
     if (Contains(OptionsShakeButtonRect(), pos))
     {
         m_hitShakeEnabled = !m_hitShakeEnabled;
+        SaveProgress();
         return;
     }
     if (Contains(OptionsFlashButtonRect(), pos))
     {
         m_reduceFlashes = !m_reduceFlashes;
+        SaveProgress();
         SetMessage(m_reduceFlashes ? L"눈부심 줄이기 켜짐." : L"눈부심 줄이기 꺼짐.");
         return;
     }
@@ -741,19 +747,7 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
     {
         m_userViewScale = 1.0f;
         UpdateViewMetrics();
-        return;
-    }
-    if (Contains(OptionsSaveProgressButtonRect(), pos))
-    {
         SaveProgress();
-        SetMessage(SaveSlotLabel() + L"에 저장했어.");
-        return;
-    }
-    if (Contains(OptionsLoadProgressButtonRect(), pos))
-    {
-        LoadProgress();
-        UpdateViewMetrics();
-        SetMessage(SaveSlotLabel() + L"에서 불러왔어.");
         return;
     }
     if (Contains(OptionsDeleteProgressButtonRect(), pos))
@@ -803,6 +797,7 @@ void PawlineGameImpl::OnEscapeMenuClick(Vec2 pos)
     if (Contains(EscapeShakeButtonRect(), pos))
     {
         m_hitShakeEnabled = !m_hitShakeEnabled;
+        SaveProgress();
         return;
     }
     if (Contains(EscapeSpeedDownButtonRect(), pos))
@@ -813,19 +808,6 @@ void PawlineGameImpl::OnEscapeMenuClick(Vec2 pos)
     if (Contains(EscapeSpeedUpButtonRect(), pos))
     {
         AdjustEscapeMenuSpeed(0.5f);
-        return;
-    }
-    if (Contains(EscapeSaveButtonRect(), pos))
-    {
-        SaveProgress();
-        SetMessage(SaveSlotLabel() + L"에 저장했어.");
-        return;
-    }
-    if (Contains(EscapeLoadButtonRect(), pos))
-    {
-        LoadProgress();
-        UpdateViewMetrics();
-        SetMessage(SaveSlotLabel() + L"에서 불러왔어.");
         return;
     }
     if (Contains(EscapeStoryButtonRect(), pos))
@@ -881,6 +863,7 @@ void PawlineGameImpl::OnResultClick(Vec2 pos)
         if (m_victory && m_selectedStage < kStageCount - 1)
         {
             ++m_selectedStage;
+            SaveProgress();
             ResetGame();
         }
         else
@@ -956,11 +939,13 @@ void PawlineGameImpl::SetLoadoutUnit(PlayerUnit unit)
         if (m_loadout[i] == unit)
         {
             std::swap(m_loadout[i], m_loadout[m_selectedLoadoutSlot]);
+            SaveProgress();
             return;
         }
     }
 
     m_loadout[m_selectedLoadoutSlot] = unit;
+    SaveProgress();
 }
 
 void PawlineGameImpl::OnKeyDown(WPARAM key)
@@ -974,6 +959,7 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         else if (key == 'H')
         {
             m_hitShakeEnabled = !m_hitShakeEnabled;
+            SaveProgress();
         }
         else if (key == VK_LEFT || key == VK_OEM_MINUS || key == VK_OEM_4)
         {
@@ -982,17 +968,6 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         else if (key == VK_RIGHT || key == VK_OEM_PLUS || key == VK_OEM_6)
         {
             AdjustEscapeMenuSpeed(0.5f);
-        }
-        else if (key == 'S')
-        {
-            SaveProgress();
-            SetMessage(SaveSlotLabel() + L"에 저장했어.");
-        }
-        else if (key == 'L')
-        {
-            LoadProgress();
-            UpdateViewMetrics();
-            SetMessage(SaveSlotLabel() + L"에서 불러왔어.");
         }
         else if (key == 'C')
         {
@@ -1166,6 +1141,7 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         else if (key == 'H')
         {
             m_hitShakeEnabled = !m_hitShakeEnabled;
+            SaveProgress();
         }
         else if (key == 'F')
         {
@@ -1203,40 +1179,34 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         else if (key == VK_LEFT || key == VK_OEM_MINUS || key == VK_OEM_4)
         {
             m_defaultGameSpeed = std::max(0.5f, m_defaultGameSpeed - 0.5f);
+            SaveProgress();
         }
         else if (key == VK_RIGHT || key == VK_OEM_PLUS || key == VK_OEM_6)
         {
             m_defaultGameSpeed = std::min(3.0f, m_defaultGameSpeed + 0.5f);
+            SaveProgress();
         }
         else if (key == VK_DOWN)
         {
             m_userViewScale = std::max(0.82f, m_userViewScale - 0.05f);
             UpdateViewMetrics();
+            SaveProgress();
         }
         else if (key == VK_UP)
         {
             m_userViewScale = std::min(1.0f, m_userViewScale + 0.05f);
             UpdateViewMetrics();
+            SaveProgress();
         }
         else if (key == 'A')
         {
             m_userViewScale = 1.0f;
             UpdateViewMetrics();
+            SaveProgress();
         }
         else if (key >= '1' && key <= '3')
         {
             SelectSaveSlot(static_cast<int>(key - '1'));
-        }
-        else if (key == 'S')
-        {
-            SaveProgress();
-            SetMessage(SaveSlotLabel() + L"에 저장했어.");
-        }
-        else if (key == 'L')
-        {
-            LoadProgress();
-            UpdateViewMetrics();
-            SetMessage(SaveSlotLabel() + L"에서 불러왔어.");
         }
         else if (key == 'D')
         {
@@ -1317,6 +1287,7 @@ void PawlineGameImpl::OnKeyDown(WPARAM key)
         else if ((key == VK_RETURN || key == VK_SPACE) && m_victory && m_selectedStage < kStageCount - 1)
         {
             ++m_selectedStage;
+            SaveProgress();
             ResetGame();
         }
         return;

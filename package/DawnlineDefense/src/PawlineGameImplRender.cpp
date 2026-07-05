@@ -1126,8 +1126,8 @@ void PawlineGameImpl::DrawTitle()
     FillEllipse({654.0f, 255.0f}, 4.0f, 6.0f, D2D1::ColorF(0x071017));
     DrawLine({623.0f, 281.0f}, {657.0f, 281.0f}, D2D1::ColorF(0x071017), 2.0f);
 
-    DrawPixelTextCentered(L"PAWLINE DEFENSE", D2D1::RectF(166.0f, 350.0f, 1114.0f, 424.0f), 6.2f, D2D1::ColorF(0xF3FBFF), 1.0f);
-    DrawOutlinedString(L"수성에서 태양까지 이어지는 탑뷰 라인 디펜스", D2D1::RectF(250.0f, 428.0f, 1030.0f, 458.0f), m_centerFormat, D2D1::ColorF(0xCFE8F5), 0.72f);
+    DrawPixelTextCentered(L"SPACE DEFANSE", D2D1::RectF(166.0f, 350.0f, 1114.0f, 424.0f), 6.2f, D2D1::ColorF(0xF3FBFF), 1.0f);
+    DrawOutlinedString(L"우주 궤도를 밀어내는 탑뷰 라인 디펜스", D2D1::RectF(250.0f, 428.0f, 1030.0f, 458.0f), m_centerFormat, D2D1::ColorF(0xCFE8F5), 0.72f);
 
     DrawButton(TitleStartButtonRect(), L"START", true, D2D1::ColorF(0x173C4B));
     DrawButton(TitleStoryButtonRect(), L"STORY", true, D2D1::ColorF(0x22324D));
@@ -1135,53 +1135,60 @@ void PawlineGameImpl::DrawTitle()
     DrawButton(TitleOptionsButtonRect(), L"OPTIONS", true, D2D1::ColorF(0x283B27));
     DrawButton(TitleQuitButtonRect(), L"QUIT", true, D2D1::ColorF(0x332337));
 
-    const std::wstring route = L"수성  금성  지구  화성  목성  토성  천왕성  해왕성  명왕성  태양";
-    DrawOutlinedString(route, D2D1::RectF(120.0f, 748.0f, 1160.0f, 778.0f), m_centerFormat, D2D1::ColorF(0xF6FF83), 0.60f);
 }
 
 void PawlineGameImpl::DrawStoryCrawl()
 {
     DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), 9, m_uiTime, 0.0f, true);
-    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0x01050B, 0.42f));
+    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0x01050B, 0.48f));
 
-    const std::array<std::wstring, 11> lines = {
-        L"먼 행성들의 항로가 하나씩 꺼지던 밤,",
-        L"작은 기지 하나가 수성 궤도에 남았다.",
-        L"그곳의 이름은 파울라인.",
-        L"병사도 함대도 충분하지 않았지만,",
-        L"아직 전선을 밀어낼 불빛은 남아 있었다.",
-        L"너는 다섯 유닛을 골라 길어진 방어선을 열고,",
-        L"수성에서 태양까지 이어진 침묵의 항로를 되찾아야 한다.",
-        L"적은 행성마다 다른 방식으로 몰려오고,",
-        L"마지막 빛 앞에는 태양의 보스가 기다린다.",
-        L"전선이 밀리면 기록은 끝난다.",
-        L"하지만 한 걸음이라도 앞으로 나아가면, 어둠은 다시 길이 된다."};
+    const std::array<std::wstring, 14> lines = {
+        L"어느 날, 우주는 갑자기 너무 넓어졌다.",
+        L"행성 택배는 지각했고, 달빛 영수증은 전부 사라졌다.",
+        L"그 틈을 타 정체불명의 적들이 전선을 향해 줄을 섰다.",
+        L"왜 줄을 섰는지는 모른다. 하지만 정말 성실하게 몰려왔다.",
+        L"남은 것은 작은 기지 하나, 고장 직전의 지갑,",
+        L"그리고 어쩐지 믿음직한 다섯 수비대뿐.",
+        L"작전명은 SPACE DEFANSE.",
+        L"수비대를 골라 전선을 밀고, 루멘을 모아 더 강한 부대를 깨워라.",
+        L"상대가 넘어지면 앞으로, 우리가 맞으면 잠깐 뒤로.",
+        L"그 단순한 규칙 위에서 우주는 꽤 시끄럽게 흔들릴 것이다.",
+        L"수성에서 태양까지 이어진 길은 길고,",
+        L"중간중간 말도 안 되는 보스가 고개를 들 것이다.",
+        L"그래도 괜찮다.",
+        L"작은 기지가 우주를 지키는 이야기는 원래 조금 이상해야 하니까."};
 
-    // 첫 화면부터 본문이 보여야 사용자가 멈춘 화면으로 오해하지 않는다.
-    // 이후에는 천천히 위로 올라가는 크롤 느낌만 유지한다.
-    const float startY = 278.0f - m_storyTimer * 34.0f;
+    const float startY = 514.0f - m_storyTimer * 38.0f;
     for (size_t i = 0; i < lines.size(); ++i)
     {
-        const float y = startY + static_cast<float>(i) * 48.0f;
-        if (y < 126.0f || y > 756.0f)
+        const float y = startY + static_cast<float>(i) * 46.0f;
+        if (y < 92.0f || y > 752.0f)
         {
             continue;
         }
 
-        const float topFade = Clamp01((y - 126.0f) / 86.0f);
-        const float bottomFade = Clamp01((756.0f - y) / 110.0f);
+        const float topFade = Clamp01((y - 92.0f) / 122.0f);
+        const float bottomFade = Clamp01((752.0f - y) / 120.0f);
         const float alpha = topFade * bottomFade;
-        const float depth = Clamp01((y - 126.0f) / 630.0f);
-        const float inset = 164.0f + (1.0f - depth) * 142.0f;
-        const D2D1_RECT_F textRect = D2D1::RectF(inset, y, kWidth - inset, y + 34.0f);
-        DrawOutlinedString(lines[i], textRect, m_centerFormat, D2D1::ColorF(0xFFF0B5, 0.92f * alpha), 0.82f * alpha);
+        const float depth = Clamp01((y - 92.0f) / 660.0f);
+        const float inset = 122.0f + (1.0f - depth) * 262.0f;
+        const float lift = (1.0f - depth) * 0.35f;
+        const D2D1_RECT_F textRect = D2D1::RectF(inset, y - lift * 18.0f, kWidth - inset, y + 38.0f);
+        DrawOutlinedString(lines[i], textRect, m_centerFormat, D2D1::ColorF(0xFFE57A, 0.94f * alpha), 0.95f * alpha);
     }
 
-    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, 116.0f), D2D1::ColorF(0x01050B, 0.62f));
-    FillRect(D2D1::RectF(0.0f, 708.0f, kWidth, kHeight), D2D1::ColorF(0x01050B, 0.58f));
-    const float titleFade = Clamp01(1.0f - std::max(0.0f, m_storyTimer - 4.2f) / 2.2f);
-    DrawPixelTextCentered(L"MISSION LOG 00", D2D1::RectF(260.0f, 88.0f, 1020.0f, 138.0f), 4.2f, D2D1::ColorF(0xF6FF83), titleFade);
-    DrawPixelTextCentered(L"DAWNLINE ARCHIVE", D2D1::RectF(260.0f, 142.0f, 1020.0f, 190.0f), 3.2f, D2D1::ColorF(0xCFE8F5), titleFade);
+    const Vec2 vanishing = {640.0f, 72.0f};
+    for (int i = 0; i < 9; ++i)
+    {
+        const float x = 120.0f + static_cast<float>(i) * 130.0f;
+        DrawLine({x, 740.0f}, vanishing, D2D1::ColorF(0xF6FF83, 0.045f), 1.0f);
+    }
+
+    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, 112.0f), D2D1::ColorF(0x01050B, 0.68f));
+    FillRect(D2D1::RectF(0.0f, 706.0f, kWidth, kHeight), D2D1::ColorF(0x01050B, 0.60f));
+    const float titleFade = Clamp01(1.0f - std::max(0.0f, m_storyTimer - 5.0f) / 2.4f);
+    DrawPixelTextCentered(L"PROLOGUE", D2D1::RectF(260.0f, 66.0f, 1020.0f, 116.0f), 4.0f, D2D1::ColorF(0xF6FF83), titleFade);
+    DrawPixelTextCentered(L"SPACE DEFANSE", D2D1::RectF(210.0f, 118.0f, 1070.0f, 168.0f), 4.0f, D2D1::ColorF(0xCFE8F5), titleFade);
     DrawOutlinedString(L"SPACE / ENTER / CLICK", D2D1::RectF(390.0f, 690.0f, 890.0f, 714.0f), m_centerFormat, D2D1::ColorF(0xCFE8F5), 0.70f);
     DrawButton(StorySkipButtonRect(), m_storyAutoContinueToMenu ? L"SKIP & START" : L"SKIP", true, D2D1::ColorF(0x173C4B));
 }
@@ -1284,7 +1291,7 @@ void PawlineGameImpl::DrawOptions()
     DrawString(L"옵션", D2D1::RectF(236.0f, 76.0f, 1044.0f, 120.0f), m_titleFormat, D2D1::ColorF(0xF3FBFF));
     DrawString(L"소리, 전투 감각, 화면 안전 여백, 저장 데이터를 한 곳에서 조정해.", D2D1::RectF(236.0f, 116.0f, 1044.0f, 142.0f), m_centerFormat, D2D1::ColorF(0xBFD1DB));
 
-    drawSection(D2D1::RectF(236.0f, 146.0f, 1044.0f, 224.0f), L"SAVE SLOT", D2D1::ColorF(0xB8FF89));
+    drawSection(D2D1::RectF(236.0f, 146.0f, 1044.0f, 224.0f), L"SLOT", D2D1::ColorF(0xB8FF89));
     for (int i = 0; i < kSaveSlotCount; ++i)
     {
         const bool active = i == m_saveSlot;
@@ -1305,8 +1312,6 @@ void PawlineGameImpl::DrawOptions()
     DrawButton(OptionsAudioResetButtonRect(), L"AUDIO RESET", true, D2D1::ColorF(0x283B27));
 
     drawSection(D2D1::RectF(236.0f, 612.0f, 1044.0f, 742.0f), L"DATA", D2D1::ColorF(0xC8B7FF));
-    DrawButton(OptionsSaveProgressButtonRect(), L"SAVE S", true, D2D1::ColorF(0x283B27));
-    DrawButton(OptionsLoadProgressButtonRect(), L"LOAD L", true, D2D1::ColorF(0x22323F));
     DrawButton(OptionsDeleteProgressButtonRect(), m_deleteConfirmTimer > 0.0f ? L"CONFIRM D" : L"DELETE D", true, m_deleteConfirmTimer > 0.0f ? D2D1::ColorF(0x4B232D) : D2D1::ColorF(0x302735));
     DrawButton(OptionsResetProgressButtonRect(), m_resetConfirmTimer > 0.0f ? L"CONFIRM X" : L"RESET X", true, m_resetConfirmTimer > 0.0f ? D2D1::ColorF(0x4B232D) : D2D1::ColorF(0x302735));
     DrawButton(OptionsBackButtonRect(), L"BACK", true, D2D1::ColorF(0x173C4B));
@@ -1326,7 +1331,7 @@ void PawlineGameImpl::DrawMenu()
     {
         DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.032f), 1.0f);
     }
-    DrawPixelText(L"PAWLINE DEFENSE", {48.0f, 42.0f}, 4.2f, D2D1::ColorF(0xF3FBFF));
+    DrawPixelText(L"SPACE DEFANSE", {48.0f, 42.0f}, 4.2f, D2D1::ColorF(0xF3FBFF));
     DrawOutlinedString(L"스테이지와 다섯 유닛을 골라 출격해.", D2D1::RectF(58.0f, 88.0f, 460.0f, 118.0f), m_smallFormat, D2D1::ColorF(0xBFD1DB), 0.58f);
     DrawPixelText(L"LUMEN " + ToWideInt(m_lumen), {1000.0f, 50.0f}, 3.0f, D2D1::ColorF(0xF6FF83));
     if (m_debugMode)
@@ -4444,8 +4449,8 @@ void PawlineGameImpl::DrawBattleLogo()
         }
     };
 
-    drawWord(L"PAWLINE", {120.0f, 34.0f}, 4.25f, D2D1::ColorF(0xF3FBFF));
-    drawWord(L"DEFENSE", {122.0f, 66.0f}, 2.45f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.98f));
+    drawWord(L"SPACE", {120.0f, 34.0f}, 4.25f, D2D1::ColorF(0xF3FBFF));
+    drawWord(L"DEFANSE", {122.0f, 66.0f}, 2.45f, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.98f));
     DrawLine({348.0f, 67.0f}, {422.0f, 67.0f}, D2D1::ColorF(stage.lineColor.r, stage.lineColor.g, stage.lineColor.b, 0.60f), 2.4f);
 }
 
@@ -4876,8 +4881,6 @@ void PawlineGameImpl::DrawEscapeMenuClean()
     DrawString(L"x" + ToWideFloat(speed), D2D1::RectF(392.0f, 406.0f, 548.0f, 436.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
     DrawButton(EscapeSpeedUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
 
-    DrawButton(EscapeSaveButtonRect(), L"SAVE", true, D2D1::ColorF(0x283B27));
-    DrawButton(EscapeLoadButtonRect(), L"LOAD", true, D2D1::ColorF(0x22323F));
     DrawButton(EscapeStoryButtonRect(), L"STORY", true, D2D1::ColorF(0x2D3722));
     DrawButton(EscapeStageButtonRect(), L"STAGE SELECT", true, D2D1::ColorF(0x283B27));
     DrawButton(EscapeQuitButtonRect(), L"QUIT GAME", true, D2D1::ColorF(0x332337));

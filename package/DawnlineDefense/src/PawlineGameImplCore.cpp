@@ -94,7 +94,7 @@ HRESULT PawlineGameImpl::Initialize()
     m_hwnd = CreateWindowExW(
         0,
         className,
-        L"Pawline Defense - Direct2D",
+        L"Space Defanse - Direct2D",
         style,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
@@ -975,6 +975,7 @@ void PawlineGameImpl::AdjustSfxVolume(float delta)
     m_soundEnabled = m_sfxVolume > 0.001f || m_uiVolume > 0.001f;
     m_audio.SetVolume(m_sfxVolume);
     PlaySfx(SfxKind::Ui, 0.02f);
+    SaveProgress();
 }
 
 void PawlineGameImpl::AdjustUiVolume(float delta)
@@ -982,6 +983,7 @@ void PawlineGameImpl::AdjustUiVolume(float delta)
     m_uiVolume = std::clamp(m_uiVolume + delta, 0.0f, 1.0f);
     m_soundEnabled = m_sfxVolume > 0.001f || m_uiVolume > 0.001f;
     PlaySfx(SfxKind::Ui, 0.02f);
+    SaveProgress();
 }
 
 void PawlineGameImpl::AdjustBgmVolume(float delta)
@@ -989,6 +991,7 @@ void PawlineGameImpl::AdjustBgmVolume(float delta)
     m_bgmVolume = std::clamp(m_bgmVolume + delta, 0.0f, 1.0f);
     SyncMusicVolume();
     PlaySfx(SfxKind::Ui, 0.02f);
+    SaveProgress();
 }
 
 void PawlineGameImpl::ResetAudioVolumes()
@@ -1001,6 +1004,7 @@ void PawlineGameImpl::ResetAudioVolumes()
     m_audio.SetVolume(m_sfxVolume);
     SyncMusicVolume();
     PlaySfx(SfxKind::Ui, 0.02f);
+    SaveProgress();
     SetMessage(L"오디오 볼륨을 기본값으로 돌렸어.");
 }
 
@@ -1326,6 +1330,7 @@ void PawlineGameImpl::SelectStage(int index)
         return;
     }
     m_selectedStage = clamped;
+    SaveProgress();
 }
 
 void PawlineGameImpl::GrantStageReward()
@@ -1342,16 +1347,70 @@ void PawlineGameImpl::GrantStageReward()
 
 bool PawlineGameImpl::HasAnyProgressFile() const
 {
+    const auto hasGameplayProgress = [](const std::wstring& path) {
+        std::wifstream file(path);
+        if (!file)
+        {
+            return false;
+        }
+
+        std::wstring header;
+        file >> header;
+        int lumen = 0;
+        if (header == L"PAWLINE_PROGRESS_V2")
+        {
+            file >> lumen;
+        }
+        else
+        {
+            std::wistringstream legacy(header);
+            legacy >> lumen;
+        }
+        if (lumen > 0)
+        {
+            return true;
+        }
+
+        for (int i = 0; i < kRosterCount; ++i)
+        {
+            int unlocked = 0;
+            file >> unlocked;
+            if (file && i >= 5 && unlocked != 0)
+            {
+                return true;
+            }
+        }
+        for (int i = 0; i < kRosterCount; ++i)
+        {
+            int level = 1;
+            file >> level;
+            if (file && level > 1)
+            {
+                return true;
+            }
+        }
+        for (int i = 0; i < kStageCount; ++i)
+        {
+            int cleared = 0;
+            file >> cleared;
+            if (file && cleared != 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    };
+
     // 첫 실행 연출은 "저장 파일이 전혀 없는 상태"에서만 자동 재생한다.
     // 실행 파일 옆의 현재 슬롯 저장 파일과 예전 단일 저장 파일을 모두 확인한다.
-    if (GetFileAttributesW(LegacyProgressPath().c_str()) != INVALID_FILE_ATTRIBUTES)
+    if (hasGameplayProgress(LegacyProgressPath()))
     {
         return true;
     }
 
     for (int slot = 0; slot < kSaveSlotCount; ++slot)
     {
-        if (GetFileAttributesW(ProgressPath(slot).c_str()) != INVALID_FILE_ATTRIBUTES)
+        if (hasGameplayProgress(ProgressPath(slot)))
         {
             return true;
         }
@@ -1563,6 +1622,15 @@ void PawlineGameImpl::LoadProgress(int slot)
                     if (file >> savedUiVolume)
                     {
                         m_uiVolume = std::clamp(savedUiVolume, 0.0f, 1.0f);
+                        int savedDifficulty = static_cast<int>(m_difficulty);
+                        if (file >> savedDifficulty)
+                        {
+                            m_difficulty = static_cast<Difficulty>(std::clamp(savedDifficulty, 0, 2));
+                        }
+                        else
+                        {
+                            file.clear();
+                        }
                     }
                     else
                     {
@@ -1634,7 +1702,8 @@ void PawlineGameImpl::SaveProgressToSlot(int slot) const
     file << m_selectedStage << L" " << m_selectedLoadoutSlot << L"\n";
     file << m_defaultGameSpeed << L" " << m_userViewScale << L" "
          << (m_hitShakeEnabled ? 1 : 0) << L" " << (m_reduceFlashes ? 1 : 0) << L" "
-         << m_sfxVolume << L" " << m_bgmVolume << L" " << m_uiVolume << L"\n";
+         << m_sfxVolume << L" " << m_bgmVolume << L" " << m_uiVolume << L" "
+         << static_cast<int>(m_difficulty) << L"\n";
 }
 
 void PawlineGameImpl::SelectSaveSlot(int slot)
