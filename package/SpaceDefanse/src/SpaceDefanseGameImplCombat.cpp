@@ -1386,7 +1386,7 @@ void SpaceDefanseGameImpl::SpawnPlayer(PlayerUnit type)
         AddImageVfx(ImageVfxKind::HealSoft, unit.pos + Vec2{0.0f, -10.0f}, 72.0f, 0.36f, D2D1::ColorF(0xB8FF89, 0.76f), 1.0f);
         AddFloatText(unit.pos + Vec2{0.0f, -unit.radius - 34.0f}, L"WALLET +" + ToWideInt(static_cast<int>(std::round((walletBoost - 1.0f) * 100.0f))) + L"%", D2D1::ColorF(0xB8FF89), 0.82f);
     }
-    PlaySfxAt(SfxKind::Spawn, unit.pos.x, 0.10f, 0.95f);
+    PlaySfx(SfxKind::Spawn, 0.10f);
 }
 
 void SpaceDefanseGameImpl::SpawnEnemy(EnemyUnit type, bool elite)
@@ -2779,7 +2779,7 @@ void SpaceDefanseGameImpl::TryFireCannon()
     m_cannonCharge = 0.0f;
     m_cannonFlash = 0.42f;
     m_screenFlash = m_reduceFlashes ? 0.04f : 0.12f;
-    PlaySfxAt(SfxKind::Shoot, kPlayerBaseX + 120.0f, 0.18f, 1.20f);
+    PlaySfx(SfxKind::Shoot, 0.18f);
     AddCameraTrauma(0.55f);
     TriggerHitStop(0.070f, 0.38f, 0.30f);
     const float damage = 210.0f + static_cast<float>(m_walletLevel) * 48.0f;

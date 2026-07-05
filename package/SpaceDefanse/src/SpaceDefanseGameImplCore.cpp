@@ -628,8 +628,7 @@ void SpaceDefanseGameImpl::PlaySfx(SfxKind kind, float minGapSeconds)
         fileName = L"events\\player_spawn.wav";
         break;
     case SfxKind::EnemySpawn:
-        fileName = L"events\\enemy_spawn.wav";
-        break;
+        return;
     case SfxKind::Hit:
         fileName = L"events\\hit_light.wav";
         break;
@@ -683,8 +682,7 @@ void SpaceDefanseGameImpl::PlaySfxAt(SfxKind kind, float worldX, float minGapSec
         fileName = L"events\\player_spawn.wav";
         break;
     case SfxKind::EnemySpawn:
-        fileName = L"events\\enemy_spawn.wav";
-        break;
+        return;
     case SfxKind::Hit:
         fileName = L"events\\hit_light.wav";
         break;

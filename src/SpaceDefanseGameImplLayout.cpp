@@ -284,7 +284,12 @@ D2D1_RECT_F SpaceDefanseGameImpl::MessageToastRect() const
         return D2D1::RectF(604.0f, 100.0f, 1196.0f, 130.0f);
     }
 
-    const float y = (m_screen == GameScreen::Playing || m_screen == GameScreen::Result) ? 120.0f : 100.0f;
+    float y = (m_screen == GameScreen::Playing || m_screen == GameScreen::Result) ? 120.0f : 100.0f;
+    if ((m_screen == GameScreen::Playing || m_screen == GameScreen::Result) && FindBossUnit())
+    {
+        // 보스 체력바는 104~142 영역을 사용한다. 보스전 로그는 바로 아래로 내려 겹침을 피한다.
+        y = 152.0f;
+    }
     return D2D1::RectF(392.0f, y, 888.0f, y + 34.0f);
 }
 
