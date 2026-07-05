@@ -866,9 +866,13 @@ private:
 
     D2D1_RECT_F OptionsSfxUpButtonRect() const;
 
+    D2D1_RECT_F OptionsSfxSliderRect() const;
+
     D2D1_RECT_F OptionsBgmDownButtonRect() const;
 
     D2D1_RECT_F OptionsBgmUpButtonRect() const;
+
+    D2D1_RECT_F OptionsBgmSliderRect() const;
 
     D2D1_RECT_F OptionsAudioResetButtonRect() const;
 
@@ -876,9 +880,13 @@ private:
 
     D2D1_RECT_F OptionsSpeedUpButtonRect() const;
 
+    D2D1_RECT_F OptionsSpeedSliderRect() const;
+
     D2D1_RECT_F OptionsViewDownButtonRect() const;
 
     D2D1_RECT_F OptionsViewUpButtonRect() const;
+
+    D2D1_RECT_F OptionsViewSliderRect() const;
 
     D2D1_RECT_F OptionsViewResetButtonRect() const;
 

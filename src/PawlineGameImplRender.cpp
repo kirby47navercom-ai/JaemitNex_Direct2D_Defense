@@ -1247,60 +1247,69 @@ void PawlineGameImpl::DrawEndingScene()
 void PawlineGameImpl::DrawOptions()
 {
     DrawDeepSpaceBackdrop(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), m_selectedStage, m_uiTime, 0.0f, false);
-    for (float y = 38.0f; y < kHeight; y += 46.0f)
-    {
-        DrawLine({24.0f, y}, {1256.0f, y}, D2D1::ColorF(0x17303C, 0.045f), 1.0f);
-    }
-    for (float x = 36.0f; x < kWidth; x += 54.0f)
-    {
-        DrawLine({x, 18.0f}, {x, 780.0f}, D2D1::ColorF(0x17303C, 0.030f), 1.0f);
-    }
+    FillRect(D2D1::RectF(0.0f, 0.0f, kWidth, kHeight), D2D1::ColorF(0x01050B, 0.38f));
 
-    DrawString(L"옵션", D2D1::RectF(250.0f, 132.0f, 1030.0f, 188.0f), m_titleFormat, D2D1::ColorF(0xF3FBFF));
-    DrawString(L"전투 감각, 기본 속도, 화면 안전 여백을 조정합니다.", D2D1::RectF(250.0f, 192.0f, 1030.0f, 222.0f), m_centerFormat, D2D1::ColorF(0xBFD1DB));
+    const D2D1_RECT_F mainPanel = D2D1::RectF(186.0f, 48.0f, 1094.0f, 748.0f);
+    FillRoundRect(OffsetRectF(mainPanel, 6.0f, 8.0f), 10.0f, D2D1::ColorF(0x000000, 0.35f));
+    FillRoundRect(mainPanel, 10.0f, D2D1::ColorF(0x071017, 0.88f));
+    StrokeRoundRect(mainPanel, 10.0f, D2D1::ColorF(0x65B8FF, 0.68f), 1.8f);
+    FillRoundRect(D2D1::RectF(mainPanel.left + 12.0f, mainPanel.top + 10.0f, mainPanel.right - 12.0f, mainPanel.top + 24.0f), 6.0f, D2D1::ColorF(0xFFFFFF, 0.08f));
+
+    const auto drawSection = [&](D2D1_RECT_F rect, const std::wstring& label, D2D1_COLOR_F accent) {
+        FillRoundRect(OffsetRectF(rect, 4.0f, 5.0f), 9.0f, D2D1::ColorF(0x000000, 0.26f));
+        FillRoundRect(rect, 9.0f, D2D1::ColorF(0x0A1921, 0.86f));
+        FillRoundRect(D2D1::RectF(rect.left + 10.0f, rect.top + 8.0f, rect.right - 10.0f, rect.top + 20.0f), 6.0f, D2D1::ColorF(0xFFFFFF, 0.07f));
+        StrokeRoundRect(rect, 9.0f, D2D1::ColorF(accent.r, accent.g, accent.b, 0.60f), 1.4f);
+        DrawPixelText(label, {rect.left + 20.0f, rect.top + 18.0f}, 2.6f, accent);
+    };
+
+    const auto drawSlider = [&](const std::wstring& label, D2D1_RECT_F bar, float normalized, const std::wstring& valueText, D2D1_COLOR_F accent) {
+        const float value = Clamp01(normalized);
+        const bool hover = Contains(bar, m_mouse);
+        DrawOutlinedString(label, D2D1::RectF(bar.left, bar.top - 38.0f, bar.right - 96.0f, bar.top - 10.0f), m_bodyFormat, D2D1::ColorF(0xEAF7FF), 0.70f);
+        DrawOutlinedString(valueText, D2D1::RectF(bar.right - 86.0f, bar.top - 38.0f, bar.right + 20.0f, bar.top - 10.0f), m_bodyFormat, D2D1::ColorF(0xF6FF83), 0.70f);
+        FillRoundRect(bar, 10.0f, D2D1::ColorF(0x02080D, 0.92f));
+        const float knobX = Lerp(bar.left, bar.right, value);
+        FillRoundRect(D2D1::RectF(bar.left, bar.top, knobX, bar.bottom), 10.0f, D2D1::ColorF(accent.r, accent.g, accent.b, 0.72f));
+        StrokeRoundRect(bar, 10.0f, D2D1::ColorF(accent.r, accent.g, accent.b, hover ? 0.92f : 0.52f), hover ? 2.0f : 1.2f);
+        for (int i = 0; i <= 5; ++i)
+        {
+            const float x = Lerp(bar.left, bar.right, static_cast<float>(i) / 5.0f);
+            DrawLine({x, bar.top + 3.0f}, {x, bar.bottom - 3.0f}, D2D1::ColorF(0xFFFFFF, 0.12f), 1.0f);
+        }
+        FillEllipse({knobX, (bar.top + bar.bottom) * 0.5f}, hover ? 12.0f : 10.0f, hover ? 12.0f : 10.0f, D2D1::ColorF(0xF3FBFF, 0.96f));
+        StrokeEllipse({knobX, (bar.top + bar.bottom) * 0.5f}, hover ? 12.0f : 10.0f, hover ? 12.0f : 10.0f, accent, 2.0f);
+    };
+
+    DrawString(L"옵션", D2D1::RectF(236.0f, 76.0f, 1044.0f, 120.0f), m_titleFormat, D2D1::ColorF(0xF3FBFF));
+    DrawString(L"소리, 전투 감각, 화면 안전 여백, 저장 데이터를 한 곳에서 조정해.", D2D1::RectF(236.0f, 116.0f, 1044.0f, 142.0f), m_centerFormat, D2D1::ColorF(0xBFD1DB));
+
+    drawSection(D2D1::RectF(236.0f, 146.0f, 1044.0f, 224.0f), L"SAVE SLOT", D2D1::ColorF(0xB8FF89));
     for (int i = 0; i < kSaveSlotCount; ++i)
     {
         const bool active = i == m_saveSlot;
         DrawButton(OptionsSaveSlotButtonRect(i), L"SLOT " + ToWideInt(i + 1), true, active ? D2D1::ColorF(0x3F4A22) : D2D1::ColorF(0x202833));
     }
 
+    drawSection(D2D1::RectF(236.0f, 238.0f, 704.0f, 604.0f), L"COMBAT", D2D1::ColorF(0x65B8FF));
     DrawButton(OptionsShakeButtonRect(), m_hitShakeEnabled ? L"SHAKE ON" : L"SHAKE OFF", true, m_hitShakeEnabled ? D2D1::ColorF(0x173C4B) : D2D1::ColorF(0x302735));
-    DrawString(L"H", D2D1::RectF(OptionsShakeButtonRect().right + 16.0f, OptionsShakeButtonRect().top + 14.0f, OptionsShakeButtonRect().right + 56.0f, OptionsShakeButtonRect().bottom), m_centerFormat, D2D1::ColorF(0x8EA9B8));
     DrawButton(OptionsFlashButtonRect(), m_reduceFlashes ? L"FLASH LESS" : L"FLASH FULL", true, m_reduceFlashes ? D2D1::ColorF(0x283B27) : D2D1::ColorF(0x302735));
-    DrawString(L"F", D2D1::RectF(OptionsFlashButtonRect().right + 16.0f, OptionsFlashButtonRect().top + 12.0f, OptionsFlashButtonRect().right + 56.0f, OptionsFlashButtonRect().bottom), m_centerFormat, D2D1::ColorF(0x8EA9B8));
-
-    DrawString(L"효과음 볼륨", D2D1::RectF(830.0f, 306.0f, 1130.0f, 330.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
-    DrawButton(OptionsSfxDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));
-    DrawString(ToWideInt(static_cast<int>(std::round(m_sfxVolume * 100.0f))) + L"%", D2D1::RectF(892.0f, 348.0f, 1068.0f, 378.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
-    DrawButton(OptionsSfxUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
-    DrawString(L"M / N", D2D1::RectF(830.0f, 386.0f, 1130.0f, 410.0f), m_smallFormat, D2D1::ColorF(0x8EA9B8));
-
-    DrawString(L"브금 볼륨", D2D1::RectF(830.0f, 408.0f, 1130.0f, 432.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
-    DrawButton(OptionsBgmDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));
-    DrawString(ToWideInt(static_cast<int>(std::round(m_bgmVolume * 100.0f))) + L"%", D2D1::RectF(892.0f, 448.0f, 1068.0f, 478.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
-    DrawButton(OptionsBgmUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
-    DrawString(L"B / V", D2D1::RectF(830.0f, 486.0f, 1130.0f, 508.0f), m_smallFormat, D2D1::ColorF(0x8EA9B8));
-    DrawButton(OptionsAudioResetButtonRect(), L"AUDIO RESET", true, D2D1::ColorF(0x283B27));
-    DrawString(L"R", D2D1::RectF(OptionsAudioResetButtonRect().right + 12.0f, OptionsAudioResetButtonRect().top + 8.0f, OptionsAudioResetButtonRect().right + 42.0f, OptionsAudioResetButtonRect().bottom), m_smallFormat, D2D1::ColorF(0x8EA9B8));
-
-    DrawString(L"기본 게임 속도", D2D1::RectF(490.0f, 408.0f, 790.0f, 432.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
-    DrawButton(OptionsSpeedDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));
-    DrawString(L"x" + ToWideFloat(m_defaultGameSpeed), D2D1::RectF(552.0f, 448.0f, 728.0f, 478.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
-    DrawButton(OptionsSpeedUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
-
-    DrawString(L"화면 안전 여백", D2D1::RectF(490.0f, 512.0f, 790.0f, 536.0f), m_centerFormat, D2D1::ColorF(0xEAF7FF));
-    DrawButton(OptionsViewDownButtonRect(), L"-", true, D2D1::ColorF(0x202833));
-    DrawString(ToWideInt(static_cast<int>(std::round(m_userViewScale * 100.0f))) + L"%", D2D1::RectF(552.0f, 552.0f, 728.0f, 582.0f), m_centerFormat, D2D1::ColorF(0xF6FF83));
-    DrawButton(OptionsViewUpButtonRect(), L"+", true, D2D1::ColorF(0x202833));
+    drawSlider(L"기본 게임 속도", OptionsSpeedSliderRect(), (m_defaultGameSpeed - 0.5f) / 2.5f, L"x" + ToWideFloat(m_defaultGameSpeed), D2D1::ColorF(0xF6FF83));
+    drawSlider(L"화면 안전 여백", OptionsViewSliderRect(), (m_userViewScale - 0.82f) / 0.18f, ToWideInt(static_cast<int>(std::round(m_userViewScale * 100.0f))) + L"%", D2D1::ColorF(0xB8FF89));
     DrawButton(OptionsViewResetButtonRect(), L"AUTO FIT", true, D2D1::ColorF(0x2D3722));
-    DrawString(L"화면이 잘리면 값을 낮춰줘.", D2D1::RectF(442.0f, 630.0f, 838.0f, 650.0f), m_centerFormat, D2D1::ColorF(0x8EA9B8));
+
+    drawSection(D2D1::RectF(724.0f, 238.0f, 1044.0f, 552.0f), L"AUDIO", D2D1::ColorF(0xF6FF83));
+    drawSlider(L"효과음 볼륨", OptionsSfxSliderRect(), m_sfxVolume, ToWideInt(static_cast<int>(std::round(m_sfxVolume * 100.0f))) + L"%", D2D1::ColorF(0x65B8FF));
+    drawSlider(L"브금 볼륨", OptionsBgmSliderRect(), m_bgmVolume, ToWideInt(static_cast<int>(std::round(m_bgmVolume * 100.0f))) + L"%", D2D1::ColorF(0xB8FF89));
+    DrawButton(OptionsAudioResetButtonRect(), L"AUDIO RESET", true, D2D1::ColorF(0x283B27));
+
+    drawSection(D2D1::RectF(236.0f, 612.0f, 1044.0f, 742.0f), L"DATA", D2D1::ColorF(0xC8B7FF));
     DrawButton(OptionsSaveProgressButtonRect(), L"SAVE S", true, D2D1::ColorF(0x283B27));
     DrawButton(OptionsLoadProgressButtonRect(), L"LOAD L", true, D2D1::ColorF(0x22323F));
     DrawButton(OptionsDeleteProgressButtonRect(), m_deleteConfirmTimer > 0.0f ? L"CONFIRM D" : L"DELETE D", true, m_deleteConfirmTimer > 0.0f ? D2D1::ColorF(0x4B232D) : D2D1::ColorF(0x302735));
     DrawButton(OptionsResetProgressButtonRect(), m_resetConfirmTimer > 0.0f ? L"CONFIRM X" : L"RESET X", true, m_resetConfirmTimer > 0.0f ? D2D1::ColorF(0x4B232D) : D2D1::ColorF(0x302735));
-
     DrawButton(OptionsBackButtonRect(), L"BACK", true, D2D1::ColorF(0x173C4B));
-    DrawString(L"Esc / Backspace", D2D1::RectF(OptionsBackButtonRect().right + 12.0f, OptionsBackButtonRect().top + 7.0f, OptionsBackButtonRect().right + 150.0f, OptionsBackButtonRect().bottom), m_smallFormat, D2D1::ColorF(0x8EA9B8));
+    DrawString(L"Esc / Backspace", D2D1::RectF(OptionsBackButtonRect().right + 14.0f, OptionsBackButtonRect().top + 8.0f, OptionsBackButtonRect().right + 168.0f, OptionsBackButtonRect().bottom), m_smallFormat, D2D1::ColorF(0x8EA9B8));
 }
 
 void PawlineGameImpl::DrawMenu()

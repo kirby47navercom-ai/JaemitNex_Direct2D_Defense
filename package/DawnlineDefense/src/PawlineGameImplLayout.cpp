@@ -41,93 +41,117 @@ D2D1_RECT_F PawlineGameImpl::StorySkipButtonRect() const
 
 D2D1_RECT_F PawlineGameImpl::OptionsShakeButtonRect() const
 {
-    return D2D1::RectF(490.0f, 276.0f, 790.0f, 326.0f);
+    return D2D1::RectF(270.0f, 288.0f, 470.0f, 336.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsFlashButtonRect() const
 {
-    return D2D1::RectF(490.0f, 338.0f, 790.0f, 388.0f);
+    return D2D1::RectF(490.0f, 288.0f, 690.0f, 336.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsSfxDownButtonRect() const
 {
-    return D2D1::RectF(830.0f, 338.0f, 884.0f, 388.0f);
+    return D2D1::RectF(740.0f, 288.0f, 782.0f, 330.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsSfxUpButtonRect() const
 {
-    return D2D1::RectF(1076.0f, 338.0f, 1130.0f, 388.0f);
+    return D2D1::RectF(1018.0f, 288.0f, 1060.0f, 330.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::OptionsSfxSliderRect() const
+{
+    // 옵션 화면에서 효과음 볼륨을 클릭으로 바로 조정하는 바 영역이다.
+    return D2D1::RectF(746.0f, 312.0f, 1012.0f, 332.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsBgmDownButtonRect() const
 {
-    return D2D1::RectF(830.0f, 438.0f, 884.0f, 488.0f);
+    return D2D1::RectF(740.0f, 392.0f, 782.0f, 434.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsBgmUpButtonRect() const
 {
-    return D2D1::RectF(1076.0f, 438.0f, 1130.0f, 488.0f);
+    return D2D1::RectF(1018.0f, 392.0f, 1060.0f, 434.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::OptionsBgmSliderRect() const
+{
+    // 옵션 화면에서 배경음악 볼륨을 클릭으로 바로 조정하는 바 영역이다.
+    return D2D1::RectF(746.0f, 416.0f, 1012.0f, 436.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsAudioResetButtonRect() const
 {
-    return D2D1::RectF(892.0f, 552.0f, 1068.0f, 594.0f);
+    return D2D1::RectF(760.0f, 476.0f, 1000.0f, 522.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsSpeedDownButtonRect() const
 {
-    return D2D1::RectF(490.0f, 438.0f, 544.0f, 488.0f);
+    return D2D1::RectF(270.0f, 412.0f, 312.0f, 454.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsSpeedUpButtonRect() const
 {
-    return D2D1::RectF(736.0f, 438.0f, 790.0f, 488.0f);
+    return D2D1::RectF(648.0f, 412.0f, 690.0f, 454.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::OptionsSpeedSliderRect() const
+{
+    // 기본 게임 속도는 0.5x~3.0x 사이를 단계적으로 고르는 바다.
+    return D2D1::RectF(330.0f, 424.0f, 630.0f, 444.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsViewDownButtonRect() const
 {
-    return D2D1::RectF(490.0f, 540.0f, 544.0f, 590.0f);
+    return D2D1::RectF(270.0f, 512.0f, 312.0f, 554.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsViewUpButtonRect() const
 {
-    return D2D1::RectF(736.0f, 540.0f, 790.0f, 590.0f);
+    return D2D1::RectF(648.0f, 512.0f, 690.0f, 554.0f);
+}
+
+D2D1_RECT_F PawlineGameImpl::OptionsViewSliderRect() const
+{
+    // 전체 화면에서 잘림을 줄이는 안전 여백 스케일 바다.
+    return D2D1::RectF(330.0f, 524.0f, 630.0f, 544.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsViewResetButtonRect() const
 {
-    return D2D1::RectF(552.0f, 598.0f, 728.0f, 640.0f);
+    return D2D1::RectF(390.0f, 554.0f, 570.0f, 598.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsSaveSlotButtonRect(int index) const
 {
-    const float x = 490.0f + static_cast<float>(index) * 102.0f;
-    return D2D1::RectF(x, 230.0f, x + 96.0f, 266.0f);
+    const float x = 470.0f + static_cast<float>(index) * 180.0f;
+    return D2D1::RectF(x, 164.0f, x + 160.0f, 208.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsSaveProgressButtonRect() const
 {
-    return D2D1::RectF(490.0f, 654.0f, 638.0f, 700.0f);
+    return D2D1::RectF(270.0f, 650.0f, 430.0f, 692.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsLoadProgressButtonRect() const
 {
-    return D2D1::RectF(642.0f, 654.0f, 790.0f, 700.0f);
+    return D2D1::RectF(450.0f, 650.0f, 610.0f, 692.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsDeleteProgressButtonRect() const
 {
-    return D2D1::RectF(490.0f, 708.0f, 638.0f, 746.0f);
+    return D2D1::RectF(670.0f, 650.0f, 830.0f, 692.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsResetProgressButtonRect() const
 {
-    return D2D1::RectF(642.0f, 708.0f, 790.0f, 746.0f);
+    return D2D1::RectF(850.0f, 650.0f, 1010.0f, 692.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::OptionsBackButtonRect() const
 {
-    return D2D1::RectF(492.0f, 754.0f, 788.0f, 792.0f);
+    return D2D1::RectF(490.0f, 700.0f, 790.0f, 740.0f);
 }
 
 D2D1_RECT_F PawlineGameImpl::MenuStageRect(int index) const

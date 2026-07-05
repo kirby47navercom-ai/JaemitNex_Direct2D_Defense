@@ -82,15 +82,11 @@ bool PawlineGameImpl::IsInteractivePoint(Vec2 pos) const
         }
         return Contains(OptionsShakeButtonRect(), pos) ||
                Contains(OptionsFlashButtonRect(), pos) ||
-               Contains(OptionsSfxDownButtonRect(), pos) ||
-               Contains(OptionsSfxUpButtonRect(), pos) ||
-               Contains(OptionsBgmDownButtonRect(), pos) ||
-               Contains(OptionsBgmUpButtonRect(), pos) ||
+               Contains(OptionsSfxSliderRect(), pos) ||
+               Contains(OptionsBgmSliderRect(), pos) ||
                Contains(OptionsAudioResetButtonRect(), pos) ||
-               Contains(OptionsSpeedDownButtonRect(), pos) ||
-               Contains(OptionsSpeedUpButtonRect(), pos) ||
-               Contains(OptionsViewDownButtonRect(), pos) ||
-               Contains(OptionsViewUpButtonRect(), pos) ||
+               Contains(OptionsSpeedSliderRect(), pos) ||
+               Contains(OptionsViewSliderRect(), pos) ||
                Contains(OptionsViewResetButtonRect(), pos) ||
                Contains(OptionsSaveProgressButtonRect(), pos) ||
                Contains(OptionsLoadProgressButtonRect(), pos) ||
@@ -523,6 +519,11 @@ void PawlineGameImpl::OnShopClick(Vec2 pos)
 
 void PawlineGameImpl::OnOptionsClick(Vec2 pos)
 {
+    const auto sliderValue = [](D2D1_RECT_F rect, Vec2 point) {
+        const float width = std::max(1.0f, rect.right - rect.left);
+        return Clamp01((point.x - rect.left) / width);
+    };
+
     for (int i = 0; i < kSaveSlotCount; ++i)
     {
         if (Contains(OptionsSaveSlotButtonRect(i), pos))
@@ -542,24 +543,19 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
         SetMessage(m_reduceFlashes ? L"눈부심 줄이기 켜짐." : L"눈부심 줄이기 꺼짐.");
         return;
     }
-    if (Contains(OptionsSfxDownButtonRect(), pos))
+    if (Contains(OptionsSfxSliderRect(), pos))
     {
-        AdjustSfxVolume(-0.10f);
+        m_sfxVolume = sliderValue(OptionsSfxSliderRect(), pos);
+        m_soundEnabled = m_sfxVolume > 0.001f;
+        m_audio.SetVolume(m_sfxVolume);
+        PlaySfx(SfxKind::Ui, 0.02f);
         return;
     }
-    if (Contains(OptionsSfxUpButtonRect(), pos))
+    if (Contains(OptionsBgmSliderRect(), pos))
     {
-        AdjustSfxVolume(0.10f);
-        return;
-    }
-    if (Contains(OptionsBgmDownButtonRect(), pos))
-    {
-        AdjustBgmVolume(-0.10f);
-        return;
-    }
-    if (Contains(OptionsBgmUpButtonRect(), pos))
-    {
-        AdjustBgmVolume(0.10f);
+        m_bgmVolume = sliderValue(OptionsBgmSliderRect(), pos);
+        SyncMusicVolume();
+        PlaySfx(SfxKind::Ui, 0.02f);
         return;
     }
     if (Contains(OptionsAudioResetButtonRect(), pos))
@@ -567,25 +563,16 @@ void PawlineGameImpl::OnOptionsClick(Vec2 pos)
         ResetAudioVolumes();
         return;
     }
-    if (Contains(OptionsSpeedDownButtonRect(), pos))
+    if (Contains(OptionsSpeedSliderRect(), pos))
     {
-        m_defaultGameSpeed = std::max(0.5f, m_defaultGameSpeed - 0.5f);
+        const float value = sliderValue(OptionsSpeedSliderRect(), pos);
+        m_defaultGameSpeed = 0.5f + std::round(value * 5.0f) * 0.5f;
         return;
     }
-    if (Contains(OptionsSpeedUpButtonRect(), pos))
+    if (Contains(OptionsViewSliderRect(), pos))
     {
-        m_defaultGameSpeed = std::min(3.0f, m_defaultGameSpeed + 0.5f);
-        return;
-    }
-    if (Contains(OptionsViewDownButtonRect(), pos))
-    {
-        m_userViewScale = std::max(0.82f, m_userViewScale - 0.05f);
-        UpdateViewMetrics();
-        return;
-    }
-    if (Contains(OptionsViewUpButtonRect(), pos))
-    {
-        m_userViewScale = std::min(1.0f, m_userViewScale + 0.05f);
+        const float value = sliderValue(OptionsViewSliderRect(), pos);
+        m_userViewScale = std::clamp(0.82f + value * 0.18f, 0.82f, 1.0f);
         UpdateViewMetrics();
         return;
     }
