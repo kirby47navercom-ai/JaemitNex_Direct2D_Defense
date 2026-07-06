@@ -184,8 +184,41 @@ LRESULT SpaceDefenceGameImpl::HandleMessage(UINT message, WPARAM wParam, LPARAM 
     case WM_SIZE:
         if (m_renderTarget)
         {
-            m_renderTarget->Resize(D2D1::SizeU(LOWORD(lParam), HIWORD(lParam)));
-            UpdateViewMetrics();
+            const UINT32 width = LOWORD(lParam);
+            const UINT32 height = HIWORD(lParam);
+            if (width > 0 && height > 0)
+            {
+                m_renderTarget->Resize(D2D1::SizeU(width, height));
+                m_renderTarget->SetDpi(96.0f, 96.0f);
+                UpdateViewMetrics();
+            }
+        }
+        return 0;
+    case WM_DPICHANGED:
+        {
+            // 모니터나 Windows 배율이 바뀌면 OS가 추천하는 창 크기로 맞추고,
+            // Direct2D 좌표계를 다시 96DPI 기준으로 고정해 입력과 렌더 좌표를 일치시킨다.
+            if (const RECT* suggested = reinterpret_cast<const RECT*>(lParam))
+            {
+                SetWindowPos(
+                    m_hwnd,
+                    nullptr,
+                    suggested->left,
+                    suggested->top,
+                    suggested->right - suggested->left,
+                    suggested->bottom - suggested->top,
+                    SWP_NOZORDER | SWP_NOACTIVATE);
+            }
+            if (m_renderTarget)
+            {
+                RECT rc = {};
+                GetClientRect(m_hwnd, &rc);
+                const UINT32 width = static_cast<UINT32>(std::max<LONG>(1, rc.right - rc.left));
+                const UINT32 height = static_cast<UINT32>(std::max<LONG>(1, rc.bottom - rc.top));
+                m_renderTarget->Resize(D2D1::SizeU(width, height));
+                m_renderTarget->SetDpi(96.0f, 96.0f);
+                UpdateViewMetrics();
+            }
         }
         return 0;
     case WM_MOUSEMOVE:
@@ -325,7 +358,11 @@ HRESULT SpaceDefenceGameImpl::CreateDeviceResources()
     RECT rc = {};
     GetClientRect(m_hwnd, &rc);
     HRESULT hr = m_factory->CreateHwndRenderTarget(
-        D2D1::RenderTargetProperties(),
+        D2D1::RenderTargetProperties(
+            D2D1_RENDER_TARGET_TYPE_DEFAULT,
+            D2D1::PixelFormat(),
+            96.0f,
+            96.0f),
         D2D1::HwndRenderTargetProperties(
             m_hwnd,
             D2D1::SizeU(static_cast<UINT32>(rc.right - rc.left), static_cast<UINT32>(rc.bottom - rc.top))),
@@ -334,6 +371,9 @@ HRESULT SpaceDefenceGameImpl::CreateDeviceResources()
     {
         return hr;
     }
+
+    m_renderTarget->SetDpi(96.0f, 96.0f);
+    UpdateViewMetrics();
 
     hr = m_renderTarget->CreateSolidColorBrush(D2D1::ColorF(0xFFFFFF), m_brush.GetAddressOf());
     if (SUCCEEDED(hr))
@@ -2212,10 +2252,24 @@ void SpaceDefenceGameImpl::SetViewTransform(float worldCameraX, bool includeCame
 
 Vec2 SpaceDefenceGameImpl::ClientToVirtual(Vec2 pos) const
 {
+    // WM_MOUSE* 좌표는 클라이언트 픽셀 기준이고, Direct2D GetSize()는 DPI에 따라 DIP 기준일 수 있다.
+    // 두 단위를 먼저 맞춘 뒤 가상 1280x800 좌표로 변환해야 다른 해상도/배율 PC에서도 버튼 판정이 맞는다.
+    Vec2 renderPos = pos;
+    if (m_renderTarget)
+    {
+        const D2D1_SIZE_U pixelSize = m_renderTarget->GetPixelSize();
+        const D2D1_SIZE_F dipSize = m_renderTarget->GetSize();
+        if (pixelSize.width > 0 && pixelSize.height > 0)
+        {
+            renderPos.x *= dipSize.width / static_cast<float>(pixelSize.width);
+            renderPos.y *= dipSize.height / static_cast<float>(pixelSize.height);
+        }
+    }
+
     const float safeScale = std::max(0.001f, m_viewScale);
     return {
-        (pos.x - m_viewOffsetX) / safeScale,
-        (pos.y - m_viewOffsetY) / safeScale};
+        (renderPos.x - m_viewOffsetX) / safeScale,
+        (renderPos.y - m_viewOffsetY) / safeScale};
 }
 
 void SpaceDefenceGameImpl::UpdateCamera(float dt)
